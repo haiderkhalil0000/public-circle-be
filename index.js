@@ -38,6 +38,8 @@ app.use("/email-events", async (req, res) => {
     // Parse the incoming SNS message
     const body = req.body;
 
+    console.log('email-events body:', body);
+
     if (messageType === "Notification") {
       const message = JSON.parse(body.Message);
 
