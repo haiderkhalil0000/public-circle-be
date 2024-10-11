@@ -4,4 +4,5 @@ module.exports = {
   filtersController: require("./filters.controller"),
   configurationsController: require("./configurations.controller"),
   webhooksController: require("./webhooks.controller"),
+  campaignsController: require("./campaign.controller"),
 };

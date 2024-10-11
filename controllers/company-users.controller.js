@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const _ = require("lodash");
 const createError = require("http-errors");
 
-const { Company_User, Configuration, EMAIL_STATS } = require("../models");
+const { CompanyUser, Configuration, EmailStats } = require("../models");
 const {
   constants: { INTERACTION_CHANNELS },
 } = require("../utils");
@@ -13,10 +13,10 @@ const {
 } = require("../utils/constants.util");
 
 const getPossibleFilterKeys = async ({ companyId }) => {
-  const totalDocs = await Company_User.countDocuments();
+  const totalDocs = await CompanyUser.countDocuments();
   const sampleSize = Math.floor(totalDocs * 0.1);
 
-  const randomDocuments = await Company_User.aggregate([
+  const randomDocuments = await CompanyUser.aggregate([
     { $match: { companyId: new mongoose.Types.ObjectId(companyId) } }, //this warning can be ignored.
     { $sample: { size: sampleSize } },
   ]);
@@ -34,7 +34,7 @@ const getPossibleFilterKeys = async ({ companyId }) => {
 };
 
 const getPossibleFilterValues = async ({ companyId, key }) => {
-  const results = await Company_User.find({ companyId }, { [key]: 1, _id: 0 });
+  const results = await CompanyUser.find({ companyId }, { [key]: 1, _id: 0 });
 
   const values = results.map((item) => item[key]);
 
@@ -51,7 +51,7 @@ const getFiltersCount = async ({ filters }) => {
       ? filters[key]
       : [filters[key]];
 
-    const promise = Company_User.countDocuments({
+    const promise = CompanyUser.countDocuments({
       [key]: Array.isArray(filters[key]) ? { $in: filters[key] } : filters[key],
     }).then((count) => ({
       filterKey: key,
@@ -74,7 +74,7 @@ const search = async ({ companyId, searchString, searchFields }) => {
     queryArray.push({ [item]: { $regex: regex } });
   });
 
-  return Company_User.find({ companyId, $or: queryArray }).limit(10);
+  return CompanyUser.find({ companyId, $or: queryArray }).limit(10);
 };
 
 const validateConfiguration = ({ configuration }) => {
@@ -96,7 +96,7 @@ const validateConfiguration = ({ configuration }) => {
 };
 
 const mapDynamicValues = async ({ companyId, emailAddress, content }) => {
-  const companyData = await Company_User.findOne({
+  const companyData = await CompanyUser.findOne({
     companyId,
     email: emailAddress,
   }).lean();
@@ -165,7 +165,7 @@ const interactWithUsers = async ({
           },
         },
       ]),
-      Company_User.find(query, {
+      CompanyUser.find(query, {
         email: 1,
       }),
     ]);
@@ -201,7 +201,7 @@ const interactWithUsers = async ({
       );
 
       promises.push(
-        EMAIL_STATS.create({
+        EmailStats.create({
           companyId,
           fromEmailAddress: sourceEmailAddress,
           toEmailAddress: emailAddresses[index],
@@ -216,7 +216,7 @@ const interactWithUsers = async ({
 };
 
 const readAllCompanyUsers = ({ companyId, pageNumber = 1, pageSize = 10 }) =>
-  Company_User.find({ companyId })
+  CompanyUser.find({ companyId })
     .skip((parseInt(pageNumber) - 1) * pageSize)
     .limit(pageSize);
 

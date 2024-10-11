@@ -29,7 +29,7 @@ app.get("/", (req, res) =>
 );
 
 const axios = require("axios");
-const { EMAIL_STATS } = require("./models");
+const { EmailStats } = require("./models");
 
 app.use("/email-events", async (req, res) => {
   try {
@@ -38,12 +38,12 @@ app.use("/email-events", async (req, res) => {
     // Parse the incoming SNS message
     const body = req.body;
 
-    console.log('email-events body:', body);
+    console.log("email-events body:", body);
 
     if (messageType === "Notification") {
       const message = JSON.parse(body.Message);
 
-      let statDoc = await EMAIL_STATS.findOne({
+      let statDoc = await EmailStats.findOne({
         fromEmailAddress: message.mail.source,
         toEmailAddress: message.mail.destination[0],
       });

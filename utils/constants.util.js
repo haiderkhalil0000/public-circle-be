@@ -5,6 +5,7 @@ module.exports = {
     FILTER: "filter",
     CONFIGURATION: "configuration",
     EMAIL_STATS: "email-stat",
+    CAMPAIGN: "campaign",
   },
 
   RESPONSE_MESSAGES: {
@@ -21,7 +22,7 @@ module.exports = {
     FETCHED_POSSIBLE_VALUES: "Possible filter values fetched successfully.",
     FETCHED_FILTER_COUNT: "Filter count fetched sucessfully.",
     SEARCH_SUCCESSFUL: "Manually searched successfully.",
-    FETCHED_COMPANY_USERS: "Company users fetched successfully.",
+    FETCHED_CompanyUserS: "Company users fetched successfully.",
     FILTER_ALREADY_EXISTS: "This filter already exists!",
     FILTER_CREATED: "Filter created successfully.",
     FILTER_UPDATED: "Filter updated successfully.",
@@ -51,6 +52,11 @@ module.exports = {
     INVALID_DOMAIN: "Invalid domain!",
     EMAIL_ADDED_IN_DOMAIN: "Email added in the domain successfully.",
     VERIFIED_EMAIL_FETCHED: "Verified email addresses fetched successfully.",
+    CAMPAIGN_CREATED: "Campaign created successfully.",
+    FETCHED_CAMPAIGN: "Campaign fetched successfully.",
+    FETCHED_ALL_CAMPAIGNS: "All campaigns fetched successfully.",
+    UPDATED_CAMPAIGN: "Campaign updated successfully.",
+    DELETED_CAMPAIGN: "Campaign deleted successfully.",
   },
 
   INTERACTION_CHANNELS: {

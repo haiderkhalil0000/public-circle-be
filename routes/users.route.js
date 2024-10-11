@@ -8,7 +8,7 @@ const { upload } = require("../startup/multer.config");
 const {
   constants: { RESPONSE_MESSAGES },
 } = require("../utils");
-const { Company_User } = require("../models");
+const { CompanyUser } = require("../models");
 
 const router = express.Router();
 
@@ -37,11 +37,11 @@ router.post(
             // Create promises for database insertion
             results.forEach((item) => {
               promises.push(
-                Company_User.create({
+                CompanyUser.create({
                   ...item,
                   companyId: req.user.company._id,
                 })
-              ); // Assuming Company_User.create() returns a promise
+              ); // Assuming CompanyUser.create() returns a promise
             });
 
             // Wait for all the promises to resolve

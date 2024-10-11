@@ -15,7 +15,7 @@ const schema = new mongoose.Schema(
       index: true,
     },
   },
-  { strict: false }
+  { strict: false, timestamps: true }
 );
 
 const model = mongoose.model(COMPANY_USER, schema);
