@@ -87,7 +87,7 @@ const validateConfiguration = ({ configuration }) => {
   } else if (
     configuration[0].matchedAddress.status !== DOCUMENT_STATUS.ACTIVE
   ) {
-    errorMessage = INVALID_EMAIL;
+    errorMessage = RESPONSE_MESSAGES.INVALID_EMAIL;
   }
 
   if (errorMessage) {
