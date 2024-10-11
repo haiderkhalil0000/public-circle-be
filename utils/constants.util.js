@@ -1,0 +1,76 @@
+module.exports = {
+  MODELS: {
+    USER: "user",
+    COMPANY_USER: "company-user",
+    FILTER: "filter",
+    CONFIGURATION: "configuration",
+    EMAIL_STATS: "email-stat",
+  },
+
+  RESPONSE_MESSAGES: {
+    INVALID_TOKEN: "Not authenticated, invalid token provided!",
+    TOKEN_IS_REQUIRED: "Not authenticated, token is required!",
+    EMAIL_BELONGS_TO_OTHER: "This email address belongs to someone else!",
+    USER_REGISTERED: "User registered successfully.",
+    USER_LOGGED_IN: "User logged in successfully.",
+    INVALID_EMAIL_OR_PASSWORD: "Invalid email or password!",
+    TOO_MANY_INVALID_LOGIN_ATTEMTPS:
+      "Too many invalid login attempts, your login with email has been locked temporarily, please login with your phone to continue.",
+    FETCHED_CURRENT_USER: "Current user fetched successfully.",
+    FETCHED_FILTER_KEYS: "Possible filter keys fetched successfully.",
+    FETCHED_POSSIBLE_VALUES: "Possible filter values fetched successfully.",
+    FETCHED_FILTER_COUNT: "Filter count fetched sucessfully.",
+    SEARCH_SUCCESSFUL: "Manually searched successfully.",
+    FETCHED_COMPANY_USERS: "Company users fetched successfully.",
+    FILTER_ALREADY_EXISTS: "This filter already exists!",
+    FILTER_CREATED: "Filter created successfully.",
+    FILTER_UPDATED: "Filter updated successfully.",
+    FILTER_FETCHED: "Filter fetched successfully.",
+    ALL_FILTERS_FETCHED: "All filters fetched successfully.",
+    FILTER_DELETED: "Filter deleted successfully.",
+    VERIFICATION_EMAIL_SENT:
+      "A verification email has been sent to your email address.",
+    EMAIL_VERIFIED: "Email address verified successfully.",
+    EMAIL_NOT_VERIFIED: "Email address not verified yet!",
+    INITIATED_DOMAIN_VERIFICATION:
+      "Initiated domain verification, waiting for you to submit this information as TXT in your DNS records.",
+    FETCHED_CONFIGURATION: "Configuration fetched successfully.",
+    CONFIGURATION_NOT_FOUND: "No configurations found for this company!",
+    DOMAIN_NOT_VERIFIED: "Domain not verified yet!",
+    DOMAIN_VERIFIED: "Domain verified successfully.",
+    INTERACTION_SUCCESSFULL: "Interaction successful.",
+    DUPLICATE_CONFIGURATION: "Configuration exists already!",
+    CONFIGURATION_CREATED: "Configuration created successfully.",
+    DUPLICATE_DOMAIN: "This domain is already added!",
+    DUPLICATE_EMAIL: "This email address is already added!",
+    EMAIL_NOT_FOUND: "Email address not found!",
+    DOMAIN_NOT_FOUND: "Domain not found!",
+    EMAIL_DELETED: "Email address deleted successfully.",
+    DOMAIN_DELETED: "Emai domain deleted successfully.",
+    INVALID_EMAIL: "Invalid email address!",
+    INVALID_DOMAIN: "Invalid domain!",
+    EMAIL_ADDED_IN_DOMAIN: "Email added in the domain successfully.",
+    VERIFIED_EMAIL_FETCHED: "Verified email addresses fetched successfully.",
+  },
+
+  INTERACTION_CHANNELS: {
+    EMAIL: "EMAIL",
+    SMS: "SMS",
+    WHATSAPP: "WHATSAPP",
+    PUSH_NOTIFICATION: "PUSH_NOTIFICATION",
+    IN_APP_MESSAGE: "IN_APP_MESSAGE",
+  },
+
+  FILTER_TYPES: {
+    INPUT: "INPUT",
+    DROP_DOWN: "DROP_DOWN",
+    RADIO: "RADIO",
+    CHECK_BOX: "CHECK_BOX",
+    RANGE_SLIDER: "RANGE_SLIDER",
+  },
+
+  DOCUMENT_STATUS: {
+    ACTIVE: "ACTIVE",
+    DELETED: "DELETED",
+  },
+};
