@@ -7,7 +7,7 @@ const {
   DOCUMENT_STATUS,
 } = require("../utils/constants.util");
 
-const createSegment = async ({ filters, companyId }) => {
+const createSegment = async ({ name, filters, companyId }) => {
   const existingSegment = await Segment.findOne({
     name,
     companyId,
