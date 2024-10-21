@@ -1,25 +1,64 @@
 const mongoose = require("mongoose");
-const { Campaign } = require("../models");
-const { DOCUMENT_STATUS } = require("../utils/constants.util");
+const createError = require("http-errors");
 
-const createCampaign = ({
+const { Campaign } = require("../models");
+const {
+  DOCUMENT_STATUS,
+  RESPONSE_MESSAGES,
+} = require("../utils/constants.util");
+
+const createCampaign = async ({
   companyId,
-  filters,
+  segment = "",
   sourceEmailAddress,
   emailSubject,
-  emailContent,
+  emailTemplate = "",
+  sendTime,
 }) => {
+  segment = new mongoose.Types.ObjectId(segment);
+  emailTemplate = new mongoose.Types.ObjectId(emailTemplate);
+
+  const existingCampaign = await Campaign.findOne({
+    segment,
+    companyId,
+  });
+
+  if (existingCampaign) {
+    throw createError(400, {
+      errorMessage: RESPONSE_MESSAGES.DUPLICATE_CAMPAIGN,
+    });
+  }
+
   Campaign.create({
     companyId,
-    filters,
+    segment,
     sourceEmailAddress,
     emailSubject,
-    emailContent,
+    emailTemplate,
+    sendTime,
   });
 };
 
-const readCampaign = ({ campaignId = "" }) => {
-  return Campaign.findById(new mongoose.Types.ObjectId(campaignId));
+const readCampaign = async ({ campaignId = "" }) => {
+  if (campaignId.length !== 24) {
+    throw createError(400, {
+      errorMessage: RESPONSE_MESSAGES.INVALID_CAMPAIGN_ID,
+    });
+  }
+
+  campaignId = new mongoose.Types.ObjectId(campaignId);
+
+  const campaign = await Campaign.findById(
+    new mongoose.Types.ObjectId(campaignId)
+  );
+
+  if (!campaign) {
+    throw createError(404, {
+      errorMessage: RESPONSE_MESSAGES.CAMPAIGN_NOT_FOUND,
+    });
+  }
+
+  return campaign;
 };
 
 const readAllCampaigns = async ({
@@ -34,6 +73,12 @@ const readAllCampaigns = async ({
       .limit(pageSize),
   ]);
 
+  if (!allCampaigns.length) {
+    throw createError(404, {
+      errorMessage: RESPONSE_MESSAGES.NO_CAMPAIGNS,
+    });
+  }
+
   return {
     totalRecords,
     allCampaigns,
@@ -41,16 +86,53 @@ const readAllCampaigns = async ({
 };
 
 const updateCampaign = async ({ campaignId = "", campaignData }) => {
-  await Campaign.updateOne(
+  if (campaignId.length !== 24) {
+    throw createError(400, {
+      errorMessage: RESPONSE_MESSAGES.INVALID_CAMPAIGN_ID,
+    });
+  }
+
+  campaignId = new mongoose.Types.ObjectId(campaignId);
+
+  const result = await Campaign.updateOne(
     { _id: new mongoose.Types.ObjectId(campaignId) },
     { ...campaignData }
   );
+
+  if (!result.matchedCount) {
+    throw createError(404, {
+      errorMessage: RESPONSE_MESSAGES.CAMPAIGN_NOT_FOUND,
+    });
+  }
+
+  if (!result.modifiedCount) {
+    throw createError(404, {
+      errorMessage: RESPONSE_MESSAGES.CAMPAIGN_UPDATED_ALREADY,
+    });
+  }
 };
 
 const deleteCampaign = async ({ campaignId = "" }) => {
-  await Campaign.findByIdAndUpdate(new mongoose.Types.ObjectId(campaignId), {
-    status: DOCUMENT_STATUS.DELETED,
-  });
+  campaignId = new mongoose.Types.ObjectId(campaignId);
+
+  const result = await Campaign.updateOne(
+    { _id: campaignId, status: DOCUMENT_STATUS.ACTIVE },
+    {
+      status: DOCUMENT_STATUS.DELETED,
+    }
+  );
+
+  if (!result.matchedCount) {
+    throw createError(404, {
+      errorMessage: RESPONSE_MESSAGES.CAMPAIGN_NOT_FOUND,
+    });
+  }
+
+  if (!result.modifiedCount) {
+    throw createError(404, {
+      errorMessage: RESPONSE_MESSAGES.CAMPAIGN_DELETED_ALREADY,
+    });
+  }
 };
 
 module.exports = {

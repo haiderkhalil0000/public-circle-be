@@ -5,4 +5,6 @@ module.exports = {
   Configuration: require("./configuration.model"),
   EmailStats: require("./email-stats.model"),
   Campaign: require("./campaign.model"),
+  Segment: require("./segment.model"),
+  Template: require("./template.model"),
 };

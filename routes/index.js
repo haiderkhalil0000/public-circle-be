@@ -19,6 +19,8 @@ router.use("/company-users", require("./company-users.route"));
 router.use("/configuration", require("./configuration.route"));
 router.use("/webhooks", require("./webhooks.route"));
 router.use("/campaigns", require("./campaign.route"));
+router.use("/segments", require("./segments.route"));
+router.use("/templates", require("./templates.route"));
 
 router.use(error);
 

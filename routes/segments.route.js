@@ -3,7 +3,7 @@ const campaignDebugger = require("debug")("debug:webhook");
 const Joi = require("joi");
 
 const { authenticate, validate } = require("../middlewares");
-const { campaignsController } = require("../controllers");
+const { segmentsController } = require("../controllers");
 const { RESPONSE_MESSAGES } = require("../utils/constants.util");
 
 const router = express.Router();
@@ -13,22 +13,19 @@ router.post(
   authenticate.verifyToken,
   validate({
     body: Joi.object({
-      segment: Joi.string().required(),
-      sourceEmailAddress: Joi.string().email().required(),
-      emailSubject: Joi.string().required(),
-      emailTemplate: Joi.string().required(),
-      sendTime: Joi.string().required(),
+      name: Joi.string().required(),
+      filters: Joi.object().required(),
     }),
   }),
   async (req, res, next) => {
     try {
-      await campaignsController.createCampaign({
+      await segmentsController.createSegment({
         ...req.body,
         companyId: req.user.company._id,
       });
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.CAMPAIGN_CREATED,
+        message: RESPONSE_MESSAGES.SEGMENT_CREATED,
         data: {},
       });
     } catch (err) {
@@ -53,14 +50,14 @@ router.get(
   }),
   async (req, res, next) => {
     try {
-      const allCampaigns = await campaignsController.readAllCampaigns({
+      const segments = await segmentsController.readAllSegments({
         ...req.query,
         companyId: req.user.company._id,
       });
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.FETCHED_ALL_CAMPAIGNS,
-        data: allCampaigns,
+        message: RESPONSE_MESSAGES.FETCHED_ALL_SEGMENTS,
+        data: segments,
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
@@ -74,20 +71,20 @@ router.get(
 );
 
 router.get(
-  "/:campaignId",
+  "/:segmentId",
   authenticate.verifyToken,
   validate({
     params: Joi.object({
-      campaignId: Joi.string().required(),
+      segmentId: Joi.string().required(),
     }),
   }),
   async (req, res, next) => {
     try {
-      const campaign = await campaignsController.readCampaign(req.params);
+      const segment = await segmentsController.readSegment(req.params);
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.FETCHED_CAMPAIGN,
-        data: campaign,
+        message: RESPONSE_MESSAGES.FETCHED_SEGMENT,
+        data: segment,
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
@@ -101,28 +98,26 @@ router.get(
 );
 
 router.patch(
-  "/:campaignId",
+  "/:segmentId",
   authenticate.verifyToken,
   validate({
     params: Joi.object({
-      campaignId: Joi.string().required(),
+      segmentId: Joi.string().required(),
     }),
     body: Joi.object({
+      name: Joi.string(),
       filters: Joi.object(),
-      sourceEmailAddress: Joi.string().email(),
-      emailSubject: Joi.string(),
-      emailContent: Joi.string(),
     }),
   }),
   async (req, res, next) => {
     try {
-      await campaignsController.updateCampaign({
+      await segmentsController.updateSegment({
         ...req.params,
-        campaignData: req.body,
+        segmentData: req.body,
       });
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.UPDATED_CAMPAIGN,
+        message: RESPONSE_MESSAGES.UPDATED_SEGMENT,
         data: {},
       });
     } catch (err) {
@@ -137,19 +132,19 @@ router.patch(
 );
 
 router.delete(
-  "/:campaignId",
+  "/:segmentId",
   authenticate.verifyToken,
   validate({
     params: Joi.object({
-      campaignId: Joi.string().required(),
+      segmentId: Joi.string().required(),
     }),
   }),
   async (req, res, next) => {
     try {
-      await campaignsController.deleteCampaign(req.params);
+      await segmentsController.deleteSegment(req.params);
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.DELETED_CAMPAIGN,
+        message: RESPONSE_MESSAGES.DELETED_SEGMENT,
         data: {},
       });
     } catch (err) {

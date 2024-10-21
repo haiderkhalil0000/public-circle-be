@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema.Types;
 const {
   constants: {
-    MODELS: { CAMPAIGN },
+    MODELS: { SEGMENT },
   },
 } = require("../utils");
 const { DOCUMENT_STATUS } = require("../utils/constants.util");
@@ -15,25 +15,13 @@ const schema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    segment: {
-      type: ObjectId,
+    name: {
+      type: String,
       required: true,
     },
-    sourceEmailAddress: {
-      type: String,
+    filters: {
+      type: Object,
       require: true,
-    },
-    emailSubject: {
-      type: String,
-      required: true,
-    },
-    emailTemplate: {
-      type: ObjectId,
-      required: true,
-    },
-    sendTime: {
-      type: Date,
-      required: true,
     },
     status: {
       type: String,
@@ -45,6 +33,6 @@ const schema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const model = mongoose.model(CAMPAIGN, schema);
+const model = mongoose.model(SEGMENT, schema);
 
 module.exports = model;

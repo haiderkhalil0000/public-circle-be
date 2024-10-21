@@ -5,4 +5,6 @@ module.exports = {
   configurationsController: require("./configurations.controller"),
   webhooksController: require("./webhooks.controller"),
   campaignsController: require("./campaign.controller"),
+  segmentsController: require("./segments.controller"),
+  templatesController: require("./templates.controller"),
 };
