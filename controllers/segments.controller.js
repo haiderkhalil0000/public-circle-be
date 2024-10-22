@@ -57,12 +57,6 @@ const readAllSegments = async ({ companyId, pageNumber, pageSize }) => {
       .limit(pageSize),
   ]);
 
-  if (!segments.length) {
-    throw createError(404, {
-      errorMessage: RESPONSE_MESSAGES.NO_SEGMENTS,
-    });
-  }
-
   return { totalRecords, segments };
 };
 

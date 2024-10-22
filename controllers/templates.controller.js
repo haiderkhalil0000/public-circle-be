@@ -62,12 +62,6 @@ const readAllTemplates = async ({
       .limit(pageSize),
   ]);
 
-  if (!templates.length) {
-    throw createError(404, {
-      errorMessage: RESPONSE_MESSAGES.NO_TEMPLATES,
-    });
-  }
-
   return { totalRecords, templates };
 };
 
