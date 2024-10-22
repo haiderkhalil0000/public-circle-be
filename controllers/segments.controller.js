@@ -11,6 +11,7 @@ const createSegment = async ({ name, filters, companyId }) => {
   const existingSegment = await Segment.findOne({
     name,
     companyId,
+    status: DOCUMENT_STATUS.ACTIVE,
   });
 
   if (existingSegment) {
@@ -48,7 +49,7 @@ const readSegment = async ({ segmentId = "" }) => {
 
 const readAllSegments = async ({ companyId, pageNumber, pageSize }) => {
   const [totalRecords, segments] = await Promise.all([
-    Segment.countDocuments({ companyId }),
+    Segment.countDocuments({ companyId, status: DOCUMENT_STATUS.ACTIVE }),
     Segment.find({
       companyId,
       status: DOCUMENT_STATUS.ACTIVE,
