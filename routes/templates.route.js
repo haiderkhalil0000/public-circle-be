@@ -4,7 +4,10 @@ const Joi = require("joi");
 
 const { authenticate, validate } = require("../middlewares");
 const { templatesController } = require("../controllers");
-const { RESPONSE_MESSAGES } = require("../utils/constants.util");
+const {
+  RESPONSE_MESSAGES,
+  TEMPLATE_KINDS,
+} = require("../utils/constants.util");
 
 const router = express.Router();
 
@@ -14,7 +17,9 @@ router.post(
   validate({
     body: Joi.object({
       name: Joi.string().required(),
-      kind: Joi.string().required(),
+      kind: Joi.string()
+        .valid(TEMPLATE_KINDS.TEXT, TEMPLATE_KINDS.HTML)
+        .required(),
       body: Joi.string().required(),
     }),
   }),
@@ -107,7 +112,9 @@ router.patch(
     }),
     body: Joi.object({
       name: Joi.string().required(),
-      kind: Joi.string().required(),
+      kind: Joi.string()
+        .valid(TEMPLATE_KINDS.TEXT, TEMPLATE_KINDS.HTML)
+        .required(),
       body: Joi.string().required(),
     }),
   }),
