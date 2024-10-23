@@ -47,7 +47,7 @@ const readSegment = async ({ segmentId = "" }) => {
   return segment;
 };
 
-const readAllSegments = async ({ companyId, pageNumber, pageSize }) => {
+const readPaginatedSegments = async ({ companyId, pageNumber, pageSize }) => {
   const [totalRecords, segments] = await Promise.all([
     Segment.countDocuments({ companyId, status: DOCUMENT_STATUS.ACTIVE }),
     Segment.find({
@@ -60,6 +60,12 @@ const readAllSegments = async ({ companyId, pageNumber, pageSize }) => {
 
   return { totalRecords, segments };
 };
+
+const readAllSegments = ({ companyId }) =>
+  Segment.find({
+    companyId,
+    status: DOCUMENT_STATUS.ACTIVE,
+  });
 
 const updateSegment = async ({ segmentId = "", segmentData }) => {
   if (segmentId.length !== 24) {
@@ -114,6 +120,7 @@ const deleteSegment = async ({ segmentId = "" }) => {
 module.exports = {
   createSegment,
   readSegment,
+  readPaginatedSegments,
   readAllSegments,
   updateSegment,
   deleteSegment,

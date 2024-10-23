@@ -39,24 +39,44 @@ router.post(
   }
 );
 
+router.get("/all", authenticate.verifyToken, async (req, res, next) => {
+  try {
+    const segments = await segmentsController.readAllSegments({
+      companyId: req.user.company._id,
+    });
+
+    res.status(200).json({
+      message: RESPONSE_MESSAGES.FETCHED_ALL_SEGMENTS,
+      data: segments,
+    });
+  } catch (err) {
+    // sendErrorReportToSentry(error);
+    console.log(err);
+
+    campaignDebugger(err);
+
+    next(err);
+  }
+});
+
 router.get(
-  "/all",
+  "/",
   authenticate.verifyToken,
   validate({
     query: Joi.object({
-      pageNumber: Joi.number().optional(),
-      pageSize: Joi.number().optional(),
+      pageNumber: Joi.number().required(),
+      pageSize: Joi.number().required(),
     }),
   }),
   async (req, res, next) => {
     try {
-      const segments = await segmentsController.readAllSegments({
+      const segments = await segmentsController.readPaginatedSegments({
         ...req.query,
         companyId: req.user.company._id,
       });
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.FETCHED_ALL_SEGMENTS,
+        message: RESPONSE_MESSAGES.FETCHED_SEGMENTS,
         data: segments,
       });
     } catch (err) {

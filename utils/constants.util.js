@@ -65,6 +65,7 @@ module.exports = {
     NO_SEGMENTS: "You do not have any segments!",
     SEGMENT_CREATED: "Segment created successfully.",
     FETCHED_ALL_SEGMENTS: "All segments fetched successfully.",
+    FETCHED_SEGMENTS: "Segments fetched successfully.",
     FETCHED_SEGMENT: "Segment fetched successfully.",
     UPDATED_SEGMENT: "Segment updated successfully.",
     DELETED_SEGMENT: "Segment deleted successfully.",
