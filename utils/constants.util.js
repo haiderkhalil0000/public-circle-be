@@ -78,6 +78,7 @@ module.exports = {
     NO_TEMPLATES: "You do not have any templates!",
     TEMPLATE_CREATED: "Template created successfully.",
     FETCHED_TEMPLATE: "Template fetched successfully.",
+    FETCHED_TEMPLATES: "Templates fetched successfully.",
     FETCHED_ALL_TEMPLATES: "All templates fetched successfully.",
     UPDATED_TEMPLATE: "Template updated successfully.",
     DELETED_TEMPLATE: "Template deleted successfully.",
