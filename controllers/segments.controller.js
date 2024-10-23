@@ -48,24 +48,70 @@ const readSegment = async ({ segmentId = "" }) => {
 };
 
 const readPaginatedSegments = async ({ companyId, pageNumber, pageSize }) => {
-  const [totalRecords, segments] = await Promise.all([
+  const promises = [];
+  const companyUsersController = require("./company-users.controller");
+
+  let [totalRecords, segments] = await Promise.all([
     Segment.countDocuments({ companyId, status: DOCUMENT_STATUS.ACTIVE }),
     Segment.find({
       companyId,
       status: DOCUMENT_STATUS.ACTIVE,
     })
       .skip((parseInt(pageNumber) - 1) * pageSize)
-      .limit(pageSize),
+      .limit(pageSize)
+      .lean(),
   ]);
+
+  for (const segment of segments) {
+    promises.push(
+      companyUsersController.getFiltersCount({ filters: segment.filters })
+    );
+  }
+
+  const filtersCountArray = await Promise.all(promises);
+
+  segments.forEach((item, index) => {
+    const filterCounts = filtersCountArray[index].map(
+      (subItem) => subItem.filterCount
+    );
+
+    const totalFilterCount = filterCounts.reduce((acc, curr) => acc + curr, 0);
+
+    item.usersCount = totalFilterCount;
+  });
 
   return { totalRecords, segments };
 };
 
-const readAllSegments = ({ companyId }) =>
-  Segment.find({
+const readAllSegments = async ({ companyId }) => {
+  const promises = [];
+  const companyUsersController = require("./company-users.controller");
+
+  const allSegments = await Segment.find({
     companyId,
     status: DOCUMENT_STATUS.ACTIVE,
+  }).lean();
+
+  for (const segment of allSegments) {
+    promises.push(
+      companyUsersController.getFiltersCount({ filters: segment.filters })
+    );
+  }
+
+  const filtersCountArray = await Promise.all(promises);
+
+  allSegments.forEach((item, index) => {
+    const filterCounts = filtersCountArray[index].map(
+      (subItem) => subItem.filterCount
+    );
+
+    const totalFilterCount = filterCounts.reduce((acc, curr) => acc + curr, 0);
+
+    item.usersCount = totalFilterCount;
   });
+
+  return allSegments;
+};
 
 const updateSegment = async ({ segmentId = "", segmentData }) => {
   if (segmentId.length !== 24) {
