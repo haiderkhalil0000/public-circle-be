@@ -47,7 +47,13 @@ const readTemplate = async ({ templateId = "" }) => {
   return template;
 };
 
-const readAllTemplates = async ({
+const readAllTemplates = async ({ companyId }) =>
+  Template.find({
+    companyId,
+    status: DOCUMENT_STATUS.ACTIVE,
+  });
+
+const readPaginatedTemplates = async ({
   companyId,
   pageNumber = 1,
   pageSize = 10,
@@ -118,6 +124,7 @@ const deleteTemplate = async ({ templateId = "" }) => {
 module.exports = {
   createTemplate,
   readTemplate,
+  readPaginatedTemplates,
   readAllTemplates,
   updateTemplate,
   deleteTemplate,

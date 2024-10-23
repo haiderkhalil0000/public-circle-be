@@ -45,24 +45,44 @@ router.post(
   }
 );
 
+router.get("/all", authenticate.verifyToken, async (req, res, next) => {
+  try {
+    const templates = await templatesController.readAllTemplates({
+      companyId: req.user.company._id,
+    });
+
+    res.status(200).json({
+      message: RESPONSE_MESSAGES.FETCHED_ALL_TEMPLATES,
+      data: templates,
+    });
+  } catch (err) {
+    // sendErrorReportToSentry(error);
+    console.log(err);
+
+    campaignDebugger(err);
+
+    next(err);
+  }
+});
+
 router.get(
-  "/all",
+  "/",
   authenticate.verifyToken,
   validate({
     query: Joi.object({
-      pageNumber: Joi.number().optional(),
-      pageSize: Joi.number().optional(),
+      pageNumber: Joi.number().required(),
+      pageSize: Joi.number().required(),
     }),
   }),
   async (req, res, next) => {
     try {
-      const templates = await templatesController.readAllTemplates({
+      const templates = await templatesController.readPaginatedTemplates({
         ...req.query,
         companyId: req.user.company._id,
       });
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.FETCHED_ALL_TEMPLATES,
+        message: RESPONSE_MESSAGES.FETCHED_TEMPLATES,
         data: templates,
       });
     } catch (err) {
