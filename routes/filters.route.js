@@ -164,6 +164,36 @@ router.get("/all", authenticate.verifyToken, async (req, res, next) => {
 });
 
 router.get(
+  "/",
+  authenticate.verifyToken,
+  validate({
+    query: Joi.object({
+      pageNumber: Joi.number().required(),
+      pageSize: Joi.number().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const filters = await filtersController.readPaginatedFilters({
+        ...req.query,
+        companyId: req.user.company._id,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.FILTER_FETCHEDS,
+        data: filters,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      filterDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.get(
   "/:filterId",
   authenticate.verifyToken,
   validate({
