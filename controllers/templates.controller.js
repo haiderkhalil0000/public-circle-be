@@ -53,7 +53,7 @@ const readAllTemplates = async ({
   pageSize = 10,
 }) => {
   const [totalRecords, templates] = await Promise.all([
-    Template.countDocuments({ companyId }),
+    Template.countDocuments({ companyId, status: DOCUMENT_STATUS.ACTIVE }),
     Template.find({
       companyId,
       status: DOCUMENT_STATUS.ACTIVE,
