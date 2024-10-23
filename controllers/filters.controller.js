@@ -46,6 +46,20 @@ const readFilter = ({ filterId }) => Filter.findById(filterId);
 const readAllFilters = ({ companyId }) =>
   Filter.find({ companyId, status: DOCUMENT_STATUS.ACTIVE });
 
+const readPaginatedFilters = async ({ companyId, pageNumber, pageSize }) => {
+  const [totalCount, filters] = await Promise.all([
+    Filter.countDocuments({ companyId, status: DOCUMENT_STATUS.ACTIVE }),
+    Filter.find({ companyId, status: DOCUMENT_STATUS.ACTIVE })
+      .skip((parseInt(pageNumber) - 1) * pageSize)
+      .limit(pageSize),
+  ]);
+
+  return {
+    totalCount,
+    filters,
+  };
+};
+
 const deleteFilter = ({ filterId }) =>
   Filter.findByIdAndUpdate(filterId, { status: DOCUMENT_STATUS.DELTED });
 
@@ -54,5 +68,6 @@ module.exports = {
   updateFilter,
   readFilter,
   readAllFilters,
+  readPaginatedFilters,
   deleteFilter,
 };

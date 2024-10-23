@@ -175,7 +175,7 @@ router.get("/", authenticate.verifyToken, async (req, res, next) => {
 });
 
 router.delete(
-  "/email-address/:emailAddress",
+  "/email/address/:emailAddress",
   authenticate.verifyToken,
   validate({
     params: Joi.object({
@@ -204,7 +204,7 @@ router.delete(
 );
 
 router.delete(
-  "/email-domain/:emailDomain",
+  "/email/domain/:emailDomain",
   authenticate.verifyToken,
   validate({
     params: Joi.object({
@@ -233,7 +233,7 @@ router.delete(
 );
 
 router.post(
-  "/email-domain/email-address",
+  "/email/domain/email-address",
   authenticate.verifyToken,
   validate({
     body: Joi.object({

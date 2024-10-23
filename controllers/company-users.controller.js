@@ -215,10 +215,25 @@ const interactWithUsers = async ({
   }
 };
 
-const readAllCompanyUsers = ({ companyId, pageNumber = 1, pageSize = 10 }) =>
-  CompanyUser.find({ companyId })
-    .skip((parseInt(pageNumber) - 1) * pageSize)
-    .limit(pageSize);
+const readAllCompanyUsers = ({ companyId }) => CompanyUser.find({ companyId });
+
+const readPaginatedCompanyUsers = async ({
+  companyId,
+  pageNumber = 1,
+  pageSize = 10,
+}) => {
+  const [totalCount, companyUsers] = await Promise.all([
+    CompanyUser.countDocuments({ companyId }),
+    CompanyUser.find({ companyId })
+      .skip((parseInt(pageNumber) - 1) * pageSize)
+      .limit(pageSize),
+  ]);
+
+  return {
+    totalCount,
+    companyUsers,
+  };
+};
 
 module.exports = {
   getPossibleFilterKeys,
@@ -227,4 +242,5 @@ module.exports = {
   interactWithUsers,
   search,
   readAllCompanyUsers,
+  readPaginatedCompanyUsers,
 };
