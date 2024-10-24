@@ -31,7 +31,7 @@ const schema = new mongoose.Schema(
       required: true,
     },
   },
-  { strict: false, timestamps: true }
+  { timestamps: true, strict: false, timestamps: true }
 );
 
 const model = mongoose.model(EMAIL_STATS, schema);
