@@ -163,4 +163,37 @@ router.delete(
   }
 );
 
+router.post(
+  "/test-email",
+  authenticate.verifyToken,
+  validate({
+    body: Joi.object({
+      sourceEmailAddress: Joi.string().email().required(),
+      toEmailAddresses: Joi.string().required(),
+      emailSubject: Joi.string().required(),
+      templateId: Joi.string().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      await campaignsController.sendTestEmail({
+        ...req.body,
+        companyId: req.user.company._id,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.TEST_EMAIL_SENT,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      campaignDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 module.exports = router;

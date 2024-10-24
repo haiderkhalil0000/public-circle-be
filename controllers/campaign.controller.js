@@ -1,11 +1,12 @@
 const mongoose = require("mongoose");
 const createError = require("http-errors");
 
-const { Campaign } = require("../models");
+const { Campaign, Template, CompanyUser } = require("../models");
 const {
   DOCUMENT_STATUS,
   RESPONSE_MESSAGES,
 } = require("../utils/constants.util");
+const { sendEmail } = require("../utils/ses.util");
 
 const createCampaign = async ({
   companyId,
@@ -135,10 +136,79 @@ const deleteCampaign = async ({ campaignId = "" }) => {
   }
 };
 
+const mapDynamicValues = async ({ companyId, emailAddress, content }) => {
+  const companyData = await CompanyUser.findOne({
+    companyId,
+    email: emailAddress,
+  }).lean();
+
+  if (!companyData) {
+    throw createError(400, { errorMessage: "Something went wrong!" });
+  }
+
+  // Iterate over the user's keys and replace placeholders dynamically
+  let modifiedContent = content;
+
+  for (const [key, value] of Object.entries(companyData)) {
+    const placeholder = `#${key}`;
+    // Replace all occurrences of the placeholder with the actual value
+    modifiedContent = modifiedContent.replace(
+      new RegExp(placeholder, "g"),
+      value
+    );
+  }
+
+  return modifiedContent;
+};
+
+const sendTestEmail = async ({
+  companyId,
+  sourceEmailAddress,
+  toEmailAddresses,
+  emailSubject,
+  templateId,
+}) => {
+  const promises = [];
+
+  const emailAdresses = toEmailAddresses
+    .split(",")
+    .map((email) => email.trim());
+
+  const template = await Template.findById(templateId);
+
+  for (const address of emailAdresses) {
+    promises.push(
+      mapDynamicValues({
+        companyId,
+        emailAddress: address,
+        content: template.body,
+      })
+    );
+  }
+
+  const mappedContentArray = await Promise.all(promises);
+
+  promises.length = 0;
+
+  emailAdresses.forEach((item, index) => {
+    promises.push(
+      sendEmail({
+        fromEmailAddress: sourceEmailAddress,
+        toEmailAddress: item,
+        subject: emailSubject,
+        content: mappedContentArray[index],
+      })
+    );
+  });
+
+  await Promise.all(promises);
+};
+
 module.exports = {
   createCampaign,
   readCampaign,
   readAllCampaigns,
   updateCampaign,
   deleteCampaign,
+  sendTestEmail,
 };
