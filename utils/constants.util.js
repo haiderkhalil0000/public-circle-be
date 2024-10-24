@@ -91,6 +91,7 @@ module.exports = {
     CAMPAIGN_UPDATED_ALREADY: "Campaign updated already!",
     CAMPAIGN_DELETED_ALREADY: "Campaign deleted already!",
     INVALID_CAMPAIGN_ID: "Invalid campaign id!",
+    TEST_EMAIL_SENT: "Test email sent successfully.",
   },
 
   INTERACTION_CHANNELS: {
