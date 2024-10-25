@@ -15,10 +15,7 @@ const schema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    segment: {
-      type: ObjectId,
-      required: true,
-    },
+    segments: [String],
     sourceEmailAddress: {
       type: String,
       require: true,
