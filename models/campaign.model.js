@@ -6,7 +6,11 @@ const {
     MODELS: { CAMPAIGN },
   },
 } = require("../utils");
-const { DOCUMENT_STATUS } = require("../utils/constants.util");
+const {
+  DOCUMENT_STATUS,
+  RUN_MODE,
+  CRON_STATUS,
+} = require("../utils/constants.util");
 
 const schema = new mongoose.Schema(
   {
@@ -15,7 +19,7 @@ const schema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    segments: [String],
+    segments: [ObjectId],
     sourceEmailAddress: {
       type: String,
       require: true,
@@ -28,9 +32,28 @@ const schema = new mongoose.Schema(
       type: ObjectId,
       required: true,
     },
-    sendTime: {
-      type: Date,
+    runMode: {
+      type: String,
       required: true,
+      enum: Object.values(RUN_MODE),
+    },
+    runSchedule: {
+      type: Date,
+    },
+    recurringPeriod: {
+      type: String,
+    },
+    cronStatus: {
+      type: String,
+      enum: Object.values(CRON_STATUS),
+      default: CRON_STATUS.PENDING,
+    },
+    lastProcessed: {
+      type: Date,
+    },
+    processedCount: {
+      type: Number,
+      default: 0,
     },
     status: {
       type: String,
