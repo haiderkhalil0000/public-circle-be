@@ -18,9 +18,10 @@ router.post(
       emailSubject: Joi.string().required(),
       emailTemplate: Joi.string().required(),
       runMode: Joi.string()
-        .valid(RUN_MODE.INSTANT, RUN_MODE.SCHEDULE, RUN_MODE.RECURRING)
+        .valid(RUN_MODE.INSTANT, RUN_MODE.SCHEDULE)
         .required(),
       runSchedule: Joi.string(),
+      isRecurring: Joi.boolean(),
       recurringPeriod: Joi.string(),
     }),
   }),
@@ -117,6 +118,7 @@ router.patch(
       emailSubject: Joi.string(),
       emailTemplate: Joi.string(),
       runSchedule: Joi.string(),
+      isRecurring: Joi.boolean(),
       recurringPeriod: Joi.string(),
     }),
   }),

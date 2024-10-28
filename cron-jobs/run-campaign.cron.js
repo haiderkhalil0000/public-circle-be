@@ -26,8 +26,12 @@ new CronJob(
     try {
       const pendingCampaigns = await Campaign.find({
         $or: [
-          { cronStatus: CRON_STATUS.PENDING, status: DOCUMENT_STATUS.ACTIVE },
-          { runMode: RUN_MODE.RECURRING, status: DOCUMENT_STATUS.ACTIVE },
+          {
+            runMode: { $in: [RUN_MODE.INSTANT, RUN_MODE.SCHEDULE] },
+            cronStatus: CRON_STATUS.PENDING,
+            status: DOCUMENT_STATUS.ACTIVE,
+          },
+          { isRecurring: true, status: DOCUMENT_STATUS.ACTIVE },
         ],
       });
 
@@ -40,7 +44,7 @@ new CronJob(
           recordsUpdated++;
 
           campaignsController.runCampaign({ campaign });
-        } else if (campaign.runMode === RUN_MODE.RECURRING) {
+        } else if (campaign.isRecurring) {
           recordsUpdated++;
 
           const recurringPeriod = moment.duration(campaign.recurringPeriod);

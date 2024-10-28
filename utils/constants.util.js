@@ -124,7 +124,6 @@ module.exports = {
   RUN_MODE: {
     INSTANT: "INSTANT",
     SCHEDULE: "SCHEDULE",
-    RECURRING: "RECURRING",
   },
 
   CRON_STATUS: {

@@ -17,6 +17,7 @@ const createCampaign = async ({
   emailTemplate = "",
   runMode,
   runSchedule,
+  isRecurring,
   recurringPeriod,
 }) => {
   emailTemplate = basicUtil.getMongoDbObjectId({ inputString: emailTemplate });
@@ -48,6 +49,7 @@ const createCampaign = async ({
     emailTemplate,
     runMode,
     runSchedule,
+    isRecurring,
     recurringPeriod,
   });
 };

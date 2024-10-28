@@ -40,6 +40,10 @@ const schema = new mongoose.Schema(
     runSchedule: {
       type: Date,
     },
+    isRecurring: {
+      type: Boolean,
+      default: false,
+    },
     recurringPeriod: {
       type: String,
     },
