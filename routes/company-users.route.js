@@ -279,8 +279,119 @@ router.post(
             .send("An error occurred while processing the CSV file.");
         });
     } catch (err) {
-      console.error("Server error:", err);
-      next(err); // Pass the error to the Express error handler
+      // sendErrorReportToSentry(error);
+
+      companyUsersDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.post("/", authenticate.verifyToken, async (req, res, next) => {
+  try {
+    await companyUsersController.createCompanyUser({
+      companyId: req.user.company._id,
+      companyUserData: req.body,
+    });
+
+    res.status(200).json({
+      message: RESPONSE_MESSAGES.COMPANY_USER_CREATED,
+      data: {},
+    });
+  } catch (err) {
+    // sendErrorReportToSentry(error);
+
+    companyUsersDebugger(err);
+
+    next(err);
+  }
+});
+
+router.get(
+  "/:userId",
+  authenticate.verifyToken,
+  validate({
+    params: Joi.object({
+      userId: Joi.string().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const companyUser = await companyUsersController.readCompanyUser({
+        companyId: req.user.company._id,
+        userId: req.params.userId,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.FETCHED_COMPANY_USER,
+        data: companyUser,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      companyUsersDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.patch(
+  "/:userId",
+  authenticate.verifyToken,
+  validate({
+    params: Joi.object({
+      userId: Joi.string().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      await companyUsersController.updateCompanyUser({
+        companyId: req.user.company._id,
+        userId: req.params.userId,
+        companyUserData: req.body,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.COMPANY_USER_UPDATED,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      companyUsersDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.delete(
+  "/:userId",
+  authenticate.verifyToken,
+  validate({
+    params: Joi.object({
+      userId: Joi.string().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      await companyUsersController.deleteCompanyUser({
+        companyId: req.user.company._id,
+        userId: req.params.userId,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.COMPANY_USER_DELETED,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      companyUsersDebugger(err);
+
+      next(err);
     }
   }
 );

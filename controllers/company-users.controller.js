@@ -5,6 +5,7 @@ const createError = require("http-errors");
 const { CompanyUser, Configuration, EmailStats } = require("../models");
 const {
   constants: { INTERACTION_CHANNELS },
+  basicUtil,
 } = require("../utils");
 const { sendEmail } = require("../utils/ses.util");
 const {
@@ -235,6 +236,64 @@ const readPaginatedCompanyUsers = async ({
   };
 };
 
+const createCompanyUser = ({ companyId, companyUserData }) => {
+  CompanyUser.create({
+    companyId,
+    ...companyUserData,
+  });
+};
+
+const readCompanyUser = async ({ companyId, userId = "" }) => {
+  userId = basicUtil.getMongoDbObjectId({
+    inputString: userId,
+  });
+
+  const companyUser = await CompanyUser.findOne({ _id: userId, companyId });
+
+  if (!companyUser) {
+    throw createError(404, {
+      errorMessage: RESPONSE_MESSAGES.COMPANY_USER_NOT_FOUND,
+    });
+  }
+
+  return companyUser;
+};
+
+const updateCompanyUser = async ({ companyId, userId, companyUserData }) => {
+  userId = basicUtil.getMongoDbObjectId({
+    inputString: userId,
+  });
+
+  const result = await CompanyUser.updateOne(
+    { _id: userId, companyId },
+    { ...companyUserData }
+  );
+
+  if (!result.matchedCount) {
+    throw createError(404, {
+      errorMessage: RESPONSE_MESSAGES.COMPANY_USER_NOT_FOUND,
+    });
+  }
+
+  if (!result.modifiedCount) {
+    throw createError(404, {
+      errorMessage: RESPONSE_MESSAGES.COMPANY_USER_UPDATED_ALREADY,
+    });
+  }
+};
+
+const deleteCompanyUser = async ({ userId }) => {
+  const result = await CompanyUser.deleteOne({
+    _id: userId,
+  });
+
+  if (!result.deletedCount) {
+    throw createError(404, {
+      errorMessage: RESPONSE_MESSAGES.COMPANY_USER_DELETED_ALREADY,
+    });
+  }
+};
+
 module.exports = {
   getPossibleFilterKeys,
   getPossibleFilterValues,
@@ -243,4 +302,8 @@ module.exports = {
   search,
   readAllCompanyUsers,
   readPaginatedCompanyUsers,
+  createCompanyUser,
+  readCompanyUser,
+  updateCompanyUser,
+  deleteCompanyUser,
 };
