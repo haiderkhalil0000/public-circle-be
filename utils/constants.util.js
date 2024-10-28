@@ -93,6 +93,13 @@ module.exports = {
     CAMPAIGN_DELETED_ALREADY: "Campaign deleted already!",
     INVALID_CAMPAIGN_ID: "Invalid campaign id!",
     TEST_EMAIL_SENT: "Test email sent successfully.",
+    COMPANY_USER_NOT_FOUND: "Company user not found!",
+    COMPANY_USER_UPDATED_ALREADY: "Company user updated already!",
+    COMPANY_USER_DELETED_ALREADY: "Company user deleted already!",
+    COMPANY_USER_CREATED: "Company user created successfully.",
+    FETCHED_COMPANY_USER: "Company user fetched successfully.",
+    COMPANY_USER_UPDATED: "Company user updated successfully.",
+    COMPANY_USER_DELETED: "Company user deleted successfully.",
   },
 
   INTERACTION_CHANNELS: {
