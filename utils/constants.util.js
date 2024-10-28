@@ -8,6 +8,7 @@ module.exports = {
     CAMPAIGN: "campaign",
     SEGMENT: "segment",
     TEMPLATE: "template",
+    CRON_JOB: "cron-job",
   },
 
   RESPONSE_MESSAGES: {
@@ -119,4 +120,27 @@ module.exports = {
     TEXT: "TEXT",
     HTML: "HTML",
   },
+
+  RUN_MODE: {
+    INSTANT: "INSTANT",
+    SCHEDULE: "SCHEDULE",
+  },
+
+  CRON_STATUS: {
+    PENDING: "PENDING",
+    PROCESSING: "PROCESSING",
+    PROCESSED: "PROCESSED",
+  },
+
+  CRON_RECORD_LIMIT: 30,
+
+  CRON_JOBS: {
+    RUN_CAMPAIGN: "RUN_CAMPAIGN",
+  },
+
+  CRON_INTERVALS: {
+    ["5M"]: "5 minutes",
+  },
+
+  CRON_RECORD_LIMIT: 30,
 };

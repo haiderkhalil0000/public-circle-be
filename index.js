@@ -71,4 +71,7 @@ app.use("/email-events", async (req, res) => {
 
 app.use(require("./routes"));
 
+//cronJobs
+require("./cron-jobs/run-campaign.cron");
+
 server.listen(PORT, () => console.log(`Server starting on port: ${PORT}`));

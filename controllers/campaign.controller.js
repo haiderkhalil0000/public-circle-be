@@ -1,26 +1,37 @@
 const mongoose = require("mongoose");
+const moment = require("moment");
 const createError = require("http-errors");
 
-const { Campaign, Template, CompanyUser } = require("../models");
+const { Campaign, Template, CompanyUser, Segment } = require("../models");
 const {
-  DOCUMENT_STATUS,
-  RESPONSE_MESSAGES,
-} = require("../utils/constants.util");
-const { sendEmail } = require("../utils/ses.util");
+  basicUtil,
+  sesUtil,
+  constants: { DOCUMENT_STATUS, RESPONSE_MESSAGES, CRON_STATUS },
+} = require("../utils");
 
 const createCampaign = async ({
   companyId,
-  segment = "",
+  segments = [],
   sourceEmailAddress,
   emailSubject,
   emailTemplate = "",
-  sendTime,
+  runMode,
+  runSchedule,
+  isRecurring,
+  recurringPeriod,
 }) => {
-  segment = new mongoose.Types.ObjectId(segment);
-  emailTemplate = new mongoose.Types.ObjectId(emailTemplate);
+  emailTemplate = basicUtil.getMongoDbObjectId({ inputString: emailTemplate });
+
+  const temp = [];
+
+  for (const segment of segments) {
+    temp.push(basicUtil.getMongoDbObjectId({ inputString: segment }));
+  }
+
+  segments = temp;
 
   const existingCampaign = await Campaign.findOne({
-    segment,
+    segments,
     companyId,
   });
 
@@ -32,11 +43,14 @@ const createCampaign = async ({
 
   Campaign.create({
     companyId,
-    segment,
+    segments,
     sourceEmailAddress,
     emailSubject,
     emailTemplate,
-    sendTime,
+    runMode,
+    runSchedule,
+    isRecurring,
+    recurringPeriod,
   });
 };
 
@@ -93,10 +107,10 @@ const updateCampaign = async ({ campaignId = "", campaignData }) => {
     });
   }
 
-  campaignId = new mongoose.Types.ObjectId(campaignId);
+  campaignId = basicUtil.getMongoDbObjectId(campaignId);
 
   const result = await Campaign.updateOne(
-    { _id: new mongoose.Types.ObjectId(campaignId) },
+    { _id: campaignId },
     { ...campaignData }
   );
 
@@ -170,13 +184,13 @@ const sendTestEmail = async ({
 }) => {
   const promises = [];
 
-  const emailAdresses = toEmailAddresses
+  const emailAddresses = toEmailAddresses
     .split(",")
     .map((email) => email.trim());
 
   const template = await Template.findById(templateId);
 
-  for (const address of emailAdresses) {
+  for (const address of emailAddresses) {
     promises.push(
       mapDynamicValues({
         companyId,
@@ -190,9 +204,9 @@ const sendTestEmail = async ({
 
   promises.length = 0;
 
-  emailAdresses.forEach((item, index) => {
+  emailAddresses.forEach((item, index) => {
     promises.push(
-      sendEmail({
+      sesUtil.sendEmail({
         fromEmailAddress: sourceEmailAddress,
         toEmailAddress: item,
         subject: emailSubject,
@@ -204,6 +218,73 @@ const sendTestEmail = async ({
   await Promise.all(promises);
 };
 
+const runCampaign = async ({ campaign }) => {
+  const promises = [];
+  const segmentPromises = [];
+
+  await Campaign.updateOne(
+    { _id: campaign._id },
+    { cronStatus: CRON_STATUS.PROCESSING }
+  );
+
+  for (const segment of campaign.segments) {
+    segmentPromises.push(Segment.findById(segment));
+  }
+
+  const [segments, template] = await Promise.all([
+    Promise.all(segmentPromises),
+    Template.findById({ _id: campaign.emailTemplate }),
+  ]);
+
+  let allFilters = {};
+
+  for (const segment of segments) {
+    allFilters = { ...allFilters, ...segment.filters };
+  }
+
+  const emailAddresses = await CompanyUser.find(
+    { ...allFilters, companyId: campaign.companyId },
+    {
+      email: 1,
+    }
+  ).lean();
+
+  for (const address of emailAddresses) {
+    promises.push(
+      mapDynamicValues({
+        companyId: campaign.companyId,
+        emailAddress: address.email,
+        content: template.body,
+      })
+    );
+  }
+
+  const mappedContentArray = await Promise.all(promises);
+
+  promises.length = 0;
+
+  emailAddresses.forEach((item, index) => {
+    promises.push(
+      sesUtil.sendEmail({
+        fromEmailAddress: campaign.sourceEmailAddress,
+        toEmailAddress: item.email,
+        subject: campaign.emailSubject,
+        content: mappedContentArray[index],
+      })
+    );
+  });
+
+  await Promise.all(promises);
+  await Campaign.updateOne(
+    { _id: campaign._id },
+    {
+      cronStatus: CRON_STATUS.PROCESSED,
+      lastProcessed: moment().format(),
+      $inc: { processedCount: 1 },
+    }
+  );
+};
+
 module.exports = {
   createCampaign,
   readCampaign,
@@ -211,4 +292,5 @@ module.exports = {
   updateCampaign,
   deleteCampaign,
   sendTestEmail,
+  runCampaign,
 };

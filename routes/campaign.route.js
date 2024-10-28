@@ -4,7 +4,7 @@ const Joi = require("joi");
 
 const { authenticate, validate } = require("../middlewares");
 const { campaignsController } = require("../controllers");
-const { RESPONSE_MESSAGES } = require("../utils/constants.util");
+const { RESPONSE_MESSAGES, RUN_MODE } = require("../utils/constants.util");
 
 const router = express.Router();
 
@@ -13,11 +13,16 @@ router.post(
   authenticate.verifyToken,
   validate({
     body: Joi.object({
-      segment: Joi.string().required(),
+      segments: Joi.array().required(),
       sourceEmailAddress: Joi.string().email().required(),
       emailSubject: Joi.string().required(),
       emailTemplate: Joi.string().required(),
-      sendTime: Joi.string().required(),
+      runMode: Joi.string()
+        .valid(RUN_MODE.INSTANT, RUN_MODE.SCHEDULE)
+        .required(),
+      runSchedule: Joi.string(),
+      isRecurring: Joi.boolean(),
+      recurringPeriod: Joi.string(),
     }),
   }),
   async (req, res, next) => {
@@ -108,10 +113,13 @@ router.patch(
       campaignId: Joi.string().required(),
     }),
     body: Joi.object({
-      filters: Joi.object(),
+      segments: Joi.array(),
       sourceEmailAddress: Joi.string().email(),
       emailSubject: Joi.string(),
-      emailContent: Joi.string(),
+      emailTemplate: Joi.string(),
+      runSchedule: Joi.string(),
+      isRecurring: Joi.boolean(),
+      recurringPeriod: Joi.string(),
     }),
   }),
   async (req, res, next) => {

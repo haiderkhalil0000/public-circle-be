@@ -7,4 +7,5 @@ module.exports = {
   Campaign: require("./campaign.model"),
   Segment: require("./segment.model"),
   Template: require("./template.model"),
+  Cron: require("./cron.model"),
 };
