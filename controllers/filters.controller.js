@@ -3,6 +3,7 @@ const { Filter } = require("../models");
 
 const {
   constants: { RESPONSE_MESSAGES, DOCUMENT_STATUS },
+  basicUtil,
 } = require("../utils");
 
 const createFilter = async (
@@ -60,8 +61,13 @@ const readPaginatedFilters = async ({ companyId, pageNumber, pageSize }) => {
   };
 };
 
-const deleteFilter = ({ filterId }) =>
-  Filter.findByIdAndUpdate(filterId, { status: DOCUMENT_STATUS.DELTED });
+const deleteFilter = ({ filterId }) => {
+  filterId = basicUtil.getMongoDbObjectId({ inputString: filterId });
+
+  return Filter.findByIdAndUpdate(filterId, {
+    status: DOCUMENT_STATUS.DELETED,
+  });
+};
 
 module.exports = {
   createFilter,
