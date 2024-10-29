@@ -7,7 +7,6 @@ const cors = require("cors");
 const createError = require("http-errors");
 
 const { configure, database } = require("./startup");
-const { companyUsersController } = require("./controllers");
 
 const app = express();
 
@@ -20,7 +19,7 @@ const server = http.createServer(app);
 configure(app);
 database.connect();
 
-const { PORT = 80 } = process.env;
+const { ENVIRONMENT, PORT = 80 } = process.env;
 
 app.get("/", (req, res) =>
   res.status(200).json({
@@ -30,6 +29,7 @@ app.get("/", (req, res) =>
 
 const axios = require("axios");
 const { EmailStats } = require("./models");
+const { constants } = require("./utils");
 
 app.use("/email-events", async (req, res) => {
   try {
@@ -71,7 +71,9 @@ app.use("/email-events", async (req, res) => {
 
 app.use(require("./routes"));
 
-//cronJobs
-require("./cron-jobs/run-campaign.cron");
+if (ENVIRONMENT === constants.ENVIRONMENT.PRODUCTION) {
+  //cronJobs
+  require("./cron-jobs/run-campaign.cron");
+}
 
 server.listen(PORT, () => console.log(`Server starting on port: ${PORT}`));

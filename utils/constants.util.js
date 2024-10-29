@@ -152,4 +152,10 @@ module.exports = {
   },
 
   CRON_RECORD_LIMIT: 30,
+
+  ENVIRONMENT: {
+    LOCAL: "LOCAL",
+    STAGING: "STAGING",
+    PRODUCTION: "PRODUCTION",
+  },
 };
