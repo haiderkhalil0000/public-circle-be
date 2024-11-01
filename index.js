@@ -4,7 +4,7 @@ const http = require("http");
 const express = require("express");
 const helmet = require("helmet");
 const cors = require("cors");
-const createError = require("http-errors");
+const createHttpError = require("http-errors");
 
 const { configure, database } = require("./startup");
 
@@ -49,7 +49,7 @@ app.use("/email-events", async (req, res) => {
       });
 
       if (!statDoc) {
-        throw createError(400, { errorMessage: "Stats document missing!" });
+        throw createHttpError(400, { errorMessage: "Stats document missing!" });
       }
 
       statDoc.details = message;

@@ -27,16 +27,13 @@ router.post(
   "/company-users",
   validate({
     body: Joi.object({
-      companyId: Joi.string().required(),
+      accessToken: Joi.string().required(),
       companyUsersData: Joi.array().required(),
     }),
   }),
   async (req, res, next) => {
     try {
-      await webhooksController.recieveCompanyUsersData({
-        companyId: req.body.companyId,
-        companyUsersData: req.body.companyUsersData,
-      });
+      await webhooksController.recieveCompanyUsersData(req.body);
 
       res.status(200).json({
         message: RESPONSE_MESSAGES.COMPANY_DATA_RECEIVED,

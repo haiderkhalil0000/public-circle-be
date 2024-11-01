@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const createError = require("http-errors");
+const createHttpError = require("http-errors");
 
 const { Template } = require("../models");
 const {
@@ -14,7 +14,7 @@ const createTemplate = async ({ companyId, name, kind, body }) => {
   });
 
   if (existingTemplate) {
-    throw createError(400, {
+    throw createHttpError(400, {
       errorMessage: RESPONSE_MESSAGES.DUPLICATE_TEMPLATE,
     });
   }
@@ -27,19 +27,13 @@ const createTemplate = async ({ companyId, name, kind, body }) => {
   });
 };
 
-const readTemplate = async ({ templateId = "" }) => {
-  if (templateId.length !== 24) {
-    throw createError(400, {
-      errorMessage: RESPONSE_MESSAGES.INVALID_TEMPLATE_ID,
-    });
-  }
-
-  templateId = new mongoose.Types.ObjectId(templateId);
+const readTemplate = async ({ templateId }) => {
+  basicUtil.validateObjectId({ inputString: templateId });
 
   const template = await Template.findById(templateId);
 
   if (!template) {
-    throw createError(404, {
+    throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.TEMPLATE_NOT_FOUND,
     });
   }
@@ -71,14 +65,8 @@ const readPaginatedTemplates = async ({
   return { totalRecords, templates };
 };
 
-const updateTemplate = async ({ templateId = "", templateData }) => {
-  if (templateId.length !== 24) {
-    throw createError(400, {
-      errorMessage: RESPONSE_MESSAGES.INVALID_TEMPLATE_ID,
-    });
-  }
-
-  templateId = new mongoose.Types.ObjectId(templateId);
+const updateTemplate = async ({ templateId, templateData }) => {
+  basicUtil.validateObjectId({ inputString: templateId });
 
   const result = await Template.updateOne(
     { _id: templateId },
@@ -86,13 +74,13 @@ const updateTemplate = async ({ templateId = "", templateData }) => {
   );
 
   if (!result.matchedCount) {
-    throw createError(404, {
+    throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.TEMPLATE_NOT_FOUND,
     });
   }
 
   if (!result.modifiedCount) {
-    throw createError(404, {
+    throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.TEMPLATE_UPDATED_ALREADY,
     });
   }
@@ -109,13 +97,13 @@ const deleteTemplate = async ({ templateId = "" }) => {
   );
 
   if (!result.matchedCount) {
-    throw createError(404, {
+    throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.TEMPLATE_NOT_FOUND,
     });
   }
 
   if (!result.modifiedCount) {
-    throw createError(404, {
+    throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.TEMPLATE_DELETED_ALREADY,
     });
   }

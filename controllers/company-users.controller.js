@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const _ = require("lodash");
-const createError = require("http-errors");
+const createHttpError = require("http-errors");
 
 const { CompanyUser, Configuration, EmailStats } = require("../models");
 const {
@@ -13,7 +13,7 @@ const {
   RESPONSE_MESSAGES,
 } = require("../utils/constants.util");
 
-const getPossibleFilterKeys = async ({ companyId }) => {
+const getPossibleFilterKeys = async ({ companyId = "" }) => {
   const totalDocs = await CompanyUser.countDocuments();
   const sampleSize = Math.floor(totalDocs * 0.1);
 
@@ -31,7 +31,9 @@ const getPossibleFilterKeys = async ({ companyId }) => {
     return commonKeys.filter((key) => docKeys.includes(key));
   }, Object.keys(randomDocuments[0]));
 
-  return allKeys.filter((item) => item !== "_id" && item !== "__v");
+  return allKeys.filter(
+    (item) => item !== "_id" && item !== "__v" && item !== "companyId"
+  );
 };
 
 const getPossibleFilterValues = async ({ companyId, key }) => {
@@ -92,7 +94,7 @@ const validateConfiguration = ({ configuration }) => {
   }
 
   if (errorMessage) {
-    throw createError(400, { errorMessage });
+    throw createHttpError(400, { errorMessage });
   }
 };
 
@@ -103,7 +105,7 @@ const mapDynamicValues = async ({ companyId, emailAddress, content }) => {
   }).lean();
 
   if (!companyData) {
-    throw createError(400, { errorMessage });
+    throw createHttpError(400, { errorMessage });
   }
 
   // Iterate over the user's keys and replace placeholders dynamically
@@ -243,15 +245,15 @@ const createCompanyUser = ({ companyId, companyUserData }) => {
   });
 };
 
-const readCompanyUser = async ({ companyId, userId = "" }) => {
-  userId = basicUtil.getMongoDbObjectId({
+const readCompanyUser = async ({ companyId, userId }) => {
+  basicUtil.validateObjectId({
     inputString: userId,
   });
 
   const companyUser = await CompanyUser.findOne({ _id: userId, companyId });
 
   if (!companyUser) {
-    throw createError(404, {
+    throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.COMPANY_USER_NOT_FOUND,
     });
   }
@@ -260,7 +262,7 @@ const readCompanyUser = async ({ companyId, userId = "" }) => {
 };
 
 const updateCompanyUser = async ({ companyId, userId, companyUserData }) => {
-  userId = basicUtil.getMongoDbObjectId({
+  basicUtil.validateObjectId({
     inputString: userId,
   });
 
@@ -270,13 +272,13 @@ const updateCompanyUser = async ({ companyId, userId, companyUserData }) => {
   );
 
   if (!result.matchedCount) {
-    throw createError(404, {
+    throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.COMPANY_USER_NOT_FOUND,
     });
   }
 
   if (!result.modifiedCount) {
-    throw createError(404, {
+    throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.COMPANY_USER_UPDATED_ALREADY,
     });
   }
@@ -288,7 +290,7 @@ const deleteCompanyUser = async ({ userId }) => {
   });
 
   if (!result.deletedCount) {
-    throw createError(404, {
+    throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.COMPANY_USER_DELETED_ALREADY,
     });
   }
