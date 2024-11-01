@@ -86,7 +86,7 @@ const updateTemplate = async ({ templateId, templateData }) => {
   }
 };
 
-const deleteTemplate = async ({ templateId = "" }) => {
+const deleteTemplate = async ({ templateId }) => {
   templateId = new mongoose.Types.ObjectId(templateId);
 
   const result = await Template.updateOne(

@@ -129,7 +129,7 @@ const updateSegment = async ({ segmentId, segmentData }) => {
   }
 };
 
-const deleteSegment = async ({ segmentId = "" }) => {
+const deleteSegment = async ({ segmentId }) => {
   segmentId = new mongoose.Types.ObjectId(segmentId);
 
   const result = await Segment.updateOne(

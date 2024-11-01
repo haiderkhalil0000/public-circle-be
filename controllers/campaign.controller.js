@@ -13,7 +13,7 @@ const createCampaign = async ({
   segments = [],
   sourceEmailAddress,
   emailSubject,
-  emailTemplate = "",
+  emailTemplate,
   runMode,
   runSchedule,
   isRecurring,
@@ -53,7 +53,7 @@ const createCampaign = async ({
   });
 };
 
-const readCampaign = async ({ campaignId = "" }) => {
+const readCampaign = async ({ campaignId }) => {
   basicUtil.validateObjectId({ inputString: campaignId });
 
   const campaign = await Campaign.findById(campaignId);
@@ -91,7 +91,7 @@ const readAllCampaigns = async ({
   };
 };
 
-const updateCampaign = async ({ campaignId = "", campaignData }) => {
+const updateCampaign = async ({ campaignId, campaignData }) => {
   basicUtil.validateObjectId({ inputString: campaignId });
 
   const result = await Campaign.updateOne(
@@ -112,7 +112,7 @@ const updateCampaign = async ({ campaignId = "", campaignData }) => {
   }
 };
 
-const deleteCampaign = async ({ campaignId = "" }) => {
+const deleteCampaign = async ({ campaignId }) => {
   basicUtil.validateObjectId({ inputString: campaignId });
 
   const result = await Campaign.updateOne(

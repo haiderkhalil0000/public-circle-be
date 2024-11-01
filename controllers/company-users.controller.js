@@ -13,7 +13,7 @@ const {
   RESPONSE_MESSAGES,
 } = require("../utils/constants.util");
 
-const getPossibleFilterKeys = async ({ companyId = "" }) => {
+const getPossibleFilterKeys = async ({ companyId }) => {
   const totalDocs = await CompanyUser.countDocuments();
   const sampleSize = Math.floor(totalDocs * 0.1);
 
