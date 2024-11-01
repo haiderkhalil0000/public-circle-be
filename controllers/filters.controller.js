@@ -1,4 +1,4 @@
-const createError = require("http-errors");
+const createHttpError = require("http-errors");
 const { Filter } = require("../models");
 
 const {
@@ -17,7 +17,7 @@ const createFilter = async (
   });
 
   if (isFilterExists) {
-    throw createError(400, {
+    throw createHttpError(400, {
       errorMessage: RESPONSE_MESSAGES.FILTER_ALREADY_EXISTS,
     });
   }
@@ -62,7 +62,7 @@ const readPaginatedFilters = async ({ companyId, pageNumber, pageSize }) => {
 };
 
 const deleteFilter = ({ filterId }) => {
-  filterId = basicUtil.getMongoDbObjectId({ inputString: filterId });
+  basicUtil.validateObjectId({ inputString: filterId });
 
   return Filter.findByIdAndUpdate(filterId, {
     status: DOCUMENT_STATUS.DELETED,
