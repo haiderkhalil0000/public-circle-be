@@ -1,10 +1,13 @@
 const createError = require("http-errors");
 const moment = require("moment");
+const axios = require("axios");
 
 const { User } = require("../models");
 const {
   constants: { RESPONSE_MESSAGES },
 } = require("../utils");
+
+const { BEEFREE_CLIENT_ID, BEEFREE_CLIENT_SECRET } = process.env;
 
 const register = async ({
   company,
@@ -68,7 +71,20 @@ const login = async ({ emailAddress, password }) => {
   return user;
 };
 
+const getBeefreeAccessToken = async ({ currentUserId }) => {
+  const {
+    data: { access_token },
+  } = await axios.post("https://auth.getbee.io/loginV2", {
+    client_id: BEEFREE_CLIENT_ID,
+    client_secret: BEEFREE_CLIENT_SECRET,
+    uid: currentUserId,
+  });
+
+  return access_token;
+};
+
 module.exports = {
   register,
   login,
+  getBeefreeAccessToken,
 };

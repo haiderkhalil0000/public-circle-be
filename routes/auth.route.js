@@ -78,4 +78,27 @@ router.post(
   }
 );
 
+router.get(
+  "/beefree-token",
+  authenticate.verifyToken,
+  async (req, res, next) => {
+    try {
+      const accessToken = await authController.getBeefreeAccessToken({
+        currentUserId: req.user._id,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.ACCESS_TOKEN_FETCHED,
+        data: accessToken,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      authDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 module.exports = router;
