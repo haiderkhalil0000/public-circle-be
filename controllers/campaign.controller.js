@@ -30,17 +30,6 @@ const createCampaign = async ({
 
   segments = temp;
 
-  const existingCampaign = await Campaign.findOne({
-    segments,
-    companyId,
-  });
-
-  if (existingCampaign) {
-    throw createError(400, {
-      errorMessage: RESPONSE_MESSAGES.DUPLICATE_CAMPAIGN,
-    });
-  }
-
   Campaign.create({
     companyId,
     segments,
