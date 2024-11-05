@@ -3,8 +3,20 @@ const moment = require("moment");
 
 const { User } = require("../models");
 const {
-  constants: { RESPONSE_MESSAGES },
+  createToken,
+  decodeToken,
+} = require("../middlewares/authenticator.middleware");
+const {
+  constants: {
+    RESPONSE_MESSAGES,
+    VERIFICATION_EMAIL_SUBJECT,
+    PUBLIC_CIRCLES_EMAIL_ADDRESS,
+  },
+  sesUtil,
 } = require("../utils");
+const createHttpError = require("http-errors");
+
+const { PUBLIC_CIRCLES_WEB_URL } = process.env;
 
 const register = async ({
   company,
@@ -68,7 +80,46 @@ const login = async ({ emailAddress, password }) => {
   return user;
 };
 
+const sendVerificationEmail = async ({ emailAddress }) => {
+  const token = createToken({ emailAddress });
+
+  await sesUtil.sendEmail({
+    fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
+    toEmailAddress: emailAddress,
+    subject: VERIFICATION_EMAIL_SUBJECT,
+    content: `Welcome to Public Circles,
+
+Please verify your email address by using the following link:
+${PUBLIC_CIRCLES_WEB_URL}/email-verification?emailAddress=${emailAddress}&token=${token}
+
+Regards,
+Public Circles Team`,
+  });
+};
+
+const verifyEmailAddress = async ({ emailAddress, token }) => {
+  try {
+    const decodedToken = decodeToken(token);
+
+    if (decodedToken.emailAddress !== emailAddress) {
+      throw createHttpError(403, {
+        errorMessage: RESPONSE_MESSAGES.TOKEN_IS_INVALID_OR_EXPIRED,
+      });
+    }
+  } catch (err) {
+    if (err.name === "TokenExpiredError") {
+      throw createHttpError(403, {
+        errorMessage: RESPONSE_MESSAGES.TOKEN_IS_INVALID_OR_EXPIRED,
+      });
+    } else {
+      throw err;
+    }
+  }
+};
+
 module.exports = {
   register,
   login,
+  sendVerificationEmail,
+  verifyEmailAddress,
 };
