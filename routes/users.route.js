@@ -23,4 +23,23 @@ router.get("/me", authenticate.verifyToken, async (req, res, next) => {
   }
 });
 
+router.get(
+  "/verify-email",
+  authenticate.verifyToken,
+  async (req, res, next) => {
+    try {
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.FETCHED_CURRENT_USER,
+        data: req.user,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      userDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 module.exports = router;
