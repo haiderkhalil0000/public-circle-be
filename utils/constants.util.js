@@ -9,6 +9,7 @@ module.exports = {
     SEGMENT: "segment",
     TEMPLATE: "template",
     CRON_JOB: "cron-job",
+    COMPANY: "companies",
   },
 
   RESPONSE_MESSAGES: {
@@ -102,6 +103,7 @@ module.exports = {
     COMPANY_USER_DELETED: "Company user deleted successfully.",
     COMPANY_DATA_RECEIVED: "Company users data recieved successfully.",
     INVALID_OBJECT_ID: "Invalid objectId!",
+    USER_UPDATED: "User updated successfully.",
   },
 
   INTERACTION_CHANNELS: {
