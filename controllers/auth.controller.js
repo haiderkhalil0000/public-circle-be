@@ -15,7 +15,6 @@ const {
   },
   sesUtil,
 } = require("../utils");
-const createHttpError = require("http-errors");
 
 const { PUBLIC_CIRCLES_WEB_URL } = process.env;
 
@@ -120,7 +119,8 @@ const verifyEmailAddress = async ({ emailAddress, token }) => {
       throw err;
     }
   }
-  
+};
+
 const getBeefreeAccessToken = async ({ currentUserId }) => {
   const {
     data: { access_token },
