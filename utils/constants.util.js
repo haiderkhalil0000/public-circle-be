@@ -102,6 +102,7 @@ module.exports = {
     COMPANY_USER_DELETED: "Company user deleted successfully.",
     COMPANY_DATA_RECEIVED: "Company users data recieved successfully.",
     INVALID_OBJECT_ID: "Invalid objectId!",
+    ACCESS_TOKEN_FETCHED: "Access token fetched successfully.",
   },
 
   INTERACTION_CHANNELS: {
