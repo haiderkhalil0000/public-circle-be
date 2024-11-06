@@ -9,6 +9,7 @@ module.exports = {
     SEGMENT: "segment",
     TEMPLATE: "template",
     CRON_JOB: "cron-job",
+    COMPANY: "companies",
     ACCESS_TOKEN: "access-token",
   },
 
@@ -104,6 +105,7 @@ module.exports = {
     COMPANY_USER_DELETED: "Company user deleted successfully.",
     COMPANY_DATA_RECEIVED: "Company users data recieved successfully.",
     INVALID_OBJECT_ID: "Invalid objectId!",
+    USER_UPDATED: "User updated successfully.",
     ACCESS_TOKEN_CREATED: "Access token created successfully.",
     ACCESS_TOKEN_EXISTS: "Access token exists already!",
     ACCESS_TOKEN_NOT_FOUND: "Access token not found!",

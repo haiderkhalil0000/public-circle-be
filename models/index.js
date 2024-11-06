@@ -8,5 +8,6 @@ module.exports = {
   Segment: require("./segment.model"),
   Template: require("./template.model"),
   Cron: require("./cron.model"),
+  Company: require("./company.model"),
   AccessToken: require("./access-token.model"),
 };
