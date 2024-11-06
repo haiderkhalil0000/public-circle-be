@@ -14,6 +14,7 @@ module.exports = {
 
   RESPONSE_MESSAGES: {
     INVALID_TOKEN: "Not authenticated, invalid token provided!",
+    TOKEN_IS_INVALID_OR_EXPIRED: "Token is invalid or expired!",
     TOKEN_IS_REQUIRED: "Not authenticated, token is required!",
     EMAIL_BELONGS_TO_OTHER: "This email address belongs to someone else!",
     USER_REGISTERED: "User registered successfully.",
@@ -172,4 +173,8 @@ module.exports = {
     STAGING: "STAGING",
     PRODUCTION: "PRODUCTION",
   },
+
+  VERIFICATION_EMAIL_SUBJECT: "Public Circles Email Verification",
+
+  PUBLIC_CIRCLES_EMAIL_ADDRESS: "saad.venndii@gmail.com",
 };
