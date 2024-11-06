@@ -1,4 +1,4 @@
-const createError = require("http-errors");
+const createHttpError = require("http-errors");
 
 const {
   sendVerificationEmail,
@@ -57,7 +57,7 @@ const addDataInCompanyConfigurations = async ({
     });
 
     if (duplicateEmailOrDomain) {
-      throw createError(400, {
+      throw createHttpError(400, {
         errorMessage: [
           emailAddress
             ? RESPONSE_MESSAGES.DUPLICATE_EMAIL
@@ -95,7 +95,7 @@ const verifyEmailAddress = async ({ emailAddress }) => {
   const verifiedIdentities = await listVerifiedIdentities();
 
   if (!verifiedIdentities.includes(emailAddress)) {
-    throw createError(400, {
+    throw createHttpError(400, {
       errorMessage: RESPONSE_MESSAGES.EMAIL_NOT_VERIFIED,
     });
   }
@@ -128,7 +128,7 @@ const readConfigurations = async ({ companyId }) => {
   ]);
 
   if (!configuration) {
-    throw createError(404, {
+    throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.CONFIGURATION_NOT_FOUND,
     });
   }
@@ -164,7 +164,7 @@ const checkDomainVerification = async ({ emailDomain }) => {
   const verifiedIdentities = await listVerifiedIdentities();
 
   if (!verifiedIdentities.includes(emailDomain)) {
-    throw createError(400, {
+    throw createHttpError(400, {
       errorMessage: RESPONSE_MESSAGES.DOMAIN_NOT_VERIFIED,
     });
   }
@@ -178,7 +178,7 @@ const createConfiguration = async ({
   const configuration = await Configuration.findOne({ companyId });
 
   if (configuration) {
-    throw createError(404, {
+    throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.DUPLICATE_CONFIGURATION,
     });
   }
@@ -225,7 +225,9 @@ const deleteEmailAddress = async ({ companyId, emailAddress }) => {
       deleteIdentityFromSES({ emailAddress }),
     ]);
   } else {
-    throw createError(400, { errorMessage: RESPONSE_MESSAGES.EMAIL_NOT_FOUND });
+    throw createHttpError(400, {
+      errorMessage: RESPONSE_MESSAGES.EMAIL_NOT_FOUND,
+    });
   }
 };
 
@@ -243,7 +245,7 @@ const deleteEmailDomain = async ({ companyId, emailDomain }) => {
   );
 
   if (!modifiedCount) {
-    throw createError(400, {
+    throw createHttpError(400, {
       errorMessage: RESPONSE_MESSAGES.DOMAIN_NOT_FOUND,
     });
   }
@@ -269,7 +271,7 @@ const attachEmailWithDomain = async ({
       );
 
       if (existingEmailAddress) {
-        throw createError(400, {
+        throw createHttpError(400, {
           errorMessage: RESPONSE_MESSAGES.DUPLICATE_EMAIL,
         });
       }
@@ -283,7 +285,7 @@ const attachEmailWithDomain = async ({
   if (isUpdated) {
     return configuration.save();
   } else {
-    throw createError(400, {
+    throw createHttpError(400, {
       errorMessage: RESPONSE_MESSAGES.DOMAIN_NOT_FOUND,
     });
   }

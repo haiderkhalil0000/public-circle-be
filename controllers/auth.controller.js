@@ -1,4 +1,4 @@
-const createError = require("http-errors");
+const createHttpError = require("http-errors");
 const moment = require("moment");
 const axios = require("axios");
 
@@ -31,7 +31,7 @@ const register = async ({
   const user = await User.findOne({ emailAddress });
 
   if (user) {
-    throw createError(400, {
+    throw createHttpError(400, {
       errorMessage: RESPONSE_MESSAGES.EMAIL_BELONGS_TO_OTHER,
     });
   }
@@ -51,7 +51,7 @@ const login = async ({ emailAddress, password }) => {
   });
 
   if (!user) {
-    throw createError(400, {
+    throw createHttpError(400, {
       errorMessage: RESPONSE_MESSAGES.INVALID_EMAIL_OR_PASSWORD,
     });
   }
@@ -63,14 +63,16 @@ const login = async ({ emailAddress, password }) => {
 
       user.save();
 
-      throw createError(403, { errorMessage: TOO_MANY_INVALID_LOGIN_ATTEMTPS });
+      throw createHttpError(403, {
+        errorMessage: TOO_MANY_INVALID_LOGIN_ATTEMTPS,
+      });
     }
 
     user.invalidLoginAttempts = user.invalidLoginAttempts + 1;
 
     user.save();
 
-    throw createError(403, {
+    throw createHttpError(403, {
       errorMessage: RESPONSE_MESSAGES.INVALID_EMAIL_OR_PASSWORD,
     });
   }
