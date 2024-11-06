@@ -11,4 +11,5 @@ module.exports = {
   accessTokensController: require("./access-tokens.controller"),
   plansController: require("./plans.controller"),
   rolesController: require("./roles.controller"),
+  stripeController: require("./stripe.controller"),
 };

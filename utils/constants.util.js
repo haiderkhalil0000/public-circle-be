@@ -128,6 +128,7 @@ module.exports = {
     PLAN_EXISTS_ALREADY: "Plan exists already!",
     PLAN_NOT_FOUND: "Plan not found!",
     PLAN_UPDATED_ALREADY: "Plan updated already!",
+    PAYMENT_INTENT_CREATED: "Payment intent created successfully.",
   },
 
   INTERACTION_CHANNELS: {

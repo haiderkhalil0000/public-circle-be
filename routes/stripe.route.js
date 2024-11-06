@@ -1,0 +1,44 @@
+const express = require("express");
+const Joi = require("joi");
+const stripeDebugger = require("debug")("debug:stripe");
+
+const { authenticate, validate } = require("../middlewares");
+const { stripeController } = require("../controllers");
+const {
+  constants: { RESPONSE_MESSAGES },
+} = require("../utils");
+
+const router = express.Router();
+
+router.post(
+  "/create-payment-intent",
+  authenticate.verifyToken,
+  validate({
+    body: Joi.object({
+      amount: Joi.number().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    const { amount } = req.body;
+
+    try {
+      const paymentIntent = await stripeController.createPaymentIntent({
+        amount,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.PAYMENT_INTENT_CREATED,
+        data: { clientSecret: paymentIntent.client_secret },
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      stripeDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+module.exports = router;
