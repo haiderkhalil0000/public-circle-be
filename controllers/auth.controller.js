@@ -20,13 +20,7 @@ const { PUBLIC_CIRCLES_WEB_URL } = process.env;
 
 const { BEEFREE_CLIENT_ID, BEEFREE_CLIENT_SECRET } = process.env;
 
-const register = async ({
-  company,
-  emailAddress,
-  password,
-  firstName,
-  lastName,
-}) => {
+const register = async ({ emailAddress, password }) => {
   const user = await User.findOne({ emailAddress });
 
   if (user) {
@@ -36,11 +30,8 @@ const register = async ({
   }
 
   return User.create({
-    company,
     emailAddress,
     password,
-    firstName,
-    lastName,
   });
 };
 

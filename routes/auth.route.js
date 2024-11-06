@@ -14,12 +14,7 @@ router.post(
   "/register",
   validate({
     body: Joi.object({
-      company: Joi.object({
-        name: Joi.string().required(),
-      }).required(),
       emailAddress: Joi.string().email().required(),
-      firstName: Joi.string().required(),
-      lastName: Joi.string().required(),
       password: Joi.string().required(),
     }),
   }),
