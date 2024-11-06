@@ -1,4 +1,4 @@
-const createError = require("http-errors");
+const createHttpError = require("http-errors");
 const mongoose = require("mongoose");
 
 const { Segment } = require("../models");
@@ -6,6 +6,7 @@ const {
   RESPONSE_MESSAGES,
   DOCUMENT_STATUS,
 } = require("../utils/constants.util");
+const { basicUtil } = require("../utils");
 
 const createSegment = async ({ name, filters, companyId }) => {
   const existingSegment = await Segment.findOne({
@@ -15,7 +16,7 @@ const createSegment = async ({ name, filters, companyId }) => {
   });
 
   if (existingSegment) {
-    throw createError(400, {
+    throw createHttpError(400, {
       errorMessage: RESPONSE_MESSAGES.DUPLICATE_SEGMENT,
     });
   }
@@ -27,19 +28,13 @@ const createSegment = async ({ name, filters, companyId }) => {
   });
 };
 
-const readSegment = async ({ segmentId = "" }) => {
-  if (segmentId.length !== 24) {
-    throw createError(400, {
-      errorMessage: RESPONSE_MESSAGES.INVALID_SEGMENT_ID,
-    });
-  }
-
-  segmentId = new mongoose.Types.ObjectId(segmentId);
+const readSegment = async ({ segmentId }) => {
+  basicUtil.validateObjectId({ inputString: segmentId });
 
   const segment = await Segment.findById(segmentId);
 
   if (!segment) {
-    throw createError(404, {
+    throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.SEGMENT_NOT_FOUND,
     });
   }
@@ -113,14 +108,8 @@ const readAllSegments = async ({ companyId }) => {
   return allSegments;
 };
 
-const updateSegment = async ({ segmentId = "", segmentData }) => {
-  if (segmentId.length !== 24) {
-    throw createError(400, {
-      errorMessage: RESPONSE_MESSAGES.INVALID_SEGMENT_ID,
-    });
-  }
-
-  segmentId = new mongoose.Types.ObjectId(segmentId);
+const updateSegment = async ({ segmentId, segmentData }) => {
+  basicUtil.validateObjectId({ inputString: segmentId });
 
   const result = await Segment.updateOne(
     { _id: segmentId },
@@ -128,19 +117,19 @@ const updateSegment = async ({ segmentId = "", segmentData }) => {
   );
 
   if (!result.matchedCount) {
-    throw createError(404, {
+    throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.SEGMENT_NOT_FOUND,
     });
   }
 
   if (!result.modifiedCount) {
-    throw createError(404, {
+    throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.SEGMENT_UPDATED_ALREADY,
     });
   }
 };
 
-const deleteSegment = async ({ segmentId = "" }) => {
+const deleteSegment = async ({ segmentId }) => {
   segmentId = new mongoose.Types.ObjectId(segmentId);
 
   const result = await Segment.updateOne(
@@ -151,13 +140,13 @@ const deleteSegment = async ({ segmentId = "" }) => {
   );
 
   if (!result.matchedCount) {
-    throw createError(404, {
+    throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.SEGMENT_NOT_FOUND,
     });
   }
 
   if (!result.modifiedCount) {
-    throw createError(404, {
+    throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.SEGMENT_DELETED_ALREADY,
     });
   }

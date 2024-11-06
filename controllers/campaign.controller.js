@@ -1,6 +1,5 @@
-const mongoose = require("mongoose");
 const moment = require("moment");
-const createError = require("http-errors");
+const createHttpError = require("http-errors");
 
 const { Campaign, Template, CompanyUser, Segment } = require("../models");
 const {
@@ -14,32 +13,21 @@ const createCampaign = async ({
   segments = [],
   sourceEmailAddress,
   emailSubject,
-  emailTemplate = "",
+  emailTemplate,
   runMode,
   runSchedule,
   isRecurring,
   recurringPeriod,
 }) => {
-  emailTemplate = basicUtil.getMongoDbObjectId({ inputString: emailTemplate });
+  basicUtil.validateObjectId({ inputString: emailTemplate });
 
   const temp = [];
 
   for (const segment of segments) {
-    temp.push(basicUtil.getMongoDbObjectId({ inputString: segment }));
+    temp.push(basicUtil.validateObjectId({ inputString: segment }));
   }
 
   segments = temp;
-
-  const existingCampaign = await Campaign.findOne({
-    segments,
-    companyId,
-  });
-
-  if (existingCampaign) {
-    throw createError(400, {
-      errorMessage: RESPONSE_MESSAGES.DUPLICATE_CAMPAIGN,
-    });
-  }
 
   Campaign.create({
     companyId,
@@ -54,21 +42,13 @@ const createCampaign = async ({
   });
 };
 
-const readCampaign = async ({ campaignId = "" }) => {
-  if (campaignId.length !== 24) {
-    throw createError(400, {
-      errorMessage: RESPONSE_MESSAGES.INVALID_CAMPAIGN_ID,
-    });
-  }
+const readCampaign = async ({ campaignId }) => {
+  basicUtil.validateObjectId({ inputString: campaignId });
 
-  campaignId = new mongoose.Types.ObjectId(campaignId);
-
-  const campaign = await Campaign.findById(
-    new mongoose.Types.ObjectId(campaignId)
-  );
+  const campaign = await Campaign.findById(campaignId);
 
   if (!campaign) {
-    throw createError(404, {
+    throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.CAMPAIGN_NOT_FOUND,
     });
   }
@@ -89,7 +69,7 @@ const readAllCampaigns = async ({
   ]);
 
   if (!allCampaigns.length) {
-    throw createError(404, {
+    throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.NO_CAMPAIGNS,
     });
   }
@@ -100,14 +80,8 @@ const readAllCampaigns = async ({
   };
 };
 
-const updateCampaign = async ({ campaignId = "", campaignData }) => {
-  if (campaignId.length !== 24) {
-    throw createError(400, {
-      errorMessage: RESPONSE_MESSAGES.INVALID_CAMPAIGN_ID,
-    });
-  }
-
-  campaignId = basicUtil.getMongoDbObjectId(campaignId);
+const updateCampaign = async ({ campaignId, campaignData }) => {
+  basicUtil.validateObjectId({ inputString: campaignId });
 
   const result = await Campaign.updateOne(
     { _id: campaignId },
@@ -115,20 +89,20 @@ const updateCampaign = async ({ campaignId = "", campaignData }) => {
   );
 
   if (!result.matchedCount) {
-    throw createError(404, {
+    throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.CAMPAIGN_NOT_FOUND,
     });
   }
 
   if (!result.modifiedCount) {
-    throw createError(404, {
+    throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.CAMPAIGN_UPDATED_ALREADY,
     });
   }
 };
 
-const deleteCampaign = async ({ campaignId = "" }) => {
-  campaignId = new mongoose.Types.ObjectId(campaignId);
+const deleteCampaign = async ({ campaignId }) => {
+  basicUtil.validateObjectId({ inputString: campaignId });
 
   const result = await Campaign.updateOne(
     { _id: campaignId, status: DOCUMENT_STATUS.ACTIVE },
@@ -138,13 +112,13 @@ const deleteCampaign = async ({ campaignId = "" }) => {
   );
 
   if (!result.matchedCount) {
-    throw createError(404, {
+    throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.CAMPAIGN_NOT_FOUND,
     });
   }
 
   if (!result.modifiedCount) {
-    throw createError(404, {
+    throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.CAMPAIGN_DELETED_ALREADY,
     });
   }
@@ -157,7 +131,9 @@ const mapDynamicValues = async ({ companyId, emailAddress, content }) => {
   }).lean();
 
   if (!companyData) {
-    throw createError(400, { errorMessage: "Something went wrong!" });
+    throw createHttpError(400, {
+      errorMessage: RESPONSE_MESSAGES.EMAIL_NOT_FOUND_IN_COMPANY,
+    });
   }
 
   // Iterate over the user's keys and replace placeholders dynamically
