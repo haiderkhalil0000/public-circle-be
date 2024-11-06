@@ -11,6 +11,7 @@ module.exports = {
     CRON_JOB: "cron-job",
     COMPANY: "companies",
     ACCESS_TOKEN: "access-token",
+    PLAN: "plan",
   },
 
   RESPONSE_MESSAGES: {
@@ -118,6 +119,15 @@ module.exports = {
     EMAIL_NOT_FOUND_IN_COMPANY:
       "Destination email address not found in the company data!",
     ACCESS_TOKEN_FETCHED: "Access token fetched successfully.",
+    PLAN_CREATED: "Plan created successfully.",
+    ALL_PLANS_FETCHED: "All plans fetched successfully.",
+    PLANS_FETCHED: "Plans fetched successfully.",
+    PLAN_FETCHED: "Plan fetched successfully.",
+    PLAN_UPDATED: "Plan updated successfully.",
+    PLAN_DELETED: "Plan deleted successfully.",
+    PLAN_EXISTS_ALREADY: "Plan exists already!",
+    PLAN_NOT_FOUND: "Plan not found!",
+    PLAN_UPDATED_ALREADY: "Plan updated already!",
   },
 
   INTERACTION_CHANNELS: {
@@ -179,4 +189,10 @@ module.exports = {
   VERIFICATION_EMAIL_SUBJECT: "Public Circles Email Verification",
 
   PUBLIC_CIRCLES_EMAIL_ADDRESS: "saad.venndii@gmail.com",
+
+  PLAN_STATUS: {
+    ACTIVE: "ACTIVE",
+    ARCHIVED: "ARCHIVED",
+    DELETED: "DELETED",
+  },
 };
