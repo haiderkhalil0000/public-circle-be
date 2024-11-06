@@ -1,5 +1,5 @@
 const express = require("express");
-const planDebugger = require("debug")("debug:plan");
+const roleDebugger = require("debug")("debug:role");
 const Joi = require("joi");
 
 const { authenticate, validate } = require("../middlewares");
@@ -16,7 +16,7 @@ router.post(
   validate({
     body: Joi.object({
       name: Joi.string().required(),
-      contactsRange: Joi.object().required(),
+      permissions: Joi.array().required(),
     }),
   }),
   async (req, res, next) => {
@@ -24,14 +24,14 @@ router.post(
       await rolesController.createRole(req.body);
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.PLAN_CREATED,
+        message: RESPONSE_MESSAGES.ROLE_CREATED,
         data: {},
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
       console.log(err);
 
-      planDebugger(err);
+      roleDebugger(err);
 
       next(err);
     }
@@ -40,43 +40,43 @@ router.post(
 
 router.get("/all", authenticate.verifyToken, async (req, res, next) => {
   try {
-    const plans = await rolesController.readAllPlans();
+    const roles = await rolesController.readAllRoles();
 
     res.status(200).json({
-      message: RESPONSE_MESSAGES.ALL_PLANS_FETCHED,
-      data: plans,
+      message: RESPONSE_MESSAGES.ALL_ROLES_FETCHED,
+      data: roles,
     });
   } catch (err) {
     // sendErrorReportToSentry(error);
     console.log(err);
 
-    planDebugger(err);
+    roleDebugger(err);
 
     next(err);
   }
 });
 
 router.get(
-  "/:planId",
+  "/:roleId",
   authenticate.verifyToken,
   validate({
     params: Joi.object({
-      planId: Joi.string().required(),
+      roleId: Joi.string().required(),
     }),
   }),
   async (req, res, next) => {
     try {
-      const plans = await rolesController.readPlan(req.params);
+      const role = await rolesController.readRole(req.params);
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.PLAN_FETCHED,
-        data: plans,
+        message: RESPONSE_MESSAGES.ROLE_FETCHED,
+        data: role,
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
       console.log(err);
 
-      planDebugger(err);
+      roleDebugger(err);
 
       next(err);
     }
@@ -94,17 +94,17 @@ router.get(
   }),
   async (req, res, next) => {
     try {
-      const plans = await rolesController.readPaginatedPlans(req.query);
+      const roles = await rolesController.readPaginatedRoles(req.query);
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.PLANS_FETCHED,
-        data: plans,
+        message: RESPONSE_MESSAGES.ROLES_FETCHED,
+        data: roles,
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
       console.log(err);
 
-      planDebugger(err);
+      roleDebugger(err);
 
       next(err);
     }
@@ -112,36 +112,36 @@ router.get(
 );
 
 router.patch(
-  "/:planId",
+  "/:roleId",
   authenticate.verifyToken,
   validate({
     params: Joi.object({
-      planId: Joi.string().required(),
+      roleId: Joi.string().required(),
     }),
     body: Joi.object({
       name: Joi.string().required(),
       contactsRange: Joi.object(),
       status: Joi.string()
         .required()
-        .valid(PLAN_STATUS.ACTIVE, PLAN_STATUS.ARCHIVED),
+        .valid(ROLE_STATUS.ACTIVE, ROLE_STATUS.ARCHIVED),
     }),
   }),
   async (req, res, next) => {
     try {
-      await rolesController.updatePlan({
+      await rolesController.updateRole({
         ...req.params,
-        planData: req.body,
+        roleData: req.body,
       });
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.PLAN_UPDATED,
+        message: RESPONSE_MESSAGES.ROLE_UPDATED,
         data: {},
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
       console.log(err);
 
-      planDebugger(err);
+      roleDebugger(err);
 
       next(err);
     }
@@ -149,26 +149,26 @@ router.patch(
 );
 
 router.delete(
-  "/:planId",
+  "/:roleId",
   authenticate.verifyToken,
   validate({
     params: Joi.object({
-      planId: Joi.string().required(),
+      roleId: Joi.string().required(),
     }),
   }),
   async (req, res, next) => {
     try {
-      await rolesController.deletePlan(req.params);
+      await rolesController.deleteRole(req.params);
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.PLAN_DELETED,
+        message: RESPONSE_MESSAGES.ROLE_DELETED,
         data: {},
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
       console.log(err);
 
-      planDebugger(err);
+      roleDebugger(err);
 
       next(err);
     }

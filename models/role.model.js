@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const {
   constants: {
-    MODELS: { PLAN },
+    MODELS: { ROLE },
     ROLE_STATUS,
   },
 } = require("../utils");
@@ -10,10 +10,7 @@ const {
 const schema = new mongoose.Schema(
   {
     name: { type: String, index: true, required: true },
-    contactsRange: {
-      from: { type: Number, required: true },
-      to: { type: Number, required: true },
-    },
+    permissions: [{ type: String }],
     status: {
       type: String,
       enum: Object.values(ROLE_STATUS),
@@ -23,6 +20,6 @@ const schema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const model = mongoose.model(PLAN, schema);
+const model = mongoose.model(ROLE, schema);
 
 module.exports = model;
