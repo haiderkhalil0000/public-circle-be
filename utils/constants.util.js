@@ -114,6 +114,7 @@ module.exports = {
     ACCESS_TOKEN_DELETED: "Access token deleted successfully.",
     EMAIL_NOT_FOUND_IN_COMPANY:
       "Destination email address not found in the company data!",
+    ACCESS_TOKEN_FETCHED: "Access token fetched successfully.",
   },
 
   INTERACTION_CHANNELS: {
