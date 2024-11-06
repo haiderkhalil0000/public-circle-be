@@ -195,4 +195,10 @@ module.exports = {
     ARCHIVED: "ARCHIVED",
     DELETED: "DELETED",
   },
+
+  ROLE_STATUS: {
+    ACTIVE: "ACTIVE",
+    ARCHIVED: "ARCHIVED",
+    DELETED: "DELETED",
+  },
 };
