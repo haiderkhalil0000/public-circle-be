@@ -12,6 +12,7 @@ module.exports = {
     COMPANY: "companies",
     ACCESS_TOKEN: "access-token",
     PLAN: "plan",
+    ROLE: "role",
   },
 
   RESPONSE_MESSAGES: {
@@ -129,6 +130,14 @@ module.exports = {
     PLAN_NOT_FOUND: "Plan not found!",
     PLAN_UPDATED_ALREADY: "Plan updated already!",
     PAYMENT_INTENT_CREATED: "Payment intent created successfully.",
+    ROLE_EXISTS_ALREADY: "Role exists already!",
+    ROLE_CREATED: "Role created successfully.",
+    ALL_ROLES_FETCHED: "All roles fetched successfully.",
+    ROLES_FETCHED: "Roles fetched successfully.",
+    ROLE_FETCHED: "Role fetched successfully.",
+    ROLE_NOT_FOUND: "Role not found!",
+    ROLE_UPDATED: "Role updated successfully.",
+    ROLE_DELETED: "Role deleted successfully.",
   },
 
   INTERACTION_CHANNELS: {
@@ -192,6 +201,12 @@ module.exports = {
   PUBLIC_CIRCLES_EMAIL_ADDRESS: "saad.venndii@gmail.com",
 
   PLAN_STATUS: {
+    ACTIVE: "ACTIVE",
+    ARCHIVED: "ARCHIVED",
+    DELETED: "DELETED",
+  },
+
+  ROLE_STATUS: {
     ACTIVE: "ACTIVE",
     ARCHIVED: "ARCHIVED",
     DELETED: "DELETED",

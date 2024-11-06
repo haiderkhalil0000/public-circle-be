@@ -11,4 +11,5 @@ module.exports = {
   Company: require("./company.model"),
   AccessToken: require("./access-token.model"),
   Plan: require("./plan.model"),
+  Role: require("./role.model"),
 };
