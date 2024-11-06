@@ -9,11 +9,13 @@ module.exports = {
     SEGMENT: "segment",
     TEMPLATE: "template",
     CRON_JOB: "cron-job",
+    COMPANY: "companies",
     ACCESS_TOKEN: "access-token",
   },
 
   RESPONSE_MESSAGES: {
     INVALID_TOKEN: "Not authenticated, invalid token provided!",
+    TOKEN_IS_INVALID_OR_EXPIRED: "Token is invalid or expired!",
     TOKEN_IS_REQUIRED: "Not authenticated, token is required!",
     EMAIL_BELONGS_TO_OTHER: "This email address belongs to someone else!",
     USER_REGISTERED: "User registered successfully.",
@@ -103,6 +105,7 @@ module.exports = {
     COMPANY_USER_DELETED: "Company user deleted successfully.",
     COMPANY_DATA_RECEIVED: "Company users data recieved successfully.",
     INVALID_OBJECT_ID: "Invalid objectId!",
+    USER_UPDATED: "User updated successfully.",
     ACCESS_TOKEN_CREATED: "Access token created successfully.",
     ACCESS_TOKEN_EXISTS: "Access token exists already!",
     ACCESS_TOKEN_NOT_FOUND: "Access token not found!",
@@ -114,6 +117,7 @@ module.exports = {
     ACCESS_TOKEN_DELETED: "Access token deleted successfully.",
     EMAIL_NOT_FOUND_IN_COMPANY:
       "Destination email address not found in the company data!",
+    ACCESS_TOKEN_FETCHED: "Access token fetched successfully.",
   },
 
   INTERACTION_CHANNELS: {
@@ -171,4 +175,8 @@ module.exports = {
     STAGING: "STAGING",
     PRODUCTION: "PRODUCTION",
   },
+
+  VERIFICATION_EMAIL_SUBJECT: "Public Circles Email Verification",
+
+  PUBLIC_CIRCLES_EMAIL_ADDRESS: "saad.venndii@gmail.com",
 };

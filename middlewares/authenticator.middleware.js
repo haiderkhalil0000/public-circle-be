@@ -9,7 +9,7 @@ const {
 
 const { JWT_SECRET } = process.env;
 
-const createToken = (data) => jwt.sign(data, JWT_SECRET);
+const createToken = (data) => jwt.sign(data, JWT_SECRET, { expiresIn: "10m" });
 
 const decodeToken = (token) => jwt.verify(token, JWT_SECRET);
 

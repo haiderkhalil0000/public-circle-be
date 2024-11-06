@@ -78,4 +78,78 @@ router.post(
   }
 );
 
+router.post(
+  "/send-verification-email",
+  validate({
+    body: Joi.object({
+      emailAddress: Joi.string().email().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      await authController.sendVerificationEmail(req.body);
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.VERIFICATION_EMAIL_SENT,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      userDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.post(
+  "/verify-email",
+  validate({
+    body: Joi.object({
+      emailAddress: Joi.string().email().required(),
+      token: Joi.string().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      await authController.verifyEmailAddress(req.body);
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.EMAIL_VERIFIED,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      authDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.get(
+  "/beefree-token",
+  authenticate.verifyToken,
+  async (req, res, next) => {
+    try {
+      const accessToken = await authController.getBeefreeAccessToken({
+        currentUserId: req.user._id,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.ACCESS_TOKEN_FETCHED,
+        data: accessToken,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      authDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 module.exports = router;

@@ -7,5 +7,6 @@ module.exports = {
   campaignsController: require("./campaign.controller"),
   segmentsController: require("./segments.controller"),
   templatesController: require("./templates.controller"),
+  usersController: require("./users.controller"),
   accessTokensController: require("./access-tokens.controller"),
 };
