@@ -41,4 +41,31 @@ router.post(
   }
 );
 
+router.get(
+  "/subscriptions",
+  authenticate.verifyToken,
+  validate({
+    query: Joi.object({
+      pageSize: Joi.number().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const subscriptions = await stripeController.getSubscriptions(req.query);
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.SUBSCRIPTIONS_FETCHED,
+        data: subscriptions,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      stripeDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 module.exports = router;

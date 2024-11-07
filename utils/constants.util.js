@@ -144,6 +144,7 @@ module.exports = {
     ADD_ON_CREATED: "Add-on created successfully.",
     ADD_ON_DELETED: "Add-on deleted successfully.",
     ALL_ADD_ON_FETCHED: "All add-ons fetched successfully.",
+    SUBSCRIPTIONS_FETCHED: "Subscriptions fetched successfully.",
   },
 
   INTERACTION_CHANNELS: {
