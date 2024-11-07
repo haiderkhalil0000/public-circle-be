@@ -17,6 +17,7 @@ router.post(
     body: Joi.object({
       name: Joi.string().required(),
       contactsRange: Joi.object().required(),
+      price: Joi.string().required(),
     }),
   }),
   async (req, res, next) => {
@@ -121,6 +122,7 @@ router.patch(
     body: Joi.object({
       name: Joi.string().required(),
       contactsRange: Joi.object(),
+      price: Joi.string(),
       status: Joi.string()
         .required()
         .valid(PLAN_STATUS.ACTIVE, PLAN_STATUS.ARCHIVED),

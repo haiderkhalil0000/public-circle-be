@@ -14,6 +14,7 @@ const schema = new mongoose.Schema(
       from: { type: Number, required: true },
       to: { type: Number, required: true },
     },
+    price: { type: Number, required: true },
     status: {
       type: String,
       enum: Object.values(PLAN_STATUS),

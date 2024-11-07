@@ -4,10 +4,9 @@ const {
   constants: { RESPONSE_MESSAGES, PLAN_STATUS },
 } = require("../utils");
 
-const createPlan = async ({ name, contactsRange }) => {
+const createPlan = async ({ name, contactsRange, price }) => {
   const existingPlanDoc = await Plan.findOne({
     name,
-    contactsRange,
   });
 
   if (existingPlanDoc) {
@@ -19,6 +18,7 @@ const createPlan = async ({ name, contactsRange }) => {
   Plan.create({
     name,
     contactsRange,
+    price,
   });
 };
 
