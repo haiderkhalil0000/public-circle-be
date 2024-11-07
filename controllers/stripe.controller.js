@@ -9,6 +9,14 @@ const createPaymentIntent = ({ amount }) =>
     payment_method_types: ["card"],
   });
 
+const getSubscriptions = async ({ pageSize }) => {
+  const { data } = await stripe.subscriptions.list({
+    limit: pageSize,
+  });
+
+  return data;
+};
 module.exports = {
   createPaymentIntent,
+  getSubscriptions,
 };
