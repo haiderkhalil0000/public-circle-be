@@ -12,4 +12,5 @@ module.exports = {
   AccessToken: require("./access-token.model"),
   Plan: require("./plan.model"),
   Role: require("./role.model"),
+  AddOn: require("./add-on.model"),
 };

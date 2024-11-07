@@ -13,6 +13,7 @@ module.exports = {
     ACCESS_TOKEN: "access-token",
     PLAN: "plan",
     ROLE: "role",
+    ADD_ON: "add-on",
   },
 
   RESPONSE_MESSAGES: {
@@ -138,6 +139,11 @@ module.exports = {
     ROLE_NOT_FOUND: "Role not found!",
     ROLE_UPDATED: "Role updated successfully.",
     ROLE_DELETED: "Role deleted successfully.",
+    ADD_ON_EXISTS_ALREADY: "Add-on exists already!",
+    ADD_ON_NOT_FOUND: "Add-on not found!",
+    ADD_ON_CREATED: "Add-on created successfully.",
+    ADD_ON_DELETED: "Add-on deleted successfully.",
+    ALL_ADD_ON_FETCHED: "All add-ons fetched successfully.",
   },
 
   INTERACTION_CHANNELS: {
@@ -207,6 +213,12 @@ module.exports = {
   },
 
   ROLE_STATUS: {
+    ACTIVE: "ACTIVE",
+    ARCHIVED: "ARCHIVED",
+    DELETED: "DELETED",
+  },
+
+  ADD_ON_STATUS: {
     ACTIVE: "ACTIVE",
     ARCHIVED: "ARCHIVED",
     DELETED: "DELETED",
