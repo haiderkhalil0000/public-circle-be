@@ -26,12 +26,12 @@ router.get("/me", authenticate.verifyToken, async (req, res, next) => {
 });
 
 router.patch(
-  "/:currentUserId",
+  "/",
   authenticate.verifyToken,
   validate({
     body: Joi.object({
       emailAddress: Joi.string().email(),
-      password: Joi.string().min(6),
+      password: Joi.string().min(6).max(20),
       firstName: Joi.string(),
       lastName: Joi.string(),
       companyName: Joi.string(),

@@ -12,6 +12,7 @@ const router = express.Router();
 
 router.post(
   "/register",
+  authenticate.verifyEmailToken,
   validate({
     body: Joi.object({
       emailAddress: Joi.string().email().required(),
@@ -43,10 +44,7 @@ router.post(
   "/login",
   validate({
     body: Joi.object({
-      emailAddress: Joi.string()
-        .email()
-
-        .required(),
+      emailAddress: Joi.string().email().required(),
       password: Joi.string().min(6).required(),
       isActivationAllowed: Joi.boolean(),
     }),
