@@ -12,4 +12,5 @@ module.exports = {
   plansController: require("./plans.controller"),
   rolesController: require("./roles.controller"),
   stripeController: require("./stripe.controller"),
+  addOnsController: require("./add-ons.controller"),
 };
