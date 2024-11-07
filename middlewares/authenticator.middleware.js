@@ -59,4 +59,43 @@ const verifyToken = async (req, res, next) => {
   }
 };
 
-module.exports = { verifyToken, createToken, decodeToken };
+const verifyEmailToken = async (req, res, next) => {
+  const authorization = req.headers["authorization"];
+
+  if (!authorization) {
+    return res
+      .status(401)
+      .json({ message: RESPONSE_MESSAGES.TOKEN_IS_REQUIRED, data: {} });
+  }
+
+  const token = authorization.split(" ")[1];
+
+  if (!token) {
+    return res
+      .status(401)
+      .json({ message: RESPONSE_MESSAGES.TOKEN_IS_REQUIRED, data: {} });
+  }
+
+  try {
+    const decodedToken = decodeToken(token);
+
+    if (req.body.emailAddress !== decodedToken.emailAddress) {
+      return res.status(401).json({
+        message: RESPONSE_MESSAGES.INVALID_TOKEN,
+        data: {},
+      });
+    }
+
+    next();
+  } catch (err) {
+    // sendErrorReportToSentry(err);
+    console.log(err);
+
+    return res.status(401).json({
+      message: RESPONSE_MESSAGES.INVALID_TOKEN,
+      data: {},
+    });
+  }
+};
+
+module.exports = { verifyToken, createToken, decodeToken, verifyEmailToken };
