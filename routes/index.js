@@ -24,6 +24,7 @@ router.use("/templates", require("./templates.route"));
 router.use("/access-tokens", require("./access-tokens.route"));
 router.use("/roles", require("./roles.route"));
 router.use("/stripe", require("./stripe.route"));
+router.use("/social-links", require("./social-links.route"));
 
 router.use(error);
 

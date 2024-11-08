@@ -3,32 +3,37 @@ const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema.Types;
 const {
   constants: {
-    MODELS: { ACCESS_TOKEN },
-    DOCUMENT_STATUS,
+    MODELS: { SOCIAL_LINK, COMPANY },
+    SOCIAL_LINK_STATUS,
   },
 } = require("../utils");
 
 const schema = new mongoose.Schema(
   {
-    companyId: {
+    company: {
       type: ObjectId,
       required: true,
       index: true,
+      ref: COMPANY,
     },
-    title: {
+    name: {
+      type: String,
+      required: true,
+    },
+    url: {
       type: String,
       required: true,
     },
     status: {
       type: String,
       required: true,
-      enum: Object.values(DOCUMENT_STATUS),
-      default: DOCUMENT_STATUS.ACTIVE,
+      enum: Object.values(SOCIAL_LINK_STATUS),
+      default: SOCIAL_LINK_STATUS.ACTIVE,
     },
   },
   { timestamps: true }
 );
 
-const model = mongoose.model(ACCESS_TOKEN, schema);
+const model = mongoose.model(SOCIAL_LINK, schema);
 
 module.exports = model;
