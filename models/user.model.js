@@ -3,13 +3,12 @@ const moment = require("moment");
 
 const {
   constants: {
-    MODELS: { USER, COMPANY },
+    MODELS: { USER, ROLE },
   },
 } = require("../utils");
 
 const schema = new mongoose.Schema(
   {
-    company: { type: mongoose.Types.ObjectId, ref: COMPANY },
     emailAddress: { type: String, index: true, required: true },
     password: { type: String, required: true },
     firstName: { type: String, index: true },
@@ -19,6 +18,7 @@ const schema = new mongoose.Schema(
     lastLoginAt: { type: Date, default: moment().format() },
     invalidLoginAttempts: { type: Number, default: 0 },
     isLoginWithEmailLocked: { type: Boolean, default: false },
+    role: { type: mongoose.Types.ObjectId, ref: ROLE },
   },
   { timestamps: true }
 );

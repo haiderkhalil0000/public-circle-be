@@ -1,4 +1,5 @@
 const { User, Company } = require("../models");
+const { basicUtil } = require("../utils");
 
 const updateUser = async ({
   emailAddress,
@@ -14,10 +15,13 @@ const updateUser = async ({
   city,
   province,
   country,
+  role,
   currentUserId,
 }) => {
   let companyDoc;
   const promises = [];
+
+  basicUtil.validateObjectId({ inputString: role });
 
   if (companyName) {
     companyDoc = await Company.findOne({
@@ -54,6 +58,7 @@ const updateUser = async ({
         lastName,
         phoneNumber,
         secondaryEmail,
+        role,
       }
     )
   );

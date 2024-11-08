@@ -43,6 +43,7 @@ router.patch(
       city: Joi.string(),
       province: Joi.string(),
       country: Joi.string(),
+      role: Joi.string(),
     }),
   }),
   async (req, res, next) => {
