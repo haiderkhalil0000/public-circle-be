@@ -9,8 +9,6 @@ module.exports = {
   templatesController: require("./templates.controller"),
   usersController: require("./users.controller"),
   accessTokensController: require("./access-tokens.controller"),
-  plansController: require("./plans.controller"),
   rolesController: require("./roles.controller"),
   stripeController: require("./stripe.controller"),
-  addOnsController: require("./add-ons.controller"),
 };

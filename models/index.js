@@ -10,7 +10,5 @@ module.exports = {
   Cron: require("./cron.model"),
   Company: require("./company.model"),
   AccessToken: require("./access-token.model"),
-  Plan: require("./plan.model"),
   Role: require("./role.model"),
-  AddOn: require("./add-on.model"),
 };
