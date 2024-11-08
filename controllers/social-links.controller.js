@@ -1,10 +1,10 @@
 const createHttpError = require("http-errors");
+
 const { SocialLink } = require("../models");
 const {
-  RESPONSE_MESSAGES,
-  SOCIAL_LINK_STATUS,
-} = require("../utils/constants.util");
-const { basicUtil } = require("../utils");
+  basicUtil,
+  constants: { RESPONSE_MESSAGES, SOCIAL_LINK_STATUS },
+} = require("../utils");
 
 const createSocialLink = async ({ company, name, url }) => {
   const existingSocialLinkDoc = await SocialLink.findOne({

@@ -13,6 +13,7 @@ module.exports = {
     ACCESS_TOKEN: "access-token",
     ROLE: "role",
     SOCIAL_LINK: "social-link",
+    ASSET: "asset",
   },
 
   RESPONSE_MESSAGES: {
@@ -138,6 +139,14 @@ module.exports = {
     ALL_SOCIAL_LINKS_FETCHED: "All social links fetched successfully.",
     SOCIAL_LINK_UPDATED: "Social link updated successfully.",
     SOCIAL_LINK_DELETED: "Social link deleted successfully.",
+    ASSET_EXISTS_ALREADY: "Asset exists already!",
+    ASSET_CREATED: "Asset created successfully.",
+    ASSET_NOT_FOUND: "Asset not found!",
+    ASSET_FETCHED: "Asset fetched successfully.",
+    ASSETS_FETCHED: "Assets fetched successfully.",
+    ALL_ASSETS_FETCHED: "All assets fetched successfully.",
+    ASSET_UPDATED: "Asset updated successfully.",
+    ASSET_DELETED: "Asset deleted successfully.",
   },
 
   INTERACTION_CHANNELS: {
@@ -207,6 +216,12 @@ module.exports = {
   },
 
   SOCIAL_LINK_STATUS: {
+    ACTIVE: "ACTIVE",
+    ARCHIVED: "ARCHIVED",
+    DELETED: "DELETED",
+  },
+
+  ASSETS_STATUS: {
     ACTIVE: "ACTIVE",
     ARCHIVED: "ARCHIVED",
     DELETED: "DELETED",

@@ -12,4 +12,5 @@ module.exports = {
   AccessToken: require("./access-token.model"),
   Role: require("./role.model"),
   SocialLink: require("./social-link.model"),
+  Asset: require("./assets.model"),
 };
