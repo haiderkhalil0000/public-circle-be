@@ -38,6 +38,7 @@ router.patch(
       phoneNumber: Joi.string(),
       secondaryEmail: Joi.string(),
       noOfEmployees: Joi.number(),
+      address: Joi.string(),
       postalCode: Joi.number(),
       city: Joi.string(),
       province: Joi.string(),

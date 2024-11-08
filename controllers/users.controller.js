@@ -9,6 +9,7 @@ const updateUser = async ({
   phoneNumber,
   secondaryEmail,
   noOfEmployees,
+  address,
   postalCode,
   city,
   province,
@@ -34,7 +35,7 @@ const updateUser = async ({
     }
   }
 
-  if (noOfEmployees || postalCode || city || province || country) {
+  if (noOfEmployees || address || postalCode || city || province || country) {
     promises.push(
       Company.updateOne(
         { user: currentUserId },
