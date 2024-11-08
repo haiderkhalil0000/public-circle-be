@@ -68,4 +68,31 @@ router.get(
   }
 );
 
+router.get(
+  "/plans",
+  authenticate.verifyToken,
+  validate({
+    query: Joi.object({
+      pageSize: Joi.number().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const products = await stripeController.getPlans(req.query);
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.PRODUCTS_FETCHED,
+        data: products,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      stripeDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 module.exports = router;

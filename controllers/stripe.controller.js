@@ -16,7 +16,14 @@ const getSubscriptions = async ({ pageSize }) => {
 
   return data;
 };
+
+const getPlans = async ({ pageSize }) =>
+  stripe.products.list({
+    limit: pageSize,
+  });
+
 module.exports = {
   createPaymentIntent,
   getSubscriptions,
+  getPlans,
 };
