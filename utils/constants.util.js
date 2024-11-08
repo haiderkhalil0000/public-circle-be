@@ -11,9 +11,8 @@ module.exports = {
     CRON_JOB: "cron-job",
     COMPANY: "companies",
     ACCESS_TOKEN: "access-token",
-    PLAN: "plan",
     ROLE: "role",
-    ADD_ON: "add-on",
+    SOCIAL_LINK: "social-link",
   },
 
   RESPONSE_MESSAGES: {
@@ -121,15 +120,6 @@ module.exports = {
     EMAIL_NOT_FOUND_IN_COMPANY:
       "Destination email address not found in the company data!",
     ACCESS_TOKEN_FETCHED: "Access token fetched successfully.",
-    PLAN_CREATED: "Plan created successfully.",
-    ALL_PLANS_FETCHED: "All plans fetched successfully.",
-    PLANS_FETCHED: "Plans fetched successfully.",
-    PLAN_FETCHED: "Plan fetched successfully.",
-    PLAN_UPDATED: "Plan updated successfully.",
-    PLAN_DELETED: "Plan deleted successfully.",
-    PLAN_EXISTS_ALREADY: "Plan exists already!",
-    PLAN_NOT_FOUND: "Plan not found!",
-    PLAN_UPDATED_ALREADY: "Plan updated already!",
     PAYMENT_INTENT_CREATED: "Payment intent created successfully.",
     ROLE_EXISTS_ALREADY: "Role exists already!",
     ROLE_CREATED: "Role created successfully.",
@@ -139,12 +129,15 @@ module.exports = {
     ROLE_NOT_FOUND: "Role not found!",
     ROLE_UPDATED: "Role updated successfully.",
     ROLE_DELETED: "Role deleted successfully.",
-    ADD_ON_EXISTS_ALREADY: "Add-on exists already!",
-    ADD_ON_NOT_FOUND: "Add-on not found!",
-    ADD_ON_CREATED: "Add-on created successfully.",
-    ADD_ON_DELETED: "Add-on deleted successfully.",
-    ALL_ADD_ON_FETCHED: "All add-ons fetched successfully.",
     SUBSCRIPTIONS_FETCHED: "Subscriptions fetched successfully.",
+    SOCIAL_LINK_EXISTS_ALREADY: "Social link exists already!",
+    SOCIAL_LINK_NOT_FOUND: "Social link not found!",
+    SOCIAL_LINK_CREATED: "Social link created successfully.",
+    SOCIAL_LINK_FETCHED: "Social link fetched successfully.",
+    SOCIAL_LINKS_FETCHED: "Social links fetched successfully.",
+    ALL_SOCIAL_LINKS_FETCHED: "All social links fetched successfully.",
+    SOCIAL_LINK_UPDATED: "Social link updated successfully.",
+    SOCIAL_LINK_DELETED: "Social link deleted successfully.",
   },
 
   INTERACTION_CHANNELS: {
@@ -207,19 +200,13 @@ module.exports = {
 
   PUBLIC_CIRCLES_EMAIL_ADDRESS: "saad.venndii@gmail.com",
 
-  PLAN_STATUS: {
-    ACTIVE: "ACTIVE",
-    ARCHIVED: "ARCHIVED",
-    DELETED: "DELETED",
-  },
-
   ROLE_STATUS: {
     ACTIVE: "ACTIVE",
     ARCHIVED: "ARCHIVED",
     DELETED: "DELETED",
   },
 
-  ADD_ON_STATUS: {
+  SOCIAL_LINK_STATUS: {
     ACTIVE: "ACTIVE",
     ARCHIVED: "ARCHIVED",
     DELETED: "DELETED",

@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 // const sentry = require("@sentry/node");
 
-const { User } = require("../models");
+const { User, Company } = require("../models");
 const {
   constants: { RESPONSE_MESSAGES },
 } = require("../utils");
@@ -35,7 +35,10 @@ const verifyToken = async (req, res, next) => {
 
     const { _id: userId } = decodedToken;
 
-    const user = await User.findById(userId);
+    const [user, company] = await Promise.all([
+      User.findById(userId),
+      Company.findOne({ user: userId }),
+    ]);
 
     if (!user) {
       return res.status(401).json({
@@ -46,6 +49,7 @@ const verifyToken = async (req, res, next) => {
 
     // sentry.setUser(user);
     req.user = user;
+    req.user.company = company;
 
     next();
   } catch (err) {
