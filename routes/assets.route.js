@@ -1,11 +1,11 @@
 const express = require("express");
-const socialLinkDebugger = require("debug")("debug:socialLink");
+const assetDebugger = require("debug")("debug:asset");
 const Joi = require("joi");
 
 const { authenticate, validate } = require("../middlewares");
-const { socialLinksController } = require("../controllers");
+const { assetsController } = require("../controllers");
 const {
-  constants: { RESPONSE_MESSAGES, SOCIAL_LINK_STATUS },
+  constants: { RESPONSE_MESSAGES, ASSETS_STATUS },
 } = require("../utils");
 
 const router = express.Router();
@@ -21,20 +21,20 @@ router.post(
   }),
   async (req, res, next) => {
     try {
-      await socialLinksController.createSocialLink({
+      await assetsController.createAsset({
         ...req.body,
         company: req.user.company._id,
       });
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.SOCIAL_LINK_CREATED,
+        message: RESPONSE_MESSAGES.ASSET_CREATED,
         data: {},
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
       console.log(err);
 
-      socialLinkDebugger(err);
+      assetDebugger(err);
 
       next(err);
     }
@@ -43,43 +43,43 @@ router.post(
 
 router.get("/all", authenticate.verifyToken, async (req, res, next) => {
   try {
-    const socialLinks = await socialLinksController.readAllSocialLinks();
+    const assets = await assetsController.readAllAssets();
 
     res.status(200).json({
-      message: RESPONSE_MESSAGES.ALL_SOCIAL_LINKS_FETCHED,
-      data: socialLinks,
+      message: RESPONSE_MESSAGES.ALL_ASSETS_FETCHED,
+      data: assets,
     });
   } catch (err) {
     // sendErrorReportToSentry(error);
     console.log(err);
 
-    socialLinkDebugger(err);
+    assetDebugger(err);
 
     next(err);
   }
 });
 
 router.get(
-  "/:socialLinkId",
+  "/:assetId",
   authenticate.verifyToken,
   validate({
     params: Joi.object({
-      socialLinkId: Joi.string().required(),
+      assetId: Joi.string().required(),
     }),
   }),
   async (req, res, next) => {
     try {
-      const socialLink = await socialLinksController.readSocialLink(req.params);
+      const asset = await assetsController.readAsset(req.params);
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.SOCIAL_LINK_FETCHED,
-        data: socialLink,
+        message: RESPONSE_MESSAGES.ASSET_FETCHED,
+        data: asset,
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
       console.log(err);
 
-      socialLinkDebugger(err);
+      assetDebugger(err);
 
       next(err);
     }
@@ -97,19 +97,17 @@ router.get(
   }),
   async (req, res, next) => {
     try {
-      const socialLinks = await socialLinksController.readPaginatedSocialLinks(
-        req.query
-      );
+      const assets = await assetsController.readPaginatedAssets(req.query);
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.SOCIAL_LINKS_FETCHED,
-        data: socialLinks,
+        message: RESPONSE_MESSAGES.ASSETS_FETCHED,
+        data: assets,
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
       console.log(err);
 
-      socialLinkDebugger(err);
+      assetDebugger(err);
 
       next(err);
     }
@@ -117,36 +115,36 @@ router.get(
 );
 
 router.patch(
-  "/:socialLinkId",
+  "/:assetId",
   authenticate.verifyToken,
   validate({
     params: Joi.object({
-      socialLinkId: Joi.string().required(),
+      assetId: Joi.string().required(),
     }),
     body: Joi.object({
       name: Joi.string(),
       url: Joi.string(),
       status: Joi.string()
         .required()
-        .valid(SOCIAL_LINK_STATUS.ACTIVE, SOCIAL_LINK_STATUS.ARCHIVED),
+        .valid(ASSETS_STATUS.ACTIVE, ASSETS_STATUS.ARCHIVED),
     }),
   }),
   async (req, res, next) => {
     try {
-      await socialLinksController.updateSocialLink({
+      await assetsController.updateAsset({
         ...req.params,
-        socialLinkData: req.body,
+        assetData: req.body,
       });
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.SOCIAL_LINK_UPDATED,
+        message: RESPONSE_MESSAGES.ASSET_UPDATED,
         data: {},
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
       console.log(err);
 
-      socialLinkDebugger(err);
+      assetDebugger(err);
 
       next(err);
     }
@@ -154,26 +152,26 @@ router.patch(
 );
 
 router.delete(
-  "/:socialLinkId",
+  "/:assetId",
   authenticate.verifyToken,
   validate({
     params: Joi.object({
-      socialLinkId: Joi.string().required(),
+      assetId: Joi.string().required(),
     }),
   }),
   async (req, res, next) => {
     try {
-      await socialLinksController.deleteSocialLink(req.params);
+      await assetsController.deleteAsset(req.params);
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.SOCIAL_LINK_DELETED,
+        message: RESPONSE_MESSAGES.ASSET_DELETED,
         data: {},
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
       console.log(err);
 
-      socialLinkDebugger(err);
+      assetDebugger(err);
 
       next(err);
     }
