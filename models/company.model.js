@@ -6,16 +6,18 @@ const {
   },
 } = require("../utils");
 
+const ObjectId = mongoose.Types.ObjectId;
+
 const schema = new mongoose.Schema(
   {
     name: { type: String, index: true, required: true },
-    noOfEmployees: { type: Number },
+    companySize: { type: String },
     postalCode: { type: Number },
     address: { type: String },
     city: { type: String },
     province: { type: String },
     country: { type: String },
-    user: { type: mongoose.Types.ObjectId, ref: USER, required: true },
+    user: { type: ObjectId, ref: USER, required: true },
   },
   { timestamps: true }
 );
