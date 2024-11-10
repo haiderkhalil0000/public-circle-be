@@ -85,18 +85,18 @@ const sendVerificationEmail = async ({ emailAddress }) => {
     content: `Welcome to Public Circles,
 
 Please verify your email address by using the following link:
-${PUBLIC_CIRCLES_WEB_URL}/email-verification?emailAddress=${emailAddress}&token=${token}
+${PUBLIC_CIRCLES_WEB_URL}/auth/jwt/sign-up/${token}
 
 Regards,
 Public Circles Team`,
   });
 };
 
-const verifyEmailAddress = async ({ emailAddress, token }) => {
+const verifyEmailAddress = async ({ token }) => {
   try {
     const decodedToken = decodeToken(token);
 
-    if (decodedToken.emailAddress !== emailAddress) {
+    if (!decodedToken.emailAddress) {
       throw createHttpError(403, {
         errorMessage: RESPONSE_MESSAGES.TOKEN_IS_INVALID_OR_EXPIRED,
       });
@@ -106,8 +106,12 @@ const verifyEmailAddress = async ({ emailAddress, token }) => {
       throw createHttpError(403, {
         errorMessage: RESPONSE_MESSAGES.TOKEN_IS_INVALID_OR_EXPIRED,
       });
+    } else if (err.name === "JsonWebTokenError") {
+      throw createHttpError(403, {
+        errorMessage: RESPONSE_MESSAGES.INVALID_TOKEN,
+      });
     } else {
-      throw err;
+      throw { errorMessage: err.message };
     }
   }
 };
