@@ -100,7 +100,6 @@ router.post(
   "/verify-email",
   validate({
     body: Joi.object({
-      emailAddress: Joi.string().email().required(),
       token: Joi.string().required(),
     }),
   }),
