@@ -83,7 +83,7 @@ const verifyEmailToken = async (req, res, next) => {
   try {
     const decodedToken = decodeToken(token);
 
-    if (req.body.emailAddress !== decodedToken.emailAddress) {
+    if (!decodedToken.emailAddress) {
       return res.status(401).json({
         message: RESPONSE_MESSAGES.INVALID_TOKEN,
         data: {},

@@ -37,7 +37,7 @@ router.patch(
       companyName: Joi.string(),
       phoneNumber: Joi.string(),
       secondaryEmail: Joi.string(),
-      noOfEmployees: Joi.number(),
+      companySize: Joi.string(),
       address: Joi.string(),
       postalCode: Joi.number(),
       city: Joi.string(),
@@ -66,5 +66,89 @@ router.patch(
     }
   }
 );
+
+router.post(
+  "/",
+  authenticate.verifyToken,
+  validate({
+    body: Joi.object({
+      emailAddress: Joi.string().email().required(),
+      password: Joi.string().min(6).max(20).required(),
+      firstName: Joi.string(),
+      lastName: Joi.string(),
+      phoneNumber: Joi.string(),
+      secondaryEmail: Joi.string(),
+      role: Joi.string().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      await usersController.createUserUnderACompany({
+        ...req.body,
+        companyId: req.user.company._id,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.USER_CREATED,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      userDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.get(
+  "/",
+  authenticate.verifyToken,
+  validate({
+    query: Joi.object({
+      pageNumber: Joi.number().required(),
+      pageSize: Joi.number().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const users = await usersController.readPaginatedUsersUnderACompany({
+        ...req.query,
+        companyId: req.user.company._id,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.USERS_FETCHED,
+        data: users,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      userDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.get("/all", authenticate.verifyToken, async (req, res, next) => {
+  try {
+    const users = await usersController.readAllUsersUnderACompany({
+      companyId: req.user.company._id,
+    });
+
+    res.status(200).json({
+      message: RESPONSE_MESSAGES.ALL_USERS_FETCHED,
+      data: users,
+    });
+  } catch (err) {
+    // sendErrorReportToSentry(error);
+
+    userDebugger(err);
+
+    next(err);
+  }
+});
 
 module.exports = router;

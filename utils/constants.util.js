@@ -147,6 +147,10 @@ module.exports = {
     ALL_ASSETS_FETCHED: "All assets fetched successfully.",
     ASSET_UPDATED: "Asset updated successfully.",
     ASSET_DELETED: "Asset deleted successfully.",
+    USER_CREATED: "User created successfully.",
+    USER_EXISTS_ALREADY: "This email belongs to someone else in this company!",
+    USERS_FETCHED: "Users fetched successfully.",
+    ALL_USERS_FETCHED: "All users fetched successfully.",
   },
 
   INTERACTION_CHANNELS: {
