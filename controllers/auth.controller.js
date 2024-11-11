@@ -85,7 +85,7 @@ const sendVerificationEmail = async ({ emailAddress }) => {
     content: `Welcome to Public Circles,
 
 Please verify your email address by using the following link:
-${PUBLIC_CIRCLES_WEB_URL}/auth/jwt/sign-up/${token}
+${PUBLIC_CIRCLES_WEB_URL}/auth/jwt/sign-up/?token=${token}
 
 Regards,
 Public Circles Team`,
