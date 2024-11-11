@@ -73,11 +73,7 @@ router.post(
   validate({
     body: Joi.object({
       emailAddress: Joi.string().email().required(),
-      password: Joi.string().min(6).max(20).required(),
-      firstName: Joi.string(),
-      lastName: Joi.string(),
-      phoneNumber: Joi.string(),
-      secondaryEmail: Joi.string(),
+      name: Joi.string().required(),
       role: Joi.string().required(),
     }),
   }),

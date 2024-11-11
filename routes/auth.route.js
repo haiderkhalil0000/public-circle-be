@@ -15,13 +15,15 @@ router.post(
   authenticate.verifyEmailToken,
   validate({
     body: Joi.object({
-      emailAddress: Joi.string().email().required(),
       password: Joi.string().required(),
     }),
   }),
   async (req, res, next) => {
     try {
-      const user = await authController.register(req.body);
+      const user = await authController.register({
+        ...req.body,
+        emailAddress: req.user.emailAddress,
+      });
 
       res.status(200).json({
         message: RESPONSE_MESSAGES.USER_REGISTERED,

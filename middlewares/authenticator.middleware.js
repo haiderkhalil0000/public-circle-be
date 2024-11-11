@@ -90,6 +90,8 @@ const verifyEmailToken = async (req, res, next) => {
       });
     }
 
+    req.user.emailAddress = decodedToken.emailAddress;
+
     next();
   } catch (err) {
     // sendErrorReportToSentry(err);

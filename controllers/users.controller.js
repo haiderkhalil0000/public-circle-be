@@ -71,11 +71,7 @@ const updateUser = async ({
 
 const createUserUnderACompany = async ({
   emailAddress,
-  password,
-  firstName,
-  lastName,
-  phoneNumber,
-  secondaryEmail,
+  name,
   role,
   companyId,
 }) => {
@@ -97,11 +93,7 @@ const createUserUnderACompany = async ({
   return Promise.all([
     User.create({
       emailAddress,
-      password,
-      firstName,
-      lastName,
-      phoneNumber,
-      secondaryEmail,
+      name,
       role,
       company: companyId,
     }),
