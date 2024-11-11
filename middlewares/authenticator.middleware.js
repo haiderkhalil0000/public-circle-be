@@ -90,6 +90,7 @@ const verifyEmailToken = async (req, res, next) => {
       });
     }
 
+    req.user = {};
     req.user.emailAddress = decodedToken.emailAddress;
 
     next();
