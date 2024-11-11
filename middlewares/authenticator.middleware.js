@@ -105,4 +105,52 @@ const verifyEmailToken = async (req, res, next) => {
   }
 };
 
-module.exports = { verifyToken, createToken, decodeToken, verifyEmailToken };
+const decodeExpiredToken = async (req, res, next) => {
+  const authorization = req.headers["authorization"];
+
+  if (!authorization) {
+    return res
+      .status(401)
+      .json({ message: RESPONSE_MESSAGES.TOKEN_IS_REQUIRED, data: {} });
+  }
+
+  const token = authorization.split(" ")[1];
+
+  if (!token) {
+    return res
+      .status(401)
+      .json({ message: RESPONSE_MESSAGES.TOKEN_IS_REQUIRED, data: {} });
+  }
+
+  try {
+    const decodedToken = jwt.decode(token, { complete: true });
+
+    if (!decodedToken.payload.emailAddress) {
+      return res.status(401).json({
+        message: RESPONSE_MESSAGES.INVALID_TOKEN,
+        data: {},
+      });
+    }
+
+    req.user = {};
+    req.user.emailAddress = decodedToken.payload.emailAddress;
+
+    next();
+  } catch (err) {
+    // sendErrorReportToSentry(err);
+    console.log(err);
+
+    return res.status(401).json({
+      message: RESPONSE_MESSAGES.INVALID_TOKEN,
+      data: {},
+    });
+  }
+};
+
+module.exports = {
+  verifyToken,
+  createToken,
+  decodeToken,
+  decodeExpiredToken,
+  verifyEmailToken,
+};
