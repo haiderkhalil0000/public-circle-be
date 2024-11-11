@@ -17,10 +17,25 @@ const getSubscriptions = async ({ pageSize }) => {
   return data;
 };
 
-const getPlans = async ({ pageSize }) =>
-  stripe.products.list({
+const getPlans = async ({ pageSize }) => {
+  const promises = [];
+
+  const plans = await stripe.products.list({
     limit: pageSize,
   });
+
+  plans.data.forEach((item) => {
+    promises.push(stripe.prices.retrieve(item.default_price));
+  });
+
+  const prices = await Promise.all(promises);
+
+  plans.data.forEach((item, index) => {
+    item.price = prices[index];
+  });
+
+  return plans.data;
+};
 
 module.exports = {
   createPaymentIntent,
