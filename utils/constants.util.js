@@ -66,6 +66,7 @@ module.exports = {
     DUPLICATE_CAMPAIGN: "Campaign exists already!",
     CAMPAIGN_CREATED: "Campaign created successfully.",
     FETCHED_CAMPAIGN: "Campaign fetched successfully.",
+    FETCHED_CAMPAIGNS: "Campaigns fetched successfully.",
     FETCHED_ALL_CAMPAIGNS: "All campaigns fetched successfully.",
     UPDATED_CAMPAIGN: "Campaign updated successfully.",
     DELETED_CAMPAIGN: "Campaign deleted successfully.",

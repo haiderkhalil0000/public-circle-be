@@ -52,7 +52,7 @@ const readCampaign = async ({ campaignId }) => {
   return campaign;
 };
 
-const readAllCampaigns = async ({
+const readPaginatedCampaigns = async ({
   companyId,
   pageNumber = 1,
   pageSize = 10,
@@ -77,6 +77,9 @@ const readAllCampaigns = async ({
     allCampaigns,
   };
 };
+
+const readAllCampaigns = async ({ companyId }) =>
+  Campaign.find({ companyId, status: CAMPAIGN_STATUS.ACTIVE });
 
 const updateCampaign = async ({ campaignId, campaignData }) => {
   basicUtil.validateObjectId({ inputString: campaignId });
@@ -262,6 +265,7 @@ const runCampaign = async ({ campaign }) => {
 module.exports = {
   createCampaign,
   readCampaign,
+  readPaginatedCampaigns,
   readAllCampaigns,
   updateCampaign,
   deleteCampaign,

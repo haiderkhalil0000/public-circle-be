@@ -47,36 +47,25 @@ router.post(
   }
 );
 
-router.get(
-  "/all",
-  authenticate.verifyToken,
-  validate({
-    query: Joi.object({
-      pageNumber: Joi.number().optional(),
-      pageSize: Joi.number().optional(),
-    }),
-  }),
-  async (req, res, next) => {
-    try {
-      const allCampaigns = await campaignsController.readAllCampaigns({
-        ...req.query,
-        companyId: req.user.company._id,
-      });
+router.get("/all", authenticate.verifyToken, async (req, res, next) => {
+  try {
+    const allCampaigns = await campaignsController.readAllCampaigns({
+      companyId: req.user.company._id,
+    });
 
-      res.status(200).json({
-        message: RESPONSE_MESSAGES.FETCHED_ALL_CAMPAIGNS,
-        data: allCampaigns,
-      });
-    } catch (err) {
-      // sendErrorReportToSentry(error);
-      console.log(err);
+    res.status(200).json({
+      message: RESPONSE_MESSAGES.FETCHED_ALL_CAMPAIGNS,
+      data: allCampaigns,
+    });
+  } catch (err) {
+    // sendErrorReportToSentry(error);
+    console.log(err);
 
-      campaignDebugger(err);
+    campaignDebugger(err);
 
-      next(err);
-    }
+    next(err);
   }
-);
+});
 
 router.get(
   "/:campaignId",
@@ -93,6 +82,37 @@ router.get(
       res.status(200).json({
         message: RESPONSE_MESSAGES.FETCHED_CAMPAIGN,
         data: campaign,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      campaignDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.get(
+  "/",
+  authenticate.verifyToken,
+  validate({
+    query: Joi.object({
+      pageNumber: Joi.number().optional(),
+      pageSize: Joi.number().optional(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const campaigns = await campaignsController.readPaginatedCampaigns({
+        ...req.query,
+        companyId: req.user.company._id,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.FETCHED_CAMPAIGNS,
+        data: campaigns,
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
