@@ -66,12 +66,6 @@ const readPaginatedCampaigns = async ({
       .limit(pageSize),
   ]);
 
-  if (!allCampaigns.length) {
-    throw createHttpError(404, {
-      errorMessage: RESPONSE_MESSAGES.NO_CAMPAIGNS,
-    });
-  }
-
   return {
     totalRecords,
     allCampaigns,
