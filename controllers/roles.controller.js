@@ -1,3 +1,5 @@
+const createHttpError = require("http-errors");
+
 const { Role } = require("../models");
 const { basicUtil } = require("../utils");
 const { RESPONSE_MESSAGES, ROLE_STATUS } = require("../utils/constants.util");

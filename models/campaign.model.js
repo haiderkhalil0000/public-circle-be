@@ -19,7 +19,7 @@ const schema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    segments: [ObjectId],
+    segments: [{ type: ObjectId }],
     sourceEmailAddress: {
       type: String,
       require: true,
