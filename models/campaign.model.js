@@ -7,7 +7,7 @@ const {
   },
 } = require("../utils");
 const {
-  DOCUMENT_STATUS,
+  CAMPAIGN_STATUS,
   RUN_MODE,
   CRON_STATUS,
 } = require("../utils/constants.util");
@@ -61,8 +61,8 @@ const schema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: Object.values(DOCUMENT_STATUS),
-      default: DOCUMENT_STATUS.ACTIVE,
+      enum: Object.values(CAMPAIGN_STATUS),
+      default: CAMPAIGN_STATUS.ACTIVE,
       required: true,
     },
   },

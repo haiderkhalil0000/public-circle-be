@@ -230,4 +230,10 @@ module.exports = {
     ARCHIVED: "ARCHIVED",
     DELETED: "DELETED",
   },
+
+  CAMPAIGN_STATUS: {
+    ACTIVE: "ACTIVE",
+    ARCHIVED: "ARCHIVED",
+    DELETED: "DELETED",
+  },
 };

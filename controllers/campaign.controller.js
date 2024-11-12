@@ -5,7 +5,7 @@ const { Campaign, Template, CompanyUser, Segment } = require("../models");
 const {
   basicUtil,
   sesUtil,
-  constants: { DOCUMENT_STATUS, RESPONSE_MESSAGES, CRON_STATUS },
+  constants: { CAMPAIGN_STATUS, RESPONSE_MESSAGES, CRON_STATUS },
 } = require("../utils");
 
 const createCampaign = async ({
@@ -21,23 +21,8 @@ const createCampaign = async ({
 }) => {
   basicUtil.validateObjectId({ inputString: emailTemplate });
 
-  const temp = [];
-
   for (const segment of segments) {
-    temp.push(basicUtil.validateObjectId({ inputString: segment }));
-  }
-
-  segments = temp;
-
-  const existingCampaign = await Campaign.findOne({
-    segments,
-    companyId,
-  });
-
-  if (existingCampaign) {
-    throw createHttpError(400, {
-      errorMessage: RESPONSE_MESSAGES.DUPLICATE_CAMPAIGN,
-    });
+    basicUtil.validateObjectId({ inputString: segment });
   }
 
   Campaign.create({
@@ -72,9 +57,11 @@ const readAllCampaigns = async ({
   pageNumber = 1,
   pageSize = 10,
 }) => {
+  const query = { companyId, status: CAMPAIGN_STATUS.ACTIVE };
+
   const [totalRecords, allCampaigns] = await Promise.all([
-    Campaign.countDocuments({ companyId }),
-    Campaign.find({ companyId })
+    Campaign.countDocuments(query),
+    Campaign.find(query)
       .skip((parseInt(pageNumber) - 1) * pageSize)
       .limit(pageSize),
   ]);
@@ -116,9 +103,9 @@ const deleteCampaign = async ({ campaignId }) => {
   basicUtil.validateObjectId({ inputString: campaignId });
 
   const result = await Campaign.updateOne(
-    { _id: campaignId, status: DOCUMENT_STATUS.ACTIVE },
+    { _id: campaignId, status: CAMPAIGN_STATUS.ACTIVE },
     {
-      status: DOCUMENT_STATUS.DELETED,
+      status: CAMPAIGN_STATUS.DELETED,
     }
   );
 
