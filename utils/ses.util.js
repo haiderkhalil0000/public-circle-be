@@ -9,8 +9,13 @@ const {
 
 const { sesClient } = require("../startup/ses.config");
 
-const sendEmail = ({ fromEmailAddress, toEmailAddress, subject, content }) => {
-  sesClient.send(
+const sendEmail = async ({
+  fromEmailAddress,
+  toEmailAddress,
+  subject,
+  content,
+}) => {
+  await sesClient.send(
     new SendEmailCommand({
       Source: fromEmailAddress,
       Destination: {
