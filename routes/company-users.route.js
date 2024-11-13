@@ -129,41 +129,6 @@ router.post(
   }
 );
 
-router.post(
-  "/interact",
-  authenticate.verifyToken,
-  validate({
-    body: Joi.object({
-      filters: Joi.object().required(),
-      channel: Joi.string().required(),
-      format: Joi.object().required(),
-      sourceEmailAddress: Joi.string().email().optional(),
-    }),
-  }),
-  async (req, res, next) => {
-    try {
-      await companyUsersController.interactWithUsers({
-        filters: req.body.filters,
-        channel: req.body.channel,
-        companyId: req.user.company._id,
-        format: req.body.format,
-        sourceEmailAddress: req.body.sourceEmailAddress,
-      });
-
-      res.status(200).json({
-        message: RESPONSE_MESSAGES.INTERACTION_SUCCESSFULL,
-        data: {},
-      });
-    } catch (err) {
-      // sendErrorReportToSentry(error);
-
-      companyUsersDebugger(err);
-
-      next(err);
-    }
-  }
-);
-
 router.get("/all", authenticate.verifyToken, async (req, res, next) => {
   try {
     const companyUsers = await companyUsersController.readAllCompanyUsers({

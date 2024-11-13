@@ -123,101 +123,6 @@ const mapDynamicValues = async ({ companyId, emailAddress, content }) => {
   return modifiedContent;
 };
 
-const interactWithUsers = async ({
-  filters,
-  channel,
-  companyId,
-  format,
-  sourceEmailAddress,
-}) => {
-  if (channel === INTERACTION_CHANNELS.EMAIL) {
-    let query = { companyId };
-
-    for (let key in filters) {
-      if (Array.isArray(filters[key])) {
-        query[key] = { $in: filters[key] };
-      } else {
-        query[key] = filters[key];
-      }
-    }
-
-    const [configuration, emailAddressObjects] = await Promise.all([
-      Configuration.aggregate([
-        {
-          $match: {
-            "emailConfigurations.addresses.emailAddress": sourceEmailAddress,
-          },
-        },
-        {
-          $project: {
-            _id: 0,
-            matchedAddress: {
-              $arrayElemAt: [
-                {
-                  $filter: {
-                    input: "$emailConfigurations.addresses",
-                    as: "address",
-                    cond: {
-                      $eq: ["$$address.emailAddress", sourceEmailAddress],
-                    },
-                  },
-                },
-                0, // Return the first matched element
-              ],
-            },
-          },
-        },
-      ]),
-      CompanyUser.find(query, {
-        email: 1,
-      }),
-    ]);
-
-    validateConfiguration({ configuration });
-
-    const emailAddresses = emailAddressObjects.map((item) => item.email);
-
-    const promises = [];
-
-    for (const emailAddress of emailAddresses) {
-      promises.push(
-        mapDynamicValues({
-          companyId,
-          emailAddress,
-          content: format.content,
-        })
-      );
-    }
-
-    const mappedContentArray = await Promise.all(promises);
-
-    promises.length = 0;
-
-    for (let index = 0; index < mappedContentArray.length; index++) {
-      promises.push(
-        sendEmail({
-          fromEmailAddress: sourceEmailAddress,
-          toEmailAddress: emailAddresses[index],
-          subject: format.subject,
-          content: mappedContentArray[index],
-        })
-      );
-
-      promises.push(
-        EmailStats.create({
-          companyId,
-          fromEmailAddress: sourceEmailAddress,
-          toEmailAddress: emailAddresses[index],
-          emailSubject: format.subject,
-          emailContent: mappedContentArray[index],
-        })
-      );
-    }
-
-    await Promise.all(promises);
-  }
-};
-
 const readAllCompanyUsers = ({ companyId }) => CompanyUser.find({ companyId });
 
 const readPaginatedCompanyUsers = async ({
@@ -300,7 +205,6 @@ module.exports = {
   getPossibleFilterKeys,
   getPossibleFilterValues,
   getFiltersCount,
-  interactWithUsers,
   search,
   readAllCompanyUsers,
   readPaginatedCompanyUsers,
