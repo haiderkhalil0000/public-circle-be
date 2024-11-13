@@ -4,7 +4,11 @@ const Joi = require("joi");
 
 const { authenticate, validate } = require("../middlewares");
 const { campaignsController } = require("../controllers");
-const { RESPONSE_MESSAGES, RUN_MODE } = require("../utils/constants.util");
+const {
+  RESPONSE_MESSAGES,
+  RUN_MODE,
+  CAMPAIGN_STATUS,
+} = require("../utils/constants.util");
 
 const router = express.Router();
 
@@ -140,6 +144,10 @@ router.patch(
       runSchedule: Joi.string(),
       isRecurring: Joi.boolean(),
       recurringPeriod: Joi.string(),
+      status: Joi.string().valid(
+        CAMPAIGN_STATUS.ACTIVE,
+        CAMPAIGN_STATUS.DISABLED
+      ),
     }),
   }),
   async (req, res, next) => {

@@ -234,7 +234,7 @@ module.exports = {
 
   CAMPAIGN_STATUS: {
     ACTIVE: "ACTIVE",
-    ARCHIVED: "ARCHIVED",
+    DISABLED: "DISABLED",
     DELETED: "DELETED",
   },
 

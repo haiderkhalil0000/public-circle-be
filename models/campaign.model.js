@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema.Types;
 const {
   constants: {
-    MODELS: { CAMPAIGN },
+    MODELS: { CAMPAIGN, COMPANY, SEGMENT, TEMPLATE },
   },
 } = require("../utils");
 const {
@@ -18,8 +18,9 @@ const schema = new mongoose.Schema(
       type: ObjectId,
       required: true,
       index: true,
+      ref: COMPANY,
     },
-    segments: [{ type: ObjectId }],
+    segments: [{ type: ObjectId, ref: SEGMENT }],
     sourceEmailAddress: {
       type: String,
       require: true,
@@ -31,6 +32,7 @@ const schema = new mongoose.Schema(
     emailTemplate: {
       type: ObjectId,
       required: true,
+      ref: TEMPLATE,
     },
     runMode: {
       type: String,
