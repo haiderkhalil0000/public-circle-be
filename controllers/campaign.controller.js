@@ -5,7 +5,7 @@ const { Campaign, Template, CompanyUser, Segment } = require("../models");
 const {
   basicUtil,
   sesUtil,
-  constants: { CAMPAIGN_STATUS, RESPONSE_MESSAGES, CRON_STATUS },
+  constants: { CAMPAIGN_STATUS, RESPONSE_MESSAGES, CRON_STATUS, RUN_MODE },
 } = require("../utils");
 
 const createCampaign = async ({
@@ -25,7 +25,7 @@ const createCampaign = async ({
     basicUtil.validateObjectId({ inputString: segment });
   }
 
-  Campaign.create({
+  const campaign = await Campaign.create({
     companyId,
     segments,
     sourceEmailAddress,
@@ -36,6 +36,10 @@ const createCampaign = async ({
     isRecurring,
     recurringPeriod,
   });
+
+  if (runMode === RUN_MODE.INSTANT) {
+    await runCampaign({ campaign });
+  }
 };
 
 const readCampaign = async ({ campaignId }) => {

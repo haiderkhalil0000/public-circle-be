@@ -2,15 +2,18 @@ const moment = require("moment");
 const CronJob = require("cron").CronJob;
 
 const { Cron, Campaign } = require("../models");
-const {
-  constants: { CRON_RECORD_LIMIT, CRON_STATUS, CRON_JOBS },
-} = require("../utils");
-const {
-  CRON_INTERVALS,
-  RUN_MODE,
-  DOCUMENT_STATUS,
-} = require("../utils/constants.util");
 const { campaignsController } = require("../controllers");
+const {
+  constants: {
+    CRON_RECORD_LIMIT,
+    CRON_STATUS,
+    CRON_JOBS,
+    CRON_INTERVALS,
+    RUN_MODE,
+    CAMPAIGN_STATUS,
+  },
+} = require("../utils");
+
 // const sendErrorReportToSentry = require("../utils/send-error-report-to-sentry");
 
 new CronJob(
@@ -27,19 +30,23 @@ new CronJob(
       const pendingCampaigns = await Campaign.find({
         $or: [
           {
-            runMode: { $in: [RUN_MODE.INSTANT, RUN_MODE.SCHEDULE] },
+            runMode: RUN_MODE.SCHEDULE,
             cronStatus: CRON_STATUS.PENDING,
-            status: DOCUMENT_STATUS.ACTIVE,
+            processedCount: { $lt: 1 },
+            status: CAMPAIGN_STATUS.ACTIVE,
           },
-          { isRecurring: true, status: DOCUMENT_STATUS.ACTIVE },
+          {
+            isRecurring: true,
+            processedCount: { $gte: 1 },
+            status: CAMPAIGN_STATUS.ACTIVE,
+          },
         ],
       });
 
       for (const campaign of pendingCampaigns) {
         if (
-          campaign.runMode === RUN_MODE.INSTANT ||
-          (campaign.runMode === RUN_MODE.SCHEDULE &&
-            moment().isAfter(moment(campaign.runSchedule)))
+          campaign.runMode === RUN_MODE.SCHEDULE &&
+          moment().isAfter(moment(campaign.runSchedule))
         ) {
           recordsUpdated++;
 
