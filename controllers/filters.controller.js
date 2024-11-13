@@ -1,8 +1,7 @@
-const createHttpError = require("http-errors");
 const { Filter } = require("../models");
 
 const {
-  constants: { RESPONSE_MESSAGES, DOCUMENT_STATUS },
+  constants: { FILTER_STATUS },
   basicUtil,
 } = require("../utils");
 
@@ -10,19 +9,7 @@ const createFilter = async (
   { filterLabel, filterType, filterKey, filterValues },
   { companyId }
 ) => {
-  const isFilterExists = await Filter.findOne({
-    companyId,
-    filterKey,
-    status: DOCUMENT_STATUS.ACTIVE,
-  });
-
-  if (isFilterExists) {
-    throw createHttpError(400, {
-      errorMessage: RESPONSE_MESSAGES.FILTER_ALREADY_EXISTS,
-    });
-  }
-
-  Filter.create({
+  await Filter.create({
     companyId,
     filterLabel,
     filterType,
@@ -45,12 +32,12 @@ const updateFilter = (
 const readFilter = ({ filterId }) => Filter.findById(filterId);
 
 const readAllFilters = ({ companyId }) =>
-  Filter.find({ companyId, status: DOCUMENT_STATUS.ACTIVE });
+  Filter.find({ companyId, status: FILTER_STATUS.ACTIVE });
 
 const readPaginatedFilters = async ({ companyId, pageNumber, pageSize }) => {
   const [totalCount, filters] = await Promise.all([
-    Filter.countDocuments({ companyId, status: DOCUMENT_STATUS.ACTIVE }),
-    Filter.find({ companyId, status: DOCUMENT_STATUS.ACTIVE })
+    Filter.countDocuments({ companyId, status: FILTER_STATUS.ACTIVE }),
+    Filter.find({ companyId, status: FILTER_STATUS.ACTIVE })
       .skip((parseInt(pageNumber) - 1) * pageSize)
       .limit(pageSize),
   ]);
@@ -65,7 +52,7 @@ const deleteFilter = ({ filterId }) => {
   basicUtil.validateObjectId({ inputString: filterId });
 
   return Filter.findByIdAndUpdate(filterId, {
-    status: DOCUMENT_STATUS.DELETED,
+    status: FILTER_STATUS.DELETED,
   });
 };
 
