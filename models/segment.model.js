@@ -3,10 +3,10 @@ const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema.Types;
 const {
   constants: {
-    MODELS: { SEGMENT },
+    MODELS: { SEGMENT, COMPANY },
   },
 } = require("../utils");
-const { DOCUMENT_STATUS } = require("../utils/constants.util");
+const { SEGMENT_STATUS } = require("../utils/constants.util");
 
 const schema = new mongoose.Schema(
   {
@@ -14,6 +14,7 @@ const schema = new mongoose.Schema(
       type: ObjectId,
       required: true,
       index: true,
+      ref: COMPANY,
     },
     name: {
       type: String,
@@ -25,8 +26,8 @@ const schema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: Object.values(DOCUMENT_STATUS),
-      default: DOCUMENT_STATUS.ACTIVE,
+      enum: Object.values(SEGMENT_STATUS),
+      default: SEGMENT_STATUS.ACTIVE,
       required: true,
     },
   },

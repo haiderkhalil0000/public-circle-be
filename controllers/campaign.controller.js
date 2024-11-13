@@ -186,6 +186,7 @@ const sendTestEmail = async ({
         toEmailAddress: item,
         subject: emailSubject,
         content: mappedContentArray[index],
+        contentType: template.kind,
       })
     );
   });
@@ -245,6 +246,7 @@ const runCampaign = async ({ campaign }) => {
         toEmailAddress: item.email,
         subject: campaign.emailSubject,
         content: mappedContentArray[index],
+        contentType: template.kind,
       })
     );
   });

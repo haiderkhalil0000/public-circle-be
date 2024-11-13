@@ -2,9 +2,9 @@ const mongoose = require("mongoose");
 
 const {
   constants: {
-    MODELS: { FILTER },
+    MODELS: { FILTER, COMPANY },
     FILTER_TYPES,
-    DOCUMENT_STATUS,
+    FILTER_STATUS,
   },
 } = require("../utils");
 
@@ -16,6 +16,7 @@ const schema = new mongoose.Schema(
       type: ObjectId,
       required: true,
       index: true,
+      ref: COMPANY,
     },
     filterLabel: {
       type: String,
@@ -37,8 +38,8 @@ const schema = new mongoose.Schema(
     status: {
       type: String,
       required: true,
-      default: DOCUMENT_STATUS.ACTIVE,
-      enum: Object.values(DOCUMENT_STATUS),
+      default: FILTER_STATUS.ACTIVE,
+      enum: Object.values(FILTER_STATUS),
     },
   },
   { timestamps: true }
