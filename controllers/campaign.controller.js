@@ -54,7 +54,7 @@ const createCampaign = async ({
 }) => {
   await validateSourceEmailAddress({
     companyId,
-    sourceEmailAddress: "saad1@venndii.com",
+    sourceEmailAddress,
   });
   basicUtil.validateObjectId({ inputString: emailTemplate });
 
@@ -231,6 +231,29 @@ const sendTestEmail = async ({
   await Promise.all(promises);
 };
 
+const populateCompanyUserQuery = ({ segments }) => {
+  let allFilters = {};
+
+  for (const segment of segments) {
+    for (const [key, value] of Object.entries(segment.filters)) {
+      if (!allFilters[key]) {
+        allFilters[key] = [];
+      }
+      allFilters[key].push(value);
+    }
+  }
+
+  for (const key in allFilters) {
+    if (allFilters[key].length > 1) {
+      allFilters[key] = { $in: allFilters[key] };
+    } else {
+      allFilters[key] = allFilters[key][0];
+    }
+  }
+
+  return allFilters;
+};
+
 const runCampaign = async ({ campaign }) => {
   const promises = [];
   const segmentPromises = [];
@@ -249,24 +272,24 @@ const runCampaign = async ({ campaign }) => {
     Template.findById({ _id: campaign.emailTemplate }),
   ]);
 
-  let allFilters = {};
+  const query = populateCompanyUserQuery({ segments });
 
-  for (const segment of segments) {
-    allFilters = { ...allFilters, ...segment.filters };
-  }
-
-  const emailAddresses = await CompanyUser.find(
-    { ...allFilters, companyId: campaign.companyId },
+  let emailAddresses = await CompanyUser.find(
+    { ...query, companyId: campaign.companyId },
     {
       email: 1,
     }
   ).lean();
 
+  emailAddresses = basicUtil.fiterUniqueStringsFromArray(
+    emailAddresses.map((item) => item.email)
+  );
+
   for (const address of emailAddresses) {
     promises.push(
       mapDynamicValues({
         companyId: campaign.companyId,
-        emailAddress: address.email,
+        emailAddress: address,
         content: template.body,
       })
     );
@@ -280,7 +303,7 @@ const runCampaign = async ({ campaign }) => {
     promises.push(
       sesUtil.sendEmail({
         fromEmailAddress: campaign.sourceEmailAddress,
-        toEmailAddress: item.email,
+        toEmailAddress: item,
         subject: campaign.emailSubject,
         content: mappedContentArray[index],
         contentType: template.kind,
