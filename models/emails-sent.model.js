@@ -31,13 +31,13 @@ const schema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    awsMessageId: {
+    sesMessageId: {
       type: String,
     },
   },
   { timestamps: true, strict: false }
 );
 
-const model = mongoose.model(EMAILS_SENT, schema);
+const model = mongoose.model(EMAILS_SENT, schema, EMAILS_SENT);
 
 module.exports = model;

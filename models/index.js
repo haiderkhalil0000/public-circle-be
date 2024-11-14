@@ -12,5 +12,5 @@ module.exports = {
   Role: require("./role.model"),
   SocialLink: require("./social-link.model"),
   Asset: require("./assets.model"),
-  EmailsSent: require("./emails-sent.model"),
+  EmailSent: require("./emails-sent.model"),
 };

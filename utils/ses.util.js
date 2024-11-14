@@ -38,7 +38,7 @@ const sendEmail = async ({
     })
   );
 
-  console.log(result);
+  return result;
 };
 
 const sendVerificationEmail = ({ emailAddress }) => {

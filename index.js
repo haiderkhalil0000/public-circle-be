@@ -28,7 +28,7 @@ app.get("/", (req, res) =>
 );
 
 const axios = require("axios");
-const { EmailStats } = require("./models");
+const { EmailSent } = require("./models");
 const { constants } = require("./utils");
 
 app.use("/email-events", async (req, res) => {
@@ -39,24 +39,22 @@ app.use("/email-events", async (req, res) => {
     const body = req.body;
 
     console.log("email-events body:", body);
+    console.log("message.mail.messageId:", message.mail.messageId);
 
     if (messageType === "Notification") {
       const message = JSON.parse(body.Message);
 
-      let statDoc = await EmailStats.findOne({
-        fromEmailAddress: message.mail.source,
-        toEmailAddress: message.mail.destination[0],
+      let emailSentDoc = await EmailSent.findOne({
+        sesMessageId: message.mail.messageId,
       });
 
-      if (!statDoc) {
+      if (!emailSentDoc) {
         throw createHttpError(400, { errorMessage: "Stats document missing!" });
       }
 
-      statDoc.details = message;
+      emailSentDoc.details = message;
 
-      console.log(statDoc);
-
-      await statDoc.save();
+      await emailSentDoc.save();
     } else if (messageType === "SubscriptionConfirmation") {
       const subscribeURL = body.SubscribeURL;
 
