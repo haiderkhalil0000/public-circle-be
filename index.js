@@ -19,8 +19,6 @@ const server = http.createServer(app);
 configure(app);
 database.connect();
 
-const { ENVIRONMENT, PORT = 80 } = process.env;
-
 app.get("/", (req, res) =>
   res.status(200).json({
     message: `Server is up and running`,
@@ -29,7 +27,9 @@ app.get("/", (req, res) =>
 
 const axios = require("axios");
 const { EmailSent } = require("./models");
-const { constants } = require("./utils");
+const {
+  constants: { ENVIRONMENT, EMAIL_DOC_NOT_FOUND },
+} = require("./utils");
 
 app.use("/email-events", async (req, res) => {
   try {
@@ -49,7 +49,7 @@ app.use("/email-events", async (req, res) => {
       });
 
       if (!emailSentDoc) {
-        throw createHttpError(400, { errorMessage: "Stats document missing!" });
+        throw createHttpError(400, { errorMessage: EMAIL_DOC_NOT_FOUND });
       }
 
       emailSentDoc.details = message;
@@ -69,9 +69,11 @@ app.use("/email-events", async (req, res) => {
 
 app.use(require("./routes"));
 
-if (ENVIRONMENT === constants.ENVIRONMENT.PRODUCTION) {
+if (process.env.ENVIRONMENT === ENVIRONMENT.PRODUCTION) {
   //cronJobs
   require("./cron-jobs/run-campaign.cron");
 }
+
+const { PORT = 80 } = process.env;
 
 server.listen(PORT, () => console.log(`Server starting on port: ${PORT}`));

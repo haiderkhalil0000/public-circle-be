@@ -152,6 +152,7 @@ module.exports = {
     USER_EXISTS_ALREADY: "This email belongs to someone else in this company!",
     USERS_FETCHED: "Users fetched successfully.",
     ALL_USERS_FETCHED: "All users fetched successfully.",
+    EMAIL_DOC_NOT_FOUND: "Email document not found!",
   },
 
   INTERACTION_CHANNELS: {
