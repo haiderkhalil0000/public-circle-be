@@ -4,7 +4,7 @@ module.exports = {
     COMPANY_USER: "company-user",
     FILTER: "filter",
     CONFIGURATION: "configuration",
-    EMAIL_STATS: "email-stat",
+    EMAILS_SENT: "emails-sent",
     CAMPAIGN: "campaign",
     SEGMENT: "segment",
     TEMPLATE: "template",

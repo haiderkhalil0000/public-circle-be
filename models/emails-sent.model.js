@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema.Types;
 const {
   constants: {
-    MODELS: { EMAIL_STATS },
+    MODELS: { EMAILS_SENT, COMPANY },
   },
 } = require("../utils");
 
@@ -13,6 +13,7 @@ const schema = new mongoose.Schema(
       type: ObjectId,
       required: true,
       index: true,
+      ref: COMPANY,
     },
     fromEmailAddress: {
       type: String,
@@ -30,10 +31,13 @@ const schema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    awsMessageId: {
+      type: String,
+    },
   },
-  { timestamps: true, strict: false, timestamps: true }
+  { timestamps: true, strict: false }
 );
 
-const model = mongoose.model(EMAIL_STATS, schema);
+const model = mongoose.model(EMAILS_SENT, schema);
 
 module.exports = model;

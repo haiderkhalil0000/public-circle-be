@@ -3,7 +3,6 @@ module.exports = {
   Filter: require("./filter.model"),
   CompanyUser: require("./company-user.model"),
   Configuration: require("./configuration.model"),
-  EmailStats: require("./email-stats.model"),
   Campaign: require("./campaign.model"),
   Segment: require("./segment.model"),
   Template: require("./template.model"),
@@ -13,4 +12,5 @@ module.exports = {
   Role: require("./role.model"),
   SocialLink: require("./social-link.model"),
   Asset: require("./assets.model"),
+  EmailsSent: require("./emails-sent.model"),
 };
