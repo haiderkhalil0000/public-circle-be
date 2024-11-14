@@ -28,7 +28,7 @@ app.get("/", (req, res) =>
 const axios = require("axios");
 const { EmailSent } = require("./models");
 const {
-  constants: { ENVIRONMENT, EMAIL_DOC_NOT_FOUND },
+  constants: { ENVIRONMENT, RESPONSE_MESSAGES },
 } = require("./utils");
 
 app.use("/email-events", async (req, res) => {
@@ -47,7 +47,9 @@ app.use("/email-events", async (req, res) => {
     });
 
     if (!emailSentDoc) {
-      throw createHttpError(400, { errorMessage: EMAIL_DOC_NOT_FOUND });
+      throw createHttpError(400, {
+        errorMessage: RESPONSE_MESSAGES.EMAIL_DOC_NOT_FOUND,
+      });
     }
 
     emailSentDoc.details = message;
