@@ -8,12 +8,14 @@ const {
 } = require("@aws-sdk/client-ses");
 
 const { sesClient } = require("../startup/ses.config");
+const { TEMPLATE_KINDS } = require("./constants.util");
 
 const sendEmail = async ({
   fromEmailAddress,
   toEmailAddress,
   subject,
   content,
+  contentType,
 }) => {
   await sesClient.send(
     new SendEmailCommand({
@@ -23,10 +25,12 @@ const sendEmail = async ({
       },
       Message: {
         Subject: {
+          Charset: "UTF-8",
           Data: subject,
         },
         Body: {
-          Text: {
+          [contentType === TEMPLATE_KINDS.HTML ? "Html" : "Text"]: {
+            Charset: "UTF-8",
             Data: content,
           },
         },

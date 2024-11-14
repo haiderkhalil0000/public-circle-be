@@ -243,4 +243,10 @@ module.exports = {
     ARCHIVED: "ARCHIVED",
     DELETED: "DELETED",
   },
+
+  SEGMENT_STATUS: {
+    ACTIVE: "ACTIVE",
+    ARCHIVED: "ARCHIVED",
+    DELETED: "DELETED",
+  },
 };
