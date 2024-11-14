@@ -114,8 +114,49 @@ const readPaginatedCampaigns = async ({
   };
 };
 
-const readAllCampaigns = async ({ companyId }) =>
-  Campaign.find({ companyId, status: CAMPAIGN_STATUS.ACTIVE });
+const readAllCampaigns = async ({ companyId }) => {
+  const allCampaigns = await Campaign.find({
+    companyId,
+    status: CAMPAIGN_STATUS.ACTIVE,
+  })
+    .populate("segments")
+    .lean();
+
+  const companyUsersController = require("./company-users.controller");
+  const promises = [];
+  const usersCountMap = new Map();
+
+  for (const campaign of allCampaigns) {
+    usersCountMap.set(campaign._id.toString(), 0); // Initialize `usersCount` for each campaign
+    for (const segment of campaign.segments) {
+      promises.push(
+        companyUsersController
+          .getFiltersCount({ filters: segment.filters })
+          .then((item) => ({
+            campaignId: campaign._id.toString(),
+            usersCount: item[0].filterCount,
+          }))
+      );
+    }
+  }
+
+  const segmentUsersCount = await Promise.all(promises);
+
+  // Use the Map to aggregate `usersCount` for each campaign
+  segmentUsersCount.forEach((item) => {
+    usersCountMap.set(
+      item.campaignId,
+      usersCountMap.get(item.campaignId) + item.usersCount
+    );
+  });
+
+  // Attach aggregated `usersCount` from the Map to the campaigns
+  allCampaigns.forEach((campaign) => {
+    campaign.usersCount = usersCountMap.get(campaign._id.toString());
+  });
+
+  return allCampaigns;
+};
 
 const updateCampaign = async ({ campaignId, campaignData }) => {
   basicUtil.validateObjectId({ inputString: campaignId });
