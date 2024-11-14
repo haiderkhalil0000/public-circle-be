@@ -13,7 +13,7 @@ const schema = new mongoose.Schema(
   {
     company: { type: ObjectId, ref: COMPANY },
     emailAddress: { type: String, index: true, required: true },
-    password: { type: String, required: true },
+    password: { type: String },
     firstName: { type: String, index: true },
     lastName: { type: String, index: true },
     phoneNumber: { type: String, index: true },
