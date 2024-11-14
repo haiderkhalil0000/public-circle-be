@@ -33,33 +33,31 @@ const {
 
 app.use("/email-events", async (req, res) => {
   try {
+    console.log("request_webhook", req);
     const messageType = req.headers["x-amz-sns-message-type"];
 
     // Parse the incoming SNS message
     const body = req.body;
 
-    console.log("email-events body:", body);
-    console.log("message.mail.messageId:", message.mail.messageId);
+    // if (messageType === "Notification") {
+    const message = JSON.parse(body.Message);
 
-    if (messageType === "Notification") {
-      const message = JSON.parse(body.Message);
+    let emailSentDoc = await EmailSent.findOne({
+      sesMessageId: message.mail.messageId,
+    });
 
-      let emailSentDoc = await EmailSent.findOne({
-        sesMessageId: message.mail.messageId,
-      });
-
-      if (!emailSentDoc) {
-        throw createHttpError(400, { errorMessage: EMAIL_DOC_NOT_FOUND });
-      }
-
-      emailSentDoc.details = message;
-
-      await emailSentDoc.save();
-    } else if (messageType === "SubscriptionConfirmation") {
-      const subscribeURL = body.SubscribeURL;
-
-      await axios.get(subscribeURL);
+    if (!emailSentDoc) {
+      throw createHttpError(400, { errorMessage: EMAIL_DOC_NOT_FOUND });
     }
+
+    emailSentDoc.details = message;
+
+    await emailSentDoc.save();
+    // } else if (messageType === "SubscriptionConfirmation") {
+    //   const subscribeURL = body.SubscribeURL;
+
+    //   await axios.get(subscribeURL);
+    // }
   } catch (err) {
     console.log(err);
   }
