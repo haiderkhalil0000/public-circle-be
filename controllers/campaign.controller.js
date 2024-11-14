@@ -1,12 +1,45 @@
 const moment = require("moment");
 const createHttpError = require("http-errors");
 
-const { Campaign, Template, CompanyUser, Segment } = require("../models");
+const {
+  Campaign,
+  Template,
+  CompanyUser,
+  Segment,
+  Configuration,
+} = require("../models");
 const {
   basicUtil,
   sesUtil,
   constants: { CAMPAIGN_STATUS, RESPONSE_MESSAGES, CRON_STATUS, RUN_MODE },
 } = require("../utils");
+
+const validateSourceEmailAddress = async ({
+  companyId,
+  sourceEmailAddress,
+}) => {
+  const configurationDoc = await Configuration.findOne({ companyId }).lean();
+
+  const verifiedEmailOrDomains = [];
+
+  verifiedEmailOrDomains.push(
+    configurationDoc.emailConfigurations.addresses.find(
+      (item) => item.emailAddress === sourceEmailAddress && item.isVerified
+    )
+  );
+
+  verifiedEmailOrDomains.push(
+    configurationDoc.emailConfigurations.domains.forEach(
+      (item) => item.emailAddress === sourceEmailAddress && item.isVerified
+    )
+  );
+
+  if (!verifiedEmailOrDomains.filter(Boolean).length) {
+    throw createHttpError(403, {
+      errorMessage: RESPONSE_MESSAGES.EMAIL_NOT_VERIFIED,
+    });
+  }
+};
 
 const createCampaign = async ({
   companyId,
@@ -19,6 +52,10 @@ const createCampaign = async ({
   isRecurring,
   recurringPeriod,
 }) => {
+  await validateSourceEmailAddress({
+    companyId,
+    sourceEmailAddress: "saad1@venndii.com",
+  });
   basicUtil.validateObjectId({ inputString: emailTemplate });
 
   for (const segment of segments) {
