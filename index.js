@@ -19,8 +19,6 @@ const server = http.createServer(app);
 configure(app);
 database.connect();
 
-const { ENVIRONMENT, PORT = 80 } = process.env;
-
 app.get("/", (req, res) =>
   res.status(200).json({
     message: `Server is up and running`,
@@ -28,8 +26,10 @@ app.get("/", (req, res) =>
 );
 
 const axios = require("axios");
-const { EmailStats } = require("./models");
-const { constants } = require("./utils");
+const { EmailSent } = require("./models");
+const {
+  constants: { ENVIRONMENT, EMAIL_DOC_NOT_FOUND },
+} = require("./utils");
 
 app.use("/email-events", async (req, res) => {
   try {
@@ -39,24 +39,22 @@ app.use("/email-events", async (req, res) => {
     const body = req.body;
 
     console.log("email-events body:", body);
+    console.log("message.mail.messageId:", message.mail.messageId);
 
     if (messageType === "Notification") {
       const message = JSON.parse(body.Message);
 
-      let statDoc = await EmailStats.findOne({
-        fromEmailAddress: message.mail.source,
-        toEmailAddress: message.mail.destination[0],
+      let emailSentDoc = await EmailSent.findOne({
+        sesMessageId: message.mail.messageId,
       });
 
-      if (!statDoc) {
-        throw createHttpError(400, { errorMessage: "Stats document missing!" });
+      if (!emailSentDoc) {
+        throw createHttpError(400, { errorMessage: EMAIL_DOC_NOT_FOUND });
       }
 
-      statDoc.details = message;
+      emailSentDoc.details = message;
 
-      console.log(statDoc);
-
-      await statDoc.save();
+      await emailSentDoc.save();
     } else if (messageType === "SubscriptionConfirmation") {
       const subscribeURL = body.SubscribeURL;
 
@@ -71,9 +69,11 @@ app.use("/email-events", async (req, res) => {
 
 app.use(require("./routes"));
 
-if (ENVIRONMENT === constants.ENVIRONMENT.PRODUCTION) {
+if (process.env.ENVIRONMENT === ENVIRONMENT.PRODUCTION) {
   //cronJobs
   require("./cron-jobs/run-campaign.cron");
 }
+
+const { PORT = 80 } = process.env;
 
 server.listen(PORT, () => console.log(`Server starting on port: ${PORT}`));

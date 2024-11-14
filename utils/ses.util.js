@@ -17,7 +17,7 @@ const sendEmail = async ({
   content,
   contentType,
 }) => {
-  await sesClient.send(
+  const result = await sesClient.send(
     new SendEmailCommand({
       Source: fromEmailAddress,
       Destination: {
@@ -37,6 +37,8 @@ const sendEmail = async ({
       },
     })
   );
+
+  return result;
 };
 
 const sendVerificationEmail = ({ emailAddress }) => {

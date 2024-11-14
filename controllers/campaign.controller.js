@@ -7,6 +7,7 @@ const {
   CompanyUser,
   Segment,
   Configuration,
+  EmailSent,
 } = require("../models");
 const {
   basicUtil,
@@ -172,12 +173,11 @@ const mapDynamicValues = async ({ companyId, emailAddress, content }) => {
     });
   }
 
-  // Iterate over the user's keys and replace placeholders dynamically
   let modifiedContent = content;
 
   for (const [key, value] of Object.entries(companyData)) {
-    const placeholder = `#${key}`;
-    // Replace all occurrences of the placeholder with the actual value
+    const placeholder = `{{${key}}}`;
+
     modifiedContent = modifiedContent.replace(
       new RegExp(placeholder, "g"),
       value
@@ -311,7 +311,23 @@ const runCampaign = async ({ campaign }) => {
     );
   });
 
-  await Promise.all(promises);
+  const result = await Promise.all(promises);
+
+  promises.length = 0;
+
+  result.forEach((item, index) => {
+    promises.push(
+      EmailSent.create({
+        companyId: campaign.companyId,
+        fromEmailAddress: campaign.sourceEmailAddress,
+        toEmailAddress: emailAddresses[index],
+        emailSubject: campaign.emailSubject,
+        emailContent: mappedContentArray[index],
+        sesMessageId: item.MessageId,
+      })
+    );
+  });
+
   await Campaign.updateOne(
     { _id: campaign._id },
     {
