@@ -36,7 +36,6 @@ const schema = new mongoose.Schema(
     },
     dynamicEmailTemplate: {
       type: ObjectId,
-      required: true,
       ref: DYNAMIC_TEMPLATE,
     },
     runMode: {
