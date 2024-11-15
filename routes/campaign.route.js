@@ -21,7 +21,7 @@ router.post(
       sourceEmailAddress: Joi.string().email().required(),
       emailSubject: Joi.string().required(),
       emailTemplateId: Joi.string().required(),
-      dynamicEmailTemplateId: Joi.string().required(),
+      dynamicEmailTemplateId: Joi.string().optional(),
       runMode: Joi.string()
         .valid(RUN_MODE.INSTANT, RUN_MODE.SCHEDULE)
         .required(),
