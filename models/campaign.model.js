@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema.Types;
 const {
   constants: {
-    MODELS: { CAMPAIGN, COMPANY, SEGMENT, TEMPLATE },
+    MODELS: { CAMPAIGN, COMPANY, SEGMENT, TEMPLATE, DYNAMIC_TEMPLATE },
   },
 } = require("../utils");
 const {
@@ -14,7 +14,7 @@ const {
 
 const schema = new mongoose.Schema(
   {
-    companyId: {
+    company: {
       type: ObjectId,
       required: true,
       index: true,
@@ -33,6 +33,11 @@ const schema = new mongoose.Schema(
       type: ObjectId,
       required: true,
       ref: TEMPLATE,
+    },
+    dynamicEmailTemplate: {
+      type: ObjectId,
+      required: true,
+      ref: DYNAMIC_TEMPLATE,
     },
     runMode: {
       type: String,

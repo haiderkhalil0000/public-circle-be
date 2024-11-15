@@ -1,5 +1,5 @@
 const express = require("express");
-const campaignDebugger = require("debug")("debug:webhook");
+const campaignDebugger = require("debug")("debug:campaign");
 const Joi = require("joi");
 
 const { authenticate, validate } = require("../middlewares");
@@ -17,10 +17,11 @@ router.post(
   authenticate.verifyToken,
   validate({
     body: Joi.object({
-      segments: Joi.array().required(),
+      segmentIds: Joi.array().required(),
       sourceEmailAddress: Joi.string().email().required(),
       emailSubject: Joi.string().required(),
-      emailTemplate: Joi.string().required(),
+      emailTemplateId: Joi.string().required(),
+      dynamicEmailTemplateId: Joi.string().required(),
       runMode: Joi.string()
         .valid(RUN_MODE.INSTANT, RUN_MODE.SCHEDULE)
         .required(),
@@ -137,17 +138,17 @@ router.patch(
       campaignId: Joi.string().required(),
     }),
     body: Joi.object({
-      segments: Joi.array(),
-      sourceEmailAddress: Joi.string().email(),
-      emailSubject: Joi.string(),
-      emailTemplate: Joi.string(),
-      runSchedule: Joi.string(),
-      isRecurring: Joi.boolean(),
-      recurringPeriod: Joi.string(),
-      status: Joi.string().valid(
-        CAMPAIGN_STATUS.ACTIVE,
-        CAMPAIGN_STATUS.DISABLED
-      ),
+      segmentIds: Joi.array().optional(),
+      sourceEmailAddress: Joi.string().email().optional(),
+      emailSubject: Joi.string().optional(),
+      emailTemplateId: Joi.string().optional(),
+      dynamicEmailTemplateId: Joi.string().optional(),
+      runSchedule: Joi.string().optional(),
+      isRecurring: Joi.boolean().optional(),
+      recurringPeriod: Joi.string().optional(),
+      status: Joi.string()
+        .valid(CAMPAIGN_STATUS.ACTIVE, CAMPAIGN_STATUS.DISABLED)
+        .optional(),
     }),
   }),
   async (req, res, next) => {
@@ -207,7 +208,8 @@ router.post(
       sourceEmailAddress: Joi.string().email().required(),
       toEmailAddresses: Joi.string().required(),
       emailSubject: Joi.string().required(),
-      templateId: Joi.string().required(),
+      emailTemplateId: Joi.string().required(),
+      dynamicEmailTemplateId: Joi.string().optional(),
     }),
   }),
   async (req, res, next) => {

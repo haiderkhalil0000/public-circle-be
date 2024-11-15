@@ -6,6 +6,7 @@ module.exports = {
   Campaign: require("./campaign.model"),
   Segment: require("./segment.model"),
   Template: require("./template.model"),
+  DynamicTemplate: require("./dynamic-template.model"),
   Cron: require("./cron.model"),
   Company: require("./company.model"),
   AccessToken: require("./access-token.model"),
