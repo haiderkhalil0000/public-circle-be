@@ -330,7 +330,7 @@ const runCampaign = async ({ campaign }) => {
 
   const queryArray = [Promise.all(segmentPromises)];
 
-  if (dynamicEmailTemplateId) {
+  if (campaign.dynamicEmailTemplateId) {
     queryArray.push(
       DynamicTemplate.findById({ _id: campaign.dynamicEmailTemplate })
     );
