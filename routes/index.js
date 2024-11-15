@@ -21,6 +21,7 @@ router.use("/webhooks", require("./webhooks.route"));
 router.use("/campaigns", require("./campaign.route"));
 router.use("/segments", require("./segments.route"));
 router.use("/templates", require("./templates.route"));
+router.use("/dynamic-templates", require("./templates.route"));
 router.use("/access-tokens", require("./access-tokens.route"));
 router.use("/roles", require("./roles.route"));
 router.use("/stripe", require("./stripe.route"));

@@ -1,9 +1,9 @@
 const express = require("express");
-const templateDebugger = require("debug")("debug:template");
+const dynamicTemplateDebugger = require("debug")("debug:dyanmicTemplate");
 const Joi = require("joi");
 
 const { authenticate, validate } = require("../middlewares");
-const { templatesController } = require("../controllers");
+const { dynamicTemplatesController } = require("../controllers");
 const {
   RESPONSE_MESSAGES,
   TEMPLATE_KINDS,
@@ -21,11 +21,12 @@ router.post(
         .valid(TEMPLATE_KINDS.TEXT, TEMPLATE_KINDS.HTML)
         .required(),
       body: Joi.string().required(),
+      staticTemplateId: Joi.string().required(),
     }),
   }),
   async (req, res, next) => {
     try {
-      await templatesController.createTemplate({
+      await dynamicTemplatesController.createTemplate({
         ...req.body,
         companyId: req.user.company._id,
       });
@@ -38,7 +39,7 @@ router.post(
       // sendErrorReportToSentry(error);
       console.log(err);
 
-      templateDebugger(err);
+      dynamicTemplateDebugger(err);
 
       next(err);
     }
@@ -47,7 +48,7 @@ router.post(
 
 router.get("/all", authenticate.verifyToken, async (req, res, next) => {
   try {
-    const templates = await templatesController.readAllTemplates({
+    const templates = await dynamicTemplatesController.readAllTemplates({
       companyId: req.user.company._id,
     });
 
@@ -59,7 +60,7 @@ router.get("/all", authenticate.verifyToken, async (req, res, next) => {
     // sendErrorReportToSentry(error);
     console.log(err);
 
-    templateDebugger(err);
+    dynamicTemplateDebugger(err);
 
     next(err);
   }
@@ -76,10 +77,12 @@ router.get(
   }),
   async (req, res, next) => {
     try {
-      const templates = await templatesController.readPaginatedTemplates({
-        ...req.query,
-        companyId: req.user.company._id,
-      });
+      const templates = await dynamicTemplatesController.readPaginatedTemplates(
+        {
+          ...req.query,
+          companyId: req.user.company._id,
+        }
+      );
 
       res.status(200).json({
         message: RESPONSE_MESSAGES.FETCHED_TEMPLATES,
@@ -89,7 +92,7 @@ router.get(
       // sendErrorReportToSentry(error);
       console.log(err);
 
-      templateDebugger(err);
+      dynamicTemplateDebugger(err);
 
       next(err);
     }
@@ -106,7 +109,9 @@ router.get(
   }),
   async (req, res, next) => {
     try {
-      const template = await templatesController.readTemplate(req.params);
+      const template = await dynamicTemplatesController.readTemplate(
+        req.params
+      );
 
       res.status(200).json({
         message: RESPONSE_MESSAGES.FETCHED_TEMPLATE,
@@ -116,7 +121,7 @@ router.get(
       // sendErrorReportToSentry(error);
       console.log(err);
 
-      templateDebugger(err);
+      dynamicTemplateDebugger(err);
 
       next(err);
     }
@@ -136,12 +141,11 @@ router.patch(
         .valid(TEMPLATE_KINDS.TEXT, TEMPLATE_KINDS.HTML)
         .optional(),
       body: Joi.string().optional(),
-      dynamicTemplateId: Joi.string().optional(),
     }),
   }),
   async (req, res, next) => {
     try {
-      await templatesController.updateTemplate({
+      await dynamicTemplatesController.updateTemplate({
         ...req.params,
         templateData: req.body,
       });
@@ -154,7 +158,7 @@ router.patch(
       // sendErrorReportToSentry(error);
       console.log(err);
 
-      templateDebugger(err);
+      dynamicTemplateDebugger(err);
 
       next(err);
     }
@@ -171,7 +175,7 @@ router.delete(
   }),
   async (req, res, next) => {
     try {
-      await templatesController.deleteTemplate(req.params);
+      await dynamicTemplatesController.deleteTemplate(req.params);
 
       res.status(200).json({
         message: RESPONSE_MESSAGES.DELETED_TEMPLATE,
@@ -181,7 +185,7 @@ router.delete(
       // sendErrorReportToSentry(error);
       console.log(err);
 
-      templateDebugger(err);
+      dynamicTemplateDebugger(err);
 
       next(err);
     }

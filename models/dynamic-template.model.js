@@ -3,10 +3,11 @@ const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema.Types;
 const {
   constants: {
-    MODELS: { TEMPLATE, COMPANY, DYNAMIC_TEMPLATE },
+    MODELS: { DYNAMIC_TEMPLATE, TEMPLATE, COMPANY },
+    TEMPLATE_STATUS,
+    TEMPLATE_KINDS,
   },
 } = require("../utils");
-const { TEMPLATE_STATUS, TEMPLATE_KINDS } = require("../utils/constants.util");
 
 const schema = new mongoose.Schema(
   {
@@ -15,6 +16,12 @@ const schema = new mongoose.Schema(
       required: true,
       index: true,
       ref: COMPANY,
+    },
+    staticTemplate: {
+      type: ObjectId,
+      required: true,
+      index: true,
+      ref: TEMPLATE,
     },
     name: {
       type: String,
@@ -29,11 +36,6 @@ const schema = new mongoose.Schema(
       type: String,
       require: true,
     },
-    dynamicTemplate: {
-      type: ObjectId,
-      index: true,
-      ref: DYNAMIC_TEMPLATE,
-    },
     status: {
       type: String,
       enum: Object.values(TEMPLATE_STATUS),
@@ -44,6 +46,6 @@ const schema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const model = mongoose.model(TEMPLATE, schema);
+const model = mongoose.model(DYNAMIC_TEMPLATE, schema);
 
 module.exports = model;

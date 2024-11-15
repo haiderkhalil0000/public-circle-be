@@ -8,6 +8,7 @@ module.exports = {
     CAMPAIGN: "campaign",
     SEGMENT: "segment",
     TEMPLATE: "template",
+    DYNAMIC_TEMPLATE: "dynamic-template",
     CRON_JOB: "cron-job",
     COMPANY: "companies",
     ACCESS_TOKEN: "access-token",
@@ -246,6 +247,12 @@ module.exports = {
   },
 
   SEGMENT_STATUS: {
+    ACTIVE: "ACTIVE",
+    ARCHIVED: "ARCHIVED",
+    DELETED: "DELETED",
+  },
+
+  TEMPLATE_STATUS: {
     ACTIVE: "ACTIVE",
     ARCHIVED: "ARCHIVED",
     DELETED: "DELETED",

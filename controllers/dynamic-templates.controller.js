@@ -1,13 +1,21 @@
 const createHttpError = require("http-errors");
 
-const { Template } = require("../models");
+const { DynamicTemplate } = require("../models");
 const {
   basicUtil,
   constants: { RESPONSE_MESSAGES, DOCUMENT_STATUS },
 } = require("../utils");
 
-const createTemplate = async ({ companyId, name, kind, body }) => {
-  const existingTemplate = await Template.findOne({
+const createTemplate = async ({
+  companyId,
+  name,
+  kind,
+  body,
+  staticTemplateId,
+}) => {
+  basicUtil.validateObjectId({ inputString: staticTemplateId });
+
+  const existingTemplate = await DynamicTemplate.findOne({
     name,
     company: companyId,
   });
@@ -18,18 +26,19 @@ const createTemplate = async ({ companyId, name, kind, body }) => {
     });
   }
 
-  Template.create({
-    company: companyId,
+  DynamicTemplate.create({
+    companyId,
     name,
     kind,
     body,
+    staticTemplate: staticTemplateId,
   });
 };
 
 const readTemplate = async ({ templateId }) => {
   basicUtil.validateObjectId({ inputString: templateId });
 
-  const template = await Template.findById(templateId);
+  const template = await DynamicTemplate.findById(templateId);
 
   if (!template) {
     throw createHttpError(404, {
@@ -41,7 +50,7 @@ const readTemplate = async ({ templateId }) => {
 };
 
 const readAllTemplates = async ({ companyId }) =>
-  Template.find({
+  DynamicTemplate.find({
     company: companyId,
     status: DOCUMENT_STATUS.ACTIVE,
   });
@@ -52,11 +61,11 @@ const readPaginatedTemplates = async ({
   pageSize = 10,
 }) => {
   const [totalRecords, templates] = await Promise.all([
-    Template.countDocuments({
+    DynamicTemplate.countDocuments({
       company: companyId,
       status: DOCUMENT_STATUS.ACTIVE,
     }),
-    Template.find({
+    DynamicTemplate.find({
       company: companyId,
       status: DOCUMENT_STATUS.ACTIVE,
     })
@@ -70,15 +79,7 @@ const readPaginatedTemplates = async ({
 const updateTemplate = async ({ templateId, templateData }) => {
   basicUtil.validateObjectId({ inputString: templateId });
 
-  if (templateData.dynamicTemplateId) {
-    basicUtil.validateObjectId({ inputString: dynamicTemplateId });
-
-    templateData.dynamicTemplate = templateData.dynamicTemplateId;
-
-    delete templateData.dynamicTemplateId;
-  }
-
-  const result = await Template.updateOne(
+  const result = await DynamicTemplate.updateOne(
     { _id: templateId },
     { ...templateData }
   );
@@ -93,7 +94,7 @@ const updateTemplate = async ({ templateId, templateData }) => {
 const deleteTemplate = async ({ templateId }) => {
   basicUtil.validateObjectId({ inputString: templateId });
 
-  const result = await Template.updateOne(
+  const result = await DynamicTemplate.updateOne(
     { _id: templateId },
     {
       status: DOCUMENT_STATUS.DELETED,
