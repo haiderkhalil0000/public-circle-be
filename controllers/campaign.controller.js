@@ -66,7 +66,7 @@ const createCampaign = async ({
   }
 
   const campaign = await Campaign.create({
-    companyId,
+    company: companyId,
     segments: segmentIds,
     sourceEmailAddress,
     emailSubject,
