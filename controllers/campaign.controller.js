@@ -120,7 +120,7 @@ const readPaginatedCampaigns = async ({
 const readAllCampaigns = async ({ companyId }) => {
   const allCampaigns = await Campaign.find({
     company: companyId,
-    status: CAMPAIGN_STATUS.ACTIVE,
+    status: { $ne: CAMPAIGN_STATUS.DELETED },
   })
     .populate("segments")
     .lean();
