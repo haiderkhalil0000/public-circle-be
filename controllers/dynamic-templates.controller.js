@@ -27,7 +27,7 @@ const createTemplate = async ({
   }
 
   DynamicTemplate.create({
-    companyId,
+    company: companyId,
     name,
     kind,
     body,
