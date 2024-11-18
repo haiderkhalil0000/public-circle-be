@@ -22,12 +22,16 @@ const schema = new mongoose.Schema(
     },
     kind: {
       type: String,
-      require: true,
+      required: true,
       enum: Object.values(TEMPLATE_KINDS),
     },
     body: {
       type: String,
-      require: true,
+      required: true,
+    },
+    json: {
+      type: Object,
+      required: true,
     },
     dynamicTemplate: {
       type: ObjectId,
