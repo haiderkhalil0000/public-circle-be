@@ -47,7 +47,7 @@ app.use("/email-events", async (req, res) => {
     }
 
     emailSentDoc.details = message;
-
+    emailSentDoc.markModified("details");
     await emailSentDoc.save();
   } catch (err) {
     console.log(err);
