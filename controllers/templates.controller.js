@@ -6,7 +6,7 @@ const {
   constants: { RESPONSE_MESSAGES, DOCUMENT_STATUS },
 } = require("../utils");
 
-const createTemplate = async ({ companyId, name, kind, body }) => {
+const createTemplate = async ({ companyId, name, kind, body, json }) => {
   const existingTemplate = await Template.findOne({
     name,
     company: companyId,
@@ -23,6 +23,7 @@ const createTemplate = async ({ companyId, name, kind, body }) => {
     name,
     kind,
     body,
+    json,
   });
 };
 
@@ -69,14 +70,6 @@ const readPaginatedTemplates = async ({
 
 const updateTemplate = async ({ templateId, templateData }) => {
   basicUtil.validateObjectId({ inputString: templateId });
-
-  if (templateData.dynamicTemplateId) {
-    basicUtil.validateObjectId({ inputString: dynamicTemplateId });
-
-    templateData.dynamicTemplate = templateData.dynamicTemplateId;
-
-    delete templateData.dynamicTemplateId;
-  }
 
   const result = await Template.updateOne(
     { _id: templateId },

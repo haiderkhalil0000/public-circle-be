@@ -21,6 +21,7 @@ router.post(
         .valid(TEMPLATE_KINDS.TEXT, TEMPLATE_KINDS.HTML)
         .required(),
       body: Joi.string().required(),
+      json: Joi.object().required(),
     }),
   }),
   async (req, res, next) => {
@@ -136,7 +137,7 @@ router.patch(
         .valid(TEMPLATE_KINDS.TEXT, TEMPLATE_KINDS.HTML)
         .optional(),
       body: Joi.string().optional(),
-      dynamicTemplateId: Joi.string().optional(),
+      json: Joi.object().optional(),
     }),
   }),
   async (req, res, next) => {
