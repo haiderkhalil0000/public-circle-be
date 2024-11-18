@@ -36,19 +36,20 @@ app.use("/email-events", async (req, res) => {
 
     console.log("WEB_HOOK_DATA", message);
 
-    const result = await EmailSent.findOneAndUpdate(
+    const result = await EmailSent.updateOne(
       { sesMessageId: message.mail.messageId },
-      { $set: { details: message } },
-      { new: true } // Returns the updated document
+      { $set: { details: message } }
     );
 
     if (!result.matchedCount) {
       throw createHttpError(400, {
         errorMessage: RESPONSE_MESSAGES.EMAIL_DOC_NOT_FOUND,
       });
+    } else if (!result.modifiedCount) {
+      console.log("Document was found but not modified.");
     }
   } catch (err) {
-    console.log(err);
+    console.log("Error updating document:", err);
   }
 
   res.sendStatus(200);
