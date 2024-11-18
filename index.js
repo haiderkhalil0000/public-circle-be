@@ -36,19 +36,17 @@ app.use("/email-events", async (req, res) => {
 
     console.log("WEB_HOOK_DATA", message);
 
-    let emailSentDoc = await EmailSent.findOne({
-      sesMessageId: message.mail.messageId,
-    });
+    const result = await EmailSent.findOneAndUpdate(
+      { sesMessageId: message.mail.messageId },
+      { $set: { details: message } },
+      { new: true } // Returns the updated document
+    );
 
-    if (!emailSentDoc) {
+    if (!result.matchedCount) {
       throw createHttpError(400, {
         errorMessage: RESPONSE_MESSAGES.EMAIL_DOC_NOT_FOUND,
       });
     }
-
-    emailSentDoc.details = message;
-
-    await emailSentDoc.save();
   } catch (err) {
     console.log(err);
   }

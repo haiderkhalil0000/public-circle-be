@@ -38,7 +38,7 @@ const schema = new mongoose.Schema(
       type: Object,
     },
   },
-  { timestamps: true, strict: false }
+  { timestamps: true }
 );
 
 const model = mongoose.model(EMAILS_SENT, schema, EMAILS_SENT);
