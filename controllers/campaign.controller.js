@@ -304,6 +304,12 @@ const populateCompanyUserQuery = ({ segments }) => {
     }
   }
 
+  // Flatten all keys in `allFilters`
+  for (const key in allFilters) {
+    allFilters[key] = allFilters[key].flat();
+  }
+
+  // Process each key to apply $in or keep a single value
   for (const key in allFilters) {
     if (allFilters[key].length > 1) {
       allFilters[key] = { $in: allFilters[key] };
@@ -343,7 +349,7 @@ const runCampaign = async ({ campaign }) => {
   const query = populateCompanyUserQuery({ segments });
 
   let emailAddresses = await CompanyUser.find(
-    { ...query, companyId: campaign.companyId },
+    { ...query, companyId: campaign.company },
     {
       email: 1,
     }
@@ -356,7 +362,7 @@ const runCampaign = async ({ campaign }) => {
   for (const address of emailAddresses) {
     promises.push(
       mapDynamicValues({
-        companyId: campaign.companyId,
+        companyId: campaign.company,
         emailAddress: address,
         content: template.body,
       })
@@ -386,7 +392,7 @@ const runCampaign = async ({ campaign }) => {
   result.forEach((item, index) => {
     promises.push(
       EmailSent.create({
-        companyId: campaign.companyId,
+        company: campaign.company,
         fromEmailAddress: campaign.sourceEmailAddress,
         toEmailAddress: emailAddresses[index],
         emailSubject: campaign.emailSubject,
