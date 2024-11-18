@@ -33,33 +33,23 @@ const {
 
 app.use("/email-events", async (req, res) => {
   try {
-    console.log("request_webhook", req);
-    const messageType = req.headers["x-amz-sns-message-type"];
+    const message = JSON.parse(req.body.Message);
 
-    // Parse the incoming SNS message
-    const body = req.body;
+    console.log("WEB_HOOK_DATA", message);
 
-    // if (messageType === "Notification") {
-    const message = JSON.parse(body.Message);
+    // let emailSentDoc = await EmailSent.findOne({
+    //   sesMessageId: message.mail.messageId,
+    // });
 
-    let emailSentDoc = await EmailSent.findOne({
-      sesMessageId: message.mail.messageId,
-    });
-
-    if (!emailSentDoc) {
-      throw createHttpError(400, {
-        errorMessage: RESPONSE_MESSAGES.EMAIL_DOC_NOT_FOUND,
-      });
-    }
-
-    emailSentDoc.details = message;
-
-    await emailSentDoc.save();
-    // } else if (messageType === "SubscriptionConfirmation") {
-    //   const subscribeURL = body.SubscribeURL;
-
-    //   await axios.get(subscribeURL);
+    // if (!emailSentDoc) {
+    //   throw createHttpError(400, {
+    //     errorMessage: RESPONSE_MESSAGES.EMAIL_DOC_NOT_FOUND,
+    //   });
     // }
+
+    // emailSentDoc.details = message;
+
+    // await emailSentDoc.save();
   } catch (err) {
     console.log(err);
   }
