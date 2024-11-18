@@ -25,7 +25,6 @@ app.get("/", (req, res) =>
   })
 );
 
-const axios = require("axios");
 const { EmailSent } = require("./models");
 const {
   constants: { ENVIRONMENT, RESPONSE_MESSAGES },
@@ -37,19 +36,19 @@ app.use("/email-events", async (req, res) => {
 
     console.log("WEB_HOOK_DATA", message);
 
-    // let emailSentDoc = await EmailSent.findOne({
-    //   sesMessageId: message.mail.messageId,
-    // });
+    let emailSentDoc = await EmailSent.findOne({
+      sesMessageId: message.mail.messageId,
+    });
 
-    // if (!emailSentDoc) {
-    //   throw createHttpError(400, {
-    //     errorMessage: RESPONSE_MESSAGES.EMAIL_DOC_NOT_FOUND,
-    //   });
-    // }
+    if (!emailSentDoc) {
+      throw createHttpError(400, {
+        errorMessage: RESPONSE_MESSAGES.EMAIL_DOC_NOT_FOUND,
+      });
+    }
 
-    // emailSentDoc.details = message;
+    emailSentDoc.details = message;
 
-    // await emailSentDoc.save();
+    await emailSentDoc.save();
   } catch (err) {
     console.log(err);
   }
