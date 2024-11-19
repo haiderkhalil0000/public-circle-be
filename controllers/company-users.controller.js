@@ -1,17 +1,14 @@
 const mongoose = require("mongoose");
 const _ = require("lodash");
 const createHttpError = require("http-errors");
+const fs = require("fs");
+const csvParser = require("csv-parser");
 
-const { CompanyUser, Configuration, EmailStats } = require("../models");
+const { CompanyUser } = require("../models");
 const {
-  constants: { INTERACTION_CHANNELS },
+  constants: { RESPONSE_MESSAGES },
   basicUtil,
 } = require("../utils");
-const { sendEmail } = require("../utils/ses.util");
-const {
-  DOCUMENT_STATUS,
-  RESPONSE_MESSAGES,
-} = require("../utils/constants.util");
 
 const getPossibleFilterKeys = async ({ companyId }) => {
   const totalDocs = await CompanyUser.countDocuments();
@@ -78,49 +75,6 @@ const search = async ({ companyId, searchString, searchFields }) => {
   });
 
   return CompanyUser.find({ companyId, $or: queryArray }).limit(10);
-};
-
-const validateConfiguration = ({ configuration }) => {
-  let errorMessage = "";
-
-  if (!configuration.length) {
-    errorMessage = RESPONSE_MESSAGES.CONFIGURATION_NOT_FOUND;
-  } else if (!configuration[0].matchedAddress.isVerified) {
-    errorMessage = RESPONSE_MESSAGES.EMAIL_NOT_VERIFIED;
-  } else if (
-    configuration[0].matchedAddress.status !== DOCUMENT_STATUS.ACTIVE
-  ) {
-    errorMessage = RESPONSE_MESSAGES.INVALID_EMAIL;
-  }
-
-  if (errorMessage) {
-    throw createHttpError(400, { errorMessage });
-  }
-};
-
-const mapDynamicValues = async ({ companyId, emailAddress, content }) => {
-  const companyData = await CompanyUser.findOne({
-    companyId,
-    email: emailAddress,
-  }).lean();
-
-  if (!companyData) {
-    throw createHttpError(400, { errorMessage });
-  }
-
-  // Iterate over the user's keys and replace placeholders dynamically
-  let modifiedContent = content;
-
-  for (const [key, value] of Object.entries(companyData)) {
-    const placeholder = `#${key}`;
-    // Replace all occurrences of the placeholder with the actual value
-    modifiedContent = modifiedContent.replace(
-      new RegExp(placeholder, "g"),
-      value
-    );
-  }
-
-  return modifiedContent;
 };
 
 const readAllCompanyUsers = ({ companyId }) => CompanyUser.find({ companyId });
@@ -201,6 +155,52 @@ const deleteCompanyUser = async ({ userId }) => {
   }
 };
 
+const uploadCsv = async ({ companyId, file }) => {
+  const results = [];
+
+  if (!file) {
+    return res.status(400).send("No file uploaded.");
+  }
+
+  const webhooksController = require("./webhooks.controller");
+
+  // Read and parse the CSV file from disk
+  fs.createReadStream(file.path)
+    .pipe(csvParser()) // Parse the CSV file
+    .on("data", (data) => {
+      results.push(data); // Collect each row of CSV data
+    })
+    .on("end", async () => {
+      try {
+        await webhooksController.recieveCompanyUsersData({
+          companyId,
+          companyUsersData: results,
+        });
+
+        fs.unlink(file.path, (err) => {
+          if (err) {
+            console.error("Error removing file:", err);
+          } else {
+            console.log("File removed successfully.");
+          }
+        });
+      } catch (err) {
+        console.error(err);
+
+        throw createHttpError(500, {
+          errorMessage: "Something went wrong!",
+        });
+      }
+    })
+    .on("error", (err) => {
+      console.error("Error reading CSV file:", err);
+
+      throw createHttpError(500, {
+        errorMessage: "Error reading CSV file!",
+      });
+    });
+};
+
 module.exports = {
   getPossibleFilterKeys,
   getPossibleFilterValues,
@@ -212,4 +212,5 @@ module.exports = {
   readCompanyUser,
   updateCompanyUser,
   deleteCompanyUser,
+  uploadCsv,
 };

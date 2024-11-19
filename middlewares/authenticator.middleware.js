@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 // const sentry = require("@sentry/node");
 
-const { User, Company } = require("../models");
+const { User, Company, AccessToken } = require("../models");
 const {
   constants: { RESPONSE_MESSAGES },
 } = require("../utils");
@@ -105,6 +105,47 @@ const verifyEmailToken = async (req, res, next) => {
   }
 };
 
+const verifyWebhookToken = async (req, res, next) => {
+  const authorization = req.headers["authorization"];
+
+  if (!authorization) {
+    return res
+      .status(401)
+      .json({ message: RESPONSE_MESSAGES.TOKEN_IS_REQUIRED, data: {} });
+  }
+
+  const token = authorization.split(" ")[1];
+
+  if (!token) {
+    return res
+      .status(401)
+      .json({ message: RESPONSE_MESSAGES.TOKEN_IS_REQUIRED, data: {} });
+  }
+
+  try {
+    const decodedToken = decodeToken(token);
+
+    const accessTokenDoc = await AccessToken.findOne({ _id: decodedToken._id });
+
+    if (!accessTokenDoc) {
+      return res.status(401).json({
+        message: RESPONSE_MESSAGES.INVALID_TOKEN,
+        data: {},
+      });
+    }
+
+    next();
+  } catch (err) {
+    // sendErrorReportToSentry(err);
+    console.log(err);
+
+    return res.status(401).json({
+      message: RESPONSE_MESSAGES.INVALID_TOKEN,
+      data: {},
+    });
+  }
+};
+
 const decodeExpiredToken = async (req, res, next) => {
   const authorization = req.headers["authorization"];
 
@@ -153,4 +194,5 @@ module.exports = {
   decodeToken,
   decodeExpiredToken,
   verifyEmailToken,
+  verifyWebhookToken,
 };

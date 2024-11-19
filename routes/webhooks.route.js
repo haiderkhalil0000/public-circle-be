@@ -2,7 +2,7 @@ const express = require("express");
 const Joi = require("joi");
 const webhookDebugger = require("debug")("debug:webhook");
 
-const { validate } = require("../middlewares");
+const { authenticate, validate } = require("../middlewares");
 const { webhooksController } = require("../controllers");
 const { RESPONSE_MESSAGES } = require("../utils/constants.util");
 
@@ -25,9 +25,9 @@ router.post("/email-events", async (req, res, next) => {
 
 router.post(
   "/company-users",
+  authenticate.verifyWebhookToken,
   validate({
     body: Joi.object({
-      accessToken: Joi.string().required(),
       companyUsersData: Joi.array().required(),
     }),
   }),

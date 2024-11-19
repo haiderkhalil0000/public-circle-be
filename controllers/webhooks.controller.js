@@ -1,32 +1,19 @@
 const _ = require("lodash");
-const createHttpError = require("http-errors");
 
-const { CompanyUser, AccessToken } = require("../models");
-const { RESPONSE_MESSAGES } = require("../utils/constants.util");
+const { CompanyUser } = require("../models");
 const { basicUtil } = require("../utils");
 
 const recieveEmailEvents = () => {};
 
-const recieveCompanyUsersData = async ({ accessToken, companyUsersData }) => {
+const recieveCompanyUsersData = async ({ companyId, companyUsersData }) => {
   const promises = [];
 
-  const { decodeToken } = require("../middlewares/authenticator.middleware");
-
-  accessToken = decodeToken(accessToken);
   companyUsersData = basicUtil.fiterUniqueObjectsFromArray(companyUsersData);
-
-  const accessTokenDoc = await AccessToken.findById(accessToken._id);
-
-  if (!accessTokenDoc) {
-    throw createHttpError(400, {
-      errorMessage: RESPONSE_MESSAGES.INVALID_TOKEN,
-    });
-  }
 
   const { getPossibleFilterKeys } = require("./company-users.controller");
 
   const possibleFilterKeys = await getPossibleFilterKeys({
-    companyId: accessTokenDoc.companyId,
+    companyId,
   });
 
   const filterKeys = {};
@@ -38,7 +25,7 @@ const recieveCompanyUsersData = async ({ accessToken, companyUsersData }) => {
   let query = {};
 
   for (const user of companyUsersData) {
-    query = { ...filterKeys, companyId: accessTokenDoc.companyId };
+    query = { ...filterKeys, companyId };
 
     for (const key in user) {
       if (possibleFilterKeys.includes(key)) {
@@ -80,7 +67,7 @@ const recieveCompanyUsersData = async ({ accessToken, companyUsersData }) => {
     } else {
       promises.push(
         CompanyUser.create({
-          companyId: accessTokenDoc.companyId,
+          companyId,
           ...companyUsersData[index],
         })
       );
