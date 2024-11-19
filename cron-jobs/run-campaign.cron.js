@@ -46,6 +46,7 @@ new CronJob(
       for (const campaign of pendingCampaigns) {
         if (
           campaign.runMode === RUN_MODE.SCHEDULE &&
+          campaign.processedCount < 1 &&
           moment().isSameOrAfter(moment(campaign.runSchedule))
         ) {
           recordsUpdated++;
