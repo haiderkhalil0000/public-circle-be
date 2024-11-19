@@ -99,10 +99,11 @@ router.get(
   }),
   async (req, res, next) => {
     try {
-      const accessTokens = await accessTokensController.readAccessTokens({
-        companyId: req.user.company._id,
-        ...req.query,
-      });
+      const accessTokens =
+        await accessTokensController.readPaginatedAccessTokens({
+          companyId: req.user.company._id,
+          ...req.query,
+        });
 
       res.status(200).json({
         message: RESPONSE_MESSAGES.FETCHED_ACCESS_TOKENS,

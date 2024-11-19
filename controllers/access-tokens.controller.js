@@ -1,15 +1,16 @@
 const createHttpError = require("http-errors");
-const jwt = require("jsonwebtoken");
 
 const { AccessToken } = require("../models");
 const {
-  RESPONSE_MESSAGES,
-  DOCUMENT_STATUS,
-} = require("../utils/constants.util");
-const { basicUtil } = require("../utils");
+  basicUtil,
+  constants: { RESPONSE_MESSAGES, ACCESS_TOKEN_STATUS },
+} = require("../utils");
 
 const createAccessToken = async ({ title, companyId }) => {
-  const existingToken = await AccessToken.findOne({ title, companyId });
+  const existingToken = await AccessToken.findOne({
+    title,
+    company: companyId,
+  });
 
   if (existingToken) {
     throw createHttpError(400, {
@@ -17,11 +18,14 @@ const createAccessToken = async ({ title, companyId }) => {
     });
   }
 
-  const doc = await AccessToken.create({ companyId, title });
+  const accessTokenDoc = await AccessToken.create({
+    company: companyId,
+    title,
+  });
 
   const { createToken } = require("../middlewares/authenticator.middleware");
 
-  return createToken({ _id: doc._id });
+  return createToken({ _id: accessTokenDoc._id });
 };
 
 const readAccessToken = async ({ accessTokenId, companyId }) => {
@@ -29,7 +33,7 @@ const readAccessToken = async ({ accessTokenId, companyId }) => {
 
   const accessTokenDoc = await AccessToken.findOne({
     _id: accessTokenId,
-    companyId,
+    company: companyId,
   });
 
   if (!accessTokenDoc) {
@@ -41,10 +45,17 @@ const readAccessToken = async ({ accessTokenId, companyId }) => {
   return accessTokenDoc;
 };
 
-const readAccessTokens = async ({ companyId, pageNumber, pageSize }) => {
+const readPaginatedAccessTokens = async ({
+  companyId,
+  pageNumber,
+  pageSize,
+}) => {
   const [totalCount, accessTokens] = await Promise.all([
-    AccessToken.countDocuments({ companyId, status: DOCUMENT_STATUS.ACTIVE }),
-    AccessToken.find({ companyId, status: DOCUMENT_STATUS.ACTIVE })
+    AccessToken.countDocuments({
+      company: companyId,
+      status: ACCESS_TOKEN_STATUS.ACTIVE,
+    }),
+    AccessToken.find({ company: companyId, status: ACCESS_TOKEN_STATUS.ACTIVE })
       .skip((parseInt(pageNumber) - 1) * pageSize)
       .limit(pageSize),
   ]);
@@ -56,7 +67,7 @@ const readAccessTokens = async ({ companyId, pageNumber, pageSize }) => {
 };
 
 const readAllAccessTokens = ({ companyId }) =>
-  AccessToken.find({ companyId, status: DOCUMENT_STATUS.ACTIVE });
+  AccessToken.find({ company: companyId, status: ACCESS_TOKEN_STATUS.ACTIVE });
 
 const updateAccessToken = async ({
   companyId,
@@ -67,19 +78,13 @@ const updateAccessToken = async ({
   basicUtil.validateObjectId({ inputString: accessTokenId });
 
   const result = await AccessToken.updateOne(
-    { _id: accessTokenId, companyId },
+    { _id: accessTokenId, company: companyId },
     { title, status }
   );
 
   if (!result.matchedCount) {
     throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.ACCESS_TOKEN_NOT_FOUND,
-    });
-  }
-
-  if (!result.modifiedCount) {
-    throw createHttpError(404, {
-      errorMessage: RESPONSE_MESSAGES.ACCESS_TOKEN_UPDATED_ALREADY,
     });
   }
 };
@@ -90,9 +95,9 @@ const deleteAccessToken = async ({ companyId, accessTokenId }) => {
   const result = await AccessToken.updateOne(
     {
       _id: accessTokenId,
-      companyId,
+      company: companyId,
     },
-    { status: DOCUMENT_STATUS.DELETED }
+    { status: ACCESS_TOKEN_STATUS.DELETED }
   );
 
   if (!result.deletedCount) {
@@ -105,7 +110,7 @@ const deleteAccessToken = async ({ companyId, accessTokenId }) => {
 module.exports = {
   createAccessToken,
   readAccessToken,
-  readAccessTokens,
+  readPaginatedAccessTokens,
   readAllAccessTokens,
   updateAccessToken,
   deleteAccessToken,

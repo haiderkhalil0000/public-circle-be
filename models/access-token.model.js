@@ -3,17 +3,18 @@ const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema.Types;
 const {
   constants: {
-    MODELS: { ACCESS_TOKEN },
-    DOCUMENT_STATUS,
+    MODELS: { ACCESS_TOKEN, COMPANY },
+    ACCESS_TOKEN_STATUS,
   },
 } = require("../utils");
 
 const schema = new mongoose.Schema(
   {
-    companyId: {
+    company: {
       type: ObjectId,
       required: true,
       index: true,
+      ref: COMPANY,
     },
     title: {
       type: String,
@@ -22,8 +23,8 @@ const schema = new mongoose.Schema(
     status: {
       type: String,
       required: true,
-      enum: Object.values(DOCUMENT_STATUS),
-      default: DOCUMENT_STATUS.ACTIVE,
+      enum: Object.values(ACCESS_TOKEN_STATUS),
+      default: ACCESS_TOKEN_STATUS.ACTIVE,
     },
   },
   { timestamps: true }

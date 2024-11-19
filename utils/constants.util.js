@@ -257,4 +257,9 @@ module.exports = {
     ARCHIVED: "ARCHIVED",
     DELETED: "DELETED",
   },
+
+  ACCESS_TOKEN_STATUS: {
+    ACTIVE: "ACTIVE",
+    DELETED: "DELETED",
+  },
 };
