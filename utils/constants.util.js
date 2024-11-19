@@ -201,7 +201,7 @@ module.exports = {
   },
 
   CRON_INTERVALS: {
-    ["5M"]: "5 minutes",
+    ["1M"]: "1 minute",
   },
 
   CRON_RECORD_LIMIT: 30,

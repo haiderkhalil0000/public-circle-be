@@ -65,7 +65,7 @@ new CronJob(
 
       await Cron.create({
         cronName: CRON_JOBS.RUN_CAMPAIGN,
-        interval: CRON_INTERVALS["5M"],
+        interval: CRON_INTERVALS["1M"],
         lastRunAt: moment().format("LLL"),
         recordsUpdated,
       });
