@@ -14,11 +14,10 @@ const {
   },
 } = require("../utils");
 
-// Buffer for 5-minute window
-const TIME_BUFFER = moment.duration(5, "minutes");
+// const sendErrorReportToSentry = require("../utils/send-error-report-to-sentry");
 
 new CronJob(
-  "*/5 * * * *",
+  "*/1 * * * *",
   async function () {
     console.log(`called run-campaign.cron at ${moment().format("LLL")}`);
 
@@ -45,32 +44,20 @@ new CronJob(
       });
 
       for (const campaign of pendingCampaigns) {
-        const currentTime = moment();
+        if (
+          campaign.runMode === RUN_MODE.SCHEDULE &&
+          moment().isSameOrAfter(moment(campaign.runSchedule))
+        ) {
+          recordsUpdated++;
 
-        if (campaign.runMode === RUN_MODE.SCHEDULE) {
-          const scheduledTime = moment(campaign.runSchedule);
-
-          // Check if the current time is after the scheduled time and within the buffer
-          if (
-            scheduledTime.isSameOrBefore(currentTime) &&
-            currentTime.diff(scheduledTime) <= TIME_BUFFER.asMilliseconds()
-          ) {
-            recordsUpdated++;
-            campaignsController.runCampaign({ campaign });
-          }
+          campaignsController.runCampaign({ campaign });
         } else if (campaign.isRecurring) {
           const recurringPeriod = moment.duration(campaign.recurringPeriod);
-          const lastProcessedTime = campaign.lastProcessed
-            ? moment(campaign.lastProcessed)
-            : moment(campaign.createdAt);
+          const lastProcessedTime = campaign.lastProcessed;
 
-          // Check if current time is after the last processed time + recurring period, within the buffer
-          if (
-            currentTime.isAfter(lastProcessedTime.add(recurringPeriod)) &&
-            currentTime.diff(lastProcessedTime.add(recurringPeriod)) <=
-              TIME_BUFFER.asMilliseconds()
-          ) {
+          if (moment().isSameOrAfter(lastProcessedTime.add(recurringPeriod))) {
             recordsUpdated++;
+
             campaignsController.runCampaign({ campaign });
           }
         }
