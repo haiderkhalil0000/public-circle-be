@@ -14,7 +14,8 @@ const {
   },
 } = require("../utils");
 
-// const sendErrorReportToSentry = require("../utils/send-error-report-to-sentry");
+// Buffer for 5-minute window
+const TIME_BUFFER = moment.duration(5, "minutes");
 
 new CronJob(
   "*/5 * * * *",
@@ -44,22 +45,32 @@ new CronJob(
       });
 
       for (const campaign of pendingCampaigns) {
-        if (
-          campaign.runMode === RUN_MODE.SCHEDULE &&
-          moment().isAfter(moment(campaign.runSchedule))
-        ) {
-          recordsUpdated++;
+        const currentTime = moment();
 
-          campaignsController.runCampaign({ campaign });
+        if (campaign.runMode === RUN_MODE.SCHEDULE) {
+          const scheduledTime = moment(campaign.runSchedule);
+
+          // Check if the current time is after the scheduled time and within the buffer
+          if (
+            scheduledTime.isSameOrBefore(currentTime) &&
+            currentTime.diff(scheduledTime) <= TIME_BUFFER.asMilliseconds()
+          ) {
+            recordsUpdated++;
+            campaignsController.runCampaign({ campaign });
+          }
         } else if (campaign.isRecurring) {
-          recordsUpdated++;
-
           const recurringPeriod = moment.duration(campaign.recurringPeriod);
           const lastProcessedTime = campaign.lastProcessed
             ? moment(campaign.lastProcessed)
             : moment(campaign.createdAt);
 
-          if (moment().isAfter(lastProcessedTime.add(recurringPeriod))) {
+          // Check if current time is after the last processed time + recurring period, within the buffer
+          if (
+            currentTime.isAfter(lastProcessedTime.add(recurringPeriod)) &&
+            currentTime.diff(lastProcessedTime.add(recurringPeriod)) <=
+              TIME_BUFFER.asMilliseconds()
+          ) {
+            recordsUpdated++;
             campaignsController.runCampaign({ campaign });
           }
         }
