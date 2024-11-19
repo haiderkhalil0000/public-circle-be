@@ -52,8 +52,14 @@ new CronJob(
 
           campaignsController.runCampaign({ campaign });
         } else if (campaign.isRecurring) {
-          const recurringPeriod = moment.duration(campaign.recurringPeriod);
-          const lastProcessedTime = campaign.lastProcessed;
+          const campaignRecurring = campaign.recurringPeriod.split(" ");
+
+          const recurringPeriod = moment.duration(
+            parseInt(campaignRecurring[0]),
+            campaignRecurring[1]
+          );
+
+          const lastProcessedTime = moment(campaign.lastProcessed);
 
           if (moment().isSameOrAfter(lastProcessedTime.add(recurringPeriod))) {
             recordsUpdated++;
