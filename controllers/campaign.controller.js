@@ -49,7 +49,6 @@ const createCampaign = async ({
   sourceEmailAddress,
   emailSubject,
   emailTemplateId,
-  dynamicEmailTemplateId,
   runMode,
   runSchedule,
   isRecurring,
@@ -71,7 +70,6 @@ const createCampaign = async ({
     sourceEmailAddress,
     emailSubject,
     emailTemplate: emailTemplateId,
-    dynamicEmailTemplate: dynamicEmailTemplateId,
     runMode,
     runSchedule,
     isRecurring,
@@ -164,22 +162,18 @@ const readAllCampaigns = async ({ companyId }) => {
 const updateCampaign = async ({ campaignId, campaignData }) => {
   basicUtil.validateObjectId({ inputString: campaignId });
 
-  if (
-    campaignData.segmentIds ||
-    campaignData.emailTemplateId ||
-    campaignData.dynamicEmailTemplateId
-  ) {
-    if (campaignData.dynamicEmailTemplateId) {
-      basicUtil.validateObjectId({ inputString: dynamicEmailTemplateId });
-    }
+  if (campaignData.segmentIds || campaignData.emailTemplateId) {
+    basicUtil.validateObjectId({ inputString: campaignData.emailTemplateId });
+
+    campaignData.segmentIds.forEach((item) => {
+      basicUtil.validateObjectId({ inputString: item });
+    });
 
     campaignData.segments = campaignData.segmentIds;
     campaignData.emailTemplate = campaignData.emailTemplateId;
-    campaignData.dynamicEmailTemplate = campaignData.dynamicEmailTemplateId;
 
     delete campaignData.segmentIds;
     delete campaignData.emailTemplateId;
-    delete campaignData.dynamicEmailTemplateId;
   }
 
   const result = await Campaign.updateOne(
@@ -243,7 +237,6 @@ const sendTestEmail = async ({
   toEmailAddresses,
   emailSubject,
   emailTemplateId,
-  dynamicEmailTemplateId,
 }) => {
   const promises = [];
 
@@ -251,24 +244,14 @@ const sendTestEmail = async ({
     .split(",")
     .map((email) => email.trim());
 
-  let dynamicEmailTemplate, emailTemplate;
-
-  if (dynamicEmailTemplateId) {
-    dynamicEmailTemplate = await DynamicTemplate.findById(
-      dynamicEmailTemplateId
-    );
-  } else {
-    emailTemplate = await Template.findById(emailTemplateId);
-  }
+  const emailTemplate = await Template.findById(emailTemplateId);
 
   for (const address of emailAddresses) {
     promises.push(
       mapDynamicValues({
         companyId,
         emailAddress: address,
-        content: dynamicEmailTemplateId
-          ? dynamicEmailTemplate.body
-          : emailTemplate.body,
+        content: emailTemplate.body,
       })
     );
   }
@@ -336,13 +319,7 @@ const runCampaign = async ({ campaign }) => {
 
   const queryArray = [Promise.all(segmentPromises)];
 
-  if (campaign.dynamicEmailTemplateId) {
-    queryArray.push(
-      DynamicTemplate.findById({ _id: campaign.dynamicEmailTemplate })
-    );
-  } else {
-    queryArray.push(Template.findById({ _id: campaign.emailTemplate }));
-  }
+  queryArray.push(Template.findById({ _id: campaign.emailTemplate }));
 
   const [segments, template] = await Promise.all(queryArray);
 

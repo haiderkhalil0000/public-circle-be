@@ -21,7 +21,6 @@ router.post(
       sourceEmailAddress: Joi.string().email().required(),
       emailSubject: Joi.string().required(),
       emailTemplateId: Joi.string().required(),
-      dynamicEmailTemplateId: Joi.string().optional(),
       runMode: Joi.string()
         .valid(RUN_MODE.INSTANT, RUN_MODE.SCHEDULE)
         .required(),
@@ -142,7 +141,6 @@ router.patch(
       sourceEmailAddress: Joi.string().email().optional(),
       emailSubject: Joi.string().optional(),
       emailTemplateId: Joi.string().optional(),
-      dynamicEmailTemplateId: Joi.string().optional(),
       runSchedule: Joi.string().optional(),
       isRecurring: Joi.boolean().optional(),
       recurringPeriod: Joi.string().optional(),
@@ -209,7 +207,6 @@ router.post(
       toEmailAddresses: Joi.string().required(),
       emailSubject: Joi.string().required(),
       emailTemplateId: Joi.string().required(),
-      dynamicEmailTemplateId: Joi.string().optional(),
     }),
   }),
   async (req, res, next) => {
