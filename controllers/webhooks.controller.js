@@ -25,7 +25,7 @@ const recieveCompanyUsersData = async ({ companyId, users }) => {
   let query = {};
 
   for (const user of users) {
-    query = { ...filterKeys, companyId };
+    query = { ...filterKeys, company: companyId };
 
     for (const key in user) {
       if (possibleFilterKeys.includes(key)) {

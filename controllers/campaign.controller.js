@@ -207,7 +207,7 @@ const deleteCampaign = async ({ campaignId }) => {
 
 const mapDynamicValues = async ({ companyId, emailAddress, content }) => {
   const companyData = await CompanyUser.findOne({
-    companyId,
+    company: companyId,
     email: emailAddress,
   }).lean();
 
@@ -326,7 +326,7 @@ const runCampaign = async ({ campaign }) => {
   const query = populateCompanyUserQuery({ segments });
 
   let emailAddresses = await CompanyUser.find(
-    { ...query, companyId: campaign.company },
+    { ...query, company: campaign.company },
     {
       email: 1,
     }
