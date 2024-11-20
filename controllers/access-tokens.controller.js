@@ -100,7 +100,7 @@ const deleteAccessToken = async ({ companyId, accessTokenId }) => {
     { status: ACCESS_TOKEN_STATUS.DELETED }
   );
 
-  if (!result.deletedCount) {
+  if (!result.modifiedCount) {
     throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.ACCESS_TOKEN_DELETED_ALREADY,
     });
