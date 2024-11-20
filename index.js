@@ -57,11 +57,14 @@ app.use("/email-events", async (req, res) => {
 
 app.use("/emails-sent", async (req, res) => {
   try {
-    const emailDocs = await EmailSent.find().sort({ createdAt: -1 }).limit(50);
+    const [totalCount, emailDocs] = await Promise.all([
+      EmailSent.countDocuments(),
+      EmailSent.find().sort({ createdAt: -1 }).limit(50),
+    ]);
 
     res.json({
       message: "",
-      data: emailDocs,
+      data: { totalCount, emailDocs },
     });
   } catch (err) {
     console.log(err);
