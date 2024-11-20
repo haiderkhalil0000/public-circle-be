@@ -10,12 +10,12 @@ const {
   basicUtil,
 } = require("../utils");
 
-const getPossibleFilterKeys = async ({ companyId }) => {
+const getPossibleFilterKeys = async ({ companyId = "" }) => {
   const totalDocs = await CompanyUser.countDocuments();
   const sampleSize = Math.floor(totalDocs * 0.1);
 
   const randomDocuments = await CompanyUser.aggregate([
-    { $match: { companyId: new mongoose.Types.ObjectId(companyId) } }, //this warning can be ignored.
+    { $match: { company: new mongoose.Types.ObjectId(companyId) } },
     { $sample: { size: sampleSize } },
   ]);
 
@@ -34,7 +34,10 @@ const getPossibleFilterKeys = async ({ companyId }) => {
 };
 
 const getPossibleFilterValues = async ({ companyId, key }) => {
-  const results = await CompanyUser.find({ companyId }, { [key]: 1, _id: 0 });
+  const results = await CompanyUser.find(
+    { company: companyId },
+    { [key]: 1, _id: 0 }
+  );
 
   const values = results.map((item) => item[key]);
 
@@ -74,10 +77,11 @@ const search = async ({ companyId, searchString, searchFields }) => {
     queryArray.push({ [item]: { $regex: regex } });
   });
 
-  return CompanyUser.find({ companyId, $or: queryArray }).limit(10);
+  return CompanyUser.find({ company: companyId, $or: queryArray }).limit(10);
 };
 
-const readAllCompanyUsers = ({ companyId }) => CompanyUser.find({ companyId });
+const readAllCompanyUsers = ({ companyId }) =>
+  CompanyUser.find({ company: companyId });
 
 const readPaginatedCompanyUsers = async ({
   companyId,
@@ -85,8 +89,8 @@ const readPaginatedCompanyUsers = async ({
   pageSize = 10,
 }) => {
   const [totalCount, companyUsers] = await Promise.all([
-    CompanyUser.countDocuments({ companyId }),
-    CompanyUser.find({ companyId })
+    CompanyUser.countDocuments({ company: companyId }),
+    CompanyUser.find({ company: companyId })
       .skip((parseInt(pageNumber) - 1) * pageSize)
       .limit(pageSize),
   ]);
@@ -99,7 +103,7 @@ const readPaginatedCompanyUsers = async ({
 
 const createCompanyUser = ({ companyId, companyUserData }) => {
   CompanyUser.create({
-    companyId,
+    company: companyId,
     ...companyUserData,
   });
 };
@@ -109,7 +113,10 @@ const readCompanyUser = async ({ companyId, userId }) => {
     inputString: userId,
   });
 
-  const companyUser = await CompanyUser.findOne({ _id: userId, companyId });
+  const companyUser = await CompanyUser.findOne({
+    _id: userId,
+    company: companyId,
+  });
 
   if (!companyUser) {
     throw createHttpError(404, {
@@ -126,19 +133,13 @@ const updateCompanyUser = async ({ companyId, userId, companyUserData }) => {
   });
 
   const result = await CompanyUser.updateOne(
-    { _id: userId, companyId },
+    { _id: userId, company: companyId },
     { ...companyUserData }
   );
 
   if (!result.matchedCount) {
     throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.COMPANY_USER_NOT_FOUND,
-    });
-  }
-
-  if (!result.modifiedCount) {
-    throw createHttpError(404, {
-      errorMessage: RESPONSE_MESSAGES.COMPANY_USER_UPDATED_ALREADY,
     });
   }
 };

@@ -47,7 +47,7 @@ new CronJob(
         if (
           campaign.runMode === RUN_MODE.SCHEDULE &&
           campaign.processedCount < 1 &&
-          moment().isSameOrAfter(moment(campaign.runSchedule))
+          moment().isSameOrAfter(moment(campaign.runSchedule).startOf("minute"))
         ) {
           recordsUpdated++;
 
@@ -60,7 +60,9 @@ new CronJob(
             campaignRecurring[1]
           );
 
-          const lastProcessedTime = moment(campaign.lastProcessed);
+          const lastProcessedTime = moment(campaign.lastProcessed).startOf(
+            "minute"
+          );
 
           if (moment().isSameOrAfter(lastProcessedTime.add(recurringPeriod))) {
             recordsUpdated++;

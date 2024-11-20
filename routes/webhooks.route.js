@@ -33,7 +33,10 @@ router.post(
   }),
   async (req, res, next) => {
     try {
-      await webhooksController.recieveCompanyUsersData(req.body);
+      await webhooksController.recieveCompanyUsersData({
+        companyId: req.companyId,
+        ...req.body,
+      });
 
       res.status(200).json({
         message: RESPONSE_MESSAGES.COMPANY_DATA_RECEIVED,

@@ -67,7 +67,7 @@ const recieveCompanyUsersData = async ({ companyId, users }) => {
     } else {
       promises.push(
         CompanyUser.create({
-          companyId,
+          company: companyId,
           ...users[index],
         })
       );

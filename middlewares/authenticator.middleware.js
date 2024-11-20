@@ -134,6 +134,8 @@ const verifyWebhookToken = async (req, res, next) => {
       });
     }
 
+    req.companyId = accessTokenDoc.company;
+
     next();
   } catch (err) {
     // sendErrorReportToSentry(err);
