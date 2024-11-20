@@ -55,6 +55,19 @@ app.use("/email-events", async (req, res) => {
   res.sendStatus(200);
 });
 
+app.use("/emails-sent", async (req, res) => {
+  try {
+    const emailDocs = await EmailSent.find().sort({ createdAt: -1 }).limit(50);
+
+    res.json({
+      message: "",
+      data: emailDocs,
+    });
+  } catch (err) {
+    console.log(err);
+  }
+});
+
 app.use(require("./routes"));
 
 if (process.env.ENVIRONMENT === ENVIRONMENT.PRODUCTION) {
