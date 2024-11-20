@@ -5,10 +5,10 @@ const { basicUtil } = require("../utils");
 
 const recieveEmailEvents = () => {};
 
-const recieveCompanyUsersData = async ({ companyId, companyUsersData }) => {
+const recieveCompanyUsersData = async ({ companyId, users }) => {
   const promises = [];
 
-  companyUsersData = basicUtil.fiterUniqueObjectsFromArray(companyUsersData);
+  users = basicUtil.fiterUniqueObjectsFromArray(users);
 
   const { getPossibleFilterKeys } = require("./company-users.controller");
 
@@ -24,7 +24,7 @@ const recieveCompanyUsersData = async ({ companyId, companyUsersData }) => {
 
   let query = {};
 
-  for (const user of companyUsersData) {
+  for (const user of users) {
     query = { ...filterKeys, companyId };
 
     for (const key in user) {
@@ -47,7 +47,7 @@ const recieveCompanyUsersData = async ({ companyId, companyUsersData }) => {
         (item) => item !== "$__" && item !== "_doc" && item !== "$isNew"
       );
 
-      const newItemKeysCount = Object.keys(companyUsersData[index]);
+      const newItemKeysCount = Object.keys(users[index]);
 
       if (existingItemKeysCount.length !== newItemKeysCount.length) {
         const newKeys = _.difference(newItemKeysCount, existingItemKeysCount);
@@ -55,7 +55,7 @@ const recieveCompanyUsersData = async ({ companyId, companyUsersData }) => {
         const updateQuery = {};
 
         newKeys.forEach((key) => {
-          updateQuery[key] = companyUsersData[index][key];
+          updateQuery[key] = users[index][key];
         });
 
         if (newKeys.length) {
@@ -68,7 +68,7 @@ const recieveCompanyUsersData = async ({ companyId, companyUsersData }) => {
       promises.push(
         CompanyUser.create({
           companyId,
-          ...companyUsersData[index],
+          ...users[index],
         })
       );
     }

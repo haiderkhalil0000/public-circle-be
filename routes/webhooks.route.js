@@ -28,7 +28,7 @@ router.post(
   authenticate.verifyWebhookToken,
   validate({
     body: Joi.object({
-      companyUsersData: Joi.array().required(),
+      users: Joi.array().required(),
     }),
   }),
   async (req, res, next) => {

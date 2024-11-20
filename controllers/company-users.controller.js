@@ -174,7 +174,7 @@ const uploadCsv = async ({ companyId, file }) => {
       try {
         await webhooksController.recieveCompanyUsersData({
           companyId,
-          companyUsersData: results,
+          users: results,
         });
 
         fs.unlink(file.path, (err) => {

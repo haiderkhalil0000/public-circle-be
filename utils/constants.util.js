@@ -108,7 +108,7 @@ module.exports = {
     FETCHED_COMPANY_USER: "Company user fetched successfully.",
     COMPANY_USER_UPDATED: "Company user updated successfully.",
     COMPANY_USER_DELETED: "Company user deleted successfully.",
-    COMPANY_DATA_RECEIVED: "Company users data recieved successfully.",
+    COMPANY_DATA_RECEIVED: "Users recieved successfully.",
     INVALID_OBJECT_ID: "Invalid objectId!",
     USER_UPDATED: "User updated successfully.",
     ACCESS_TOKEN_CREATED: "Access token created successfully.",
