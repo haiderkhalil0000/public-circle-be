@@ -10,6 +10,7 @@ const createAccessToken = async ({ title, companyId }) => {
   const existingToken = await AccessToken.findOne({
     title,
     company: companyId,
+    status: ACCESS_TOKEN_STATUS.ACTIVE,
   });
 
   if (existingToken) {
