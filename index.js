@@ -59,7 +59,7 @@ app.use("/emails-sent", async (req, res) => {
   try {
     const [totalCount, emailDocs] = await Promise.all([
       EmailSent.countDocuments(),
-      EmailSent.find().sort({ createdAt: -1 }).limit(50),
+      EmailSent.find().sort({ createdAt: -1 }).limit(10),
     ]);
 
     res.json({
