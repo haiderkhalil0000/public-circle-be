@@ -4,6 +4,7 @@ const moment = require("moment");
 const {
   constants: {
     MODELS: { USER, COMPANY, ROLE },
+    USER_STATUS,
   },
 } = require("../utils");
 
@@ -23,6 +24,11 @@ const schema = new mongoose.Schema(
     isEmailVerified: { type: Boolean, default: false },
     isLoginWithEmailLocked: { type: Boolean, default: false },
     role: { type: ObjectId, ref: ROLE },
+    status: {
+      type: String,
+      default: USER_STATUS.ACTIVE,
+      enum: Object.values(USER_STATUS),
+    },
   },
   { timestamps: true }
 );

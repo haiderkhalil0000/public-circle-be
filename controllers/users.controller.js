@@ -1,8 +1,10 @@
 const createHttpError = require("http-errors");
 
 const { User, Company } = require("../models");
-const { basicUtil } = require("../utils");
-const { RESPONSE_MESSAGES } = require("../utils/constants.util");
+const {
+  basicUtil,
+  constants: { RESPONSE_MESSAGES, USER_STATUS },
+} = require("../utils");
 
 const updateUser = async ({
   emailAddress,
@@ -128,9 +130,66 @@ const readAllUsersUnderACompany = async ({ companyId }) =>
     company: companyId,
   });
 
+const readUserUnderACompany = async ({ companyId, userId }) => {
+  basicUtil.validateObjectId({ inputString: userId });
+
+  const userDoc = await User.find({
+    _id: userId,
+    company: companyId,
+  });
+
+  if (!userDoc) {
+    throw createHttpError(404, {
+      errorMessage: RESPONSE_MESSAGES.USER_NOT_FOUND,
+    });
+  }
+
+  return userDoc;
+};
+
+const updateUserUnderACompany = async ({ companyId, userId, roleId }) => {
+  basicUtil.validateObjectId({ inputString: userId });
+  basicUtil.validateObjectId({ inputString: roleId });
+
+  const result = await User.updateOne(
+    {
+      _id: userId,
+      company: companyId,
+    },
+    { role: roleId }
+  );
+
+  if (!result.matchedCount) {
+    throw createHttpError(404, {
+      errorMessage: RESPONSE_MESSAGES.USER_NOT_FOUND,
+    });
+  }
+};
+
+const deleteUserUnderACompany = async ({ companyId, userId }) => {
+  basicUtil.validateObjectId({ inputString: userId });
+
+  const result = await User.updateOne(
+    {
+      _id: userId,
+      company: companyId,
+    },
+    { status: USER_STATUS.DELETED }
+  );
+
+  if (!result.matchedCount) {
+    throw createHttpError(404, {
+      errorMessage: RESPONSE_MESSAGES.USER_NOT_FOUND,
+    });
+  }
+};
+
 module.exports = {
   updateUser,
   createUserUnderACompany,
   readPaginatedUsersUnderACompany,
   readAllUsersUnderACompany,
+  readUserUnderACompany,
+  updateUserUnderACompany,
+  deleteUserUnderACompany,
 };

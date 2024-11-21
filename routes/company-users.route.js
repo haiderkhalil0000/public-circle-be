@@ -164,7 +164,7 @@ router.get(
         });
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.FETCHED_COMPANY_USERS,
+        message: RESPONSE_MESSAGES.COMPANY_USER_FETCHEDS,
         data: companyUsers,
       });
     } catch (err) {
@@ -238,7 +238,7 @@ router.get(
       });
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.FETCHED_COMPANY_USER,
+        message: RESPONSE_MESSAGES.COMPANY_USER_FETCHED,
         data: companyUser,
       });
     } catch (err) {

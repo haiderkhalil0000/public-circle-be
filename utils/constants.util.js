@@ -32,7 +32,7 @@ module.exports = {
     FETCHED_POSSIBLE_VALUES: "Possible filter values fetched successfully.",
     FETCHED_FILTER_COUNT: "Filter count fetched sucessfully.",
     SEARCH_SUCCESSFUL: "Manually searched successfully.",
-    FETCHED_COMPANY_USERS: "Company users fetched successfully.",
+    COMPANY_USER_FETCHEDS: "Company users fetched successfully.",
     FETCHED_ALL_COMPANY_USERS: "All company users fetched successfully.",
     FILTER_ALREADY_EXISTS: "This filter already exists!",
     FILTER_CREATED: "Filter created successfully.",
@@ -105,7 +105,8 @@ module.exports = {
     COMPANY_USER_UPDATED_ALREADY: "Company user updated already!",
     COMPANY_USER_DELETED_ALREADY: "Company user deleted already!",
     COMPANY_USER_CREATED: "Company user created successfully.",
-    FETCHED_COMPANY_USER: "Company user fetched successfully.",
+    COMPANY_USER_FETCHED: "Company user fetched successfully.",
+    COMPANY_USERS_FETCHED: "Company users fetched successfully.",
     COMPANY_USER_UPDATED: "Company user updated successfully.",
     COMPANY_USER_DELETED: "Company user deleted successfully.",
     COMPANY_DATA_RECEIVED: "Users recieved successfully.",
@@ -154,6 +155,8 @@ module.exports = {
     USERS_FETCHED: "Users fetched successfully.",
     ALL_USERS_FETCHED: "All users fetched successfully.",
     EMAIL_DOC_NOT_FOUND: "Email document not found!",
+    USER_NOT_FOUND: "User not found!",
+    USER_FETCHED: "User fetched successfully.",
   },
 
   INTERACTION_CHANNELS: {
@@ -260,6 +263,12 @@ module.exports = {
 
   ACCESS_TOKEN_STATUS: {
     ACTIVE: "ACTIVE",
+    DELETED: "DELETED",
+  },
+
+  USER_STATUS: {
+    ACTIVE: "ACTIVE",
+    SUSPENDED: "SUSPENDED",
     DELETED: "DELETED",
   },
 };
