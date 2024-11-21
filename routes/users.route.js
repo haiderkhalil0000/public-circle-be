@@ -85,8 +85,56 @@ router.post(
       });
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.USER_CREATED,
+        message: RESPONSE_MESSAGES.COMPANY_USER_CREATED,
         data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      userDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.get("/all", authenticate.verifyToken, async (req, res, next) => {
+  try {
+    const users = await usersController.readAllUsersUnderACompany({
+      companyId: req.user.company._id,
+    });
+
+    res.status(200).json({
+      message: RESPONSE_MESSAGES.COMPANY_USERS_FETCHED,
+      data: users,
+    });
+  } catch (err) {
+    // sendErrorReportToSentry(error);
+
+    userDebugger(err);
+
+    next(err);
+  }
+});
+
+router.get(
+  "/:userId",
+  authenticate.verifyToken,
+  validate({
+    params: Joi.object({
+      userId: Joi.string().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const user = await usersController.readUserUnderACompany({
+        companyId: req.user.company._id,
+        ...req.params,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.COMPANY_USER_FETCHED,
+        data: user,
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
@@ -115,7 +163,7 @@ router.get(
       });
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.USERS_FETCHED,
+        message: RESPONSE_MESSAGES.COMPANY_USERS_FETCHED,
         data: users,
       });
     } catch (err) {
@@ -128,23 +176,66 @@ router.get(
   }
 );
 
-router.get("/all", authenticate.verifyToken, async (req, res, next) => {
-  try {
-    const users = await usersController.readAllUsersUnderACompany({
-      companyId: req.user.company._id,
-    });
+router.patch(
+  "/:userId",
+  authenticate.verifyToken,
+  validate({
+    params: Joi.object({
+      userId: Joi.string().required(),
+    }),
+    body: Joi.object({
+      roleId: Joi.string().optional(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      await usersController.updateUserUnderACompany({
+        companyId: req.user.company._id,
+        ...req.params,
+        ...req.body,
+      });
 
-    res.status(200).json({
-      message: RESPONSE_MESSAGES.ALL_USERS_FETCHED,
-      data: users,
-    });
-  } catch (err) {
-    // sendErrorReportToSentry(error);
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.COMPANY_USER_UPDATED,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
 
-    userDebugger(err);
+      userDebugger(err);
 
-    next(err);
+      next(err);
+    }
   }
-});
+);
+
+router.delete(
+  "/:userId",
+  authenticate.verifyToken,
+  validate({
+    params: Joi.object({
+      userId: Joi.string().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      await usersController.deleteUserUnderACompany({
+        companyId: req.user.company._id,
+        ...req.params,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.COMPANY_USER_DELETED,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      userDebugger(err);
+
+      next(err);
+    }
+  }
+);
 
 module.exports = router;
