@@ -4,7 +4,6 @@ const http = require("http");
 const express = require("express");
 const helmet = require("helmet");
 const cors = require("cors");
-const createHttpError = require("http-errors");
 
 const { configure, database } = require("./startup");
 
@@ -27,33 +26,8 @@ app.get("/", (req, res) =>
 
 const { EmailSent } = require("./models");
 const {
-  constants: { ENVIRONMENT, RESPONSE_MESSAGES },
+  constants: { ENVIRONMENT },
 } = require("./utils");
-
-app.use("/email-events", async (req, res) => {
-  try {
-    const message = JSON.parse(req.body.Message);
-
-    console.log("WEB_HOOK_DATA_1", message);
-
-    const result = await EmailSent.updateOne(
-      { sesMessageId: message.mail.messageId },
-      { $set: { details: message } }
-    );
-
-    if (!result.matchedCount) {
-      throw createHttpError(400, {
-        errorMessage: RESPONSE_MESSAGES.EMAIL_DOC_NOT_FOUND,
-      });
-    } else if (!result.modifiedCount) {
-      console.log("Document was found but not modified.");
-    }
-  } catch (err) {
-    console.log("Error updating document:", err);
-  }
-
-  res.sendStatus(200);
-});
 
 app.use("/emails-sent", async (req, res) => {
   try {

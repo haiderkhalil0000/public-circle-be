@@ -34,8 +34,9 @@ const schema = new mongoose.Schema(
     sesMessageId: {
       type: String,
     },
-    details: {
+    emailEvents: {
       type: Object,
+      default: {},
     },
   },
   { timestamps: true }
