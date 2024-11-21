@@ -11,6 +11,52 @@ const {
 const router = express.Router();
 
 router.post(
+  "/resend-verification-email",
+  authenticate.decodeExpiredToken,
+  async (req, res, next) => {
+    try {
+      await authController.sendVerificationEmail(req.user.emailAddress);
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.VERIFICATION_EMAIL_SENT,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      userDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.post(
+  "/verify-email",
+  validate({
+    body: Joi.object({
+      token: Joi.string().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      await authController.verifyEmailAddress(req.body);
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.EMAIL_VERIFIED,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      authDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.post(
   "/register",
   authenticate.verifyEmailToken,
   validate({
@@ -99,39 +145,22 @@ router.post(
 );
 
 router.post(
-  "/resend-verification-email",
-  authenticate.decodeExpiredToken,
-  async (req, res, next) => {
-    try {
-      await authController.sendVerificationEmail(req.user.emailAddress);
-
-      res.status(200).json({
-        message: RESPONSE_MESSAGES.VERIFICATION_EMAIL_SENT,
-        data: {},
-      });
-    } catch (err) {
-      // sendErrorReportToSentry(error);
-
-      userDebugger(err);
-
-      next(err);
-    }
-  }
-);
-
-router.post(
-  "/verify-email",
+  "/change-password",
+  authenticate.verifyToken,
   validate({
     body: Joi.object({
-      token: Joi.string().required(),
+      oldPassword: Joi.string().min(6).max(20).required(),
+      newPassword: Joi.string().min(6).max(20).required(),
     }),
   }),
   async (req, res, next) => {
     try {
-      await authController.verifyEmailAddress(req.body);
+      await authController.changePassword({
+        currentUserId: req.user._id,
+      });
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.EMAIL_VERIFIED,
+        message: RESPONSE_MESSAGES.PASSWORD_CHANGED,
         data: {},
       });
     } catch (err) {

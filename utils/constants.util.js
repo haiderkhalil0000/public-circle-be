@@ -157,6 +157,8 @@ module.exports = {
     EMAIL_DOC_NOT_FOUND: "Email document not found!",
     USER_NOT_FOUND: "User not found!",
     USER_FETCHED: "User fetched successfully.",
+    PASSWORD_INVALID: "Password is invalid!",
+    PASSWORD_CHANGED: "Password changed successfully.",
   },
 
   INTERACTION_CHANNELS: {
