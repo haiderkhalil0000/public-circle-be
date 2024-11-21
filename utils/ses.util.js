@@ -35,6 +35,7 @@ const sendEmail = async ({
           },
         },
       },
+      ConfigurationSetName: "public-circles",
     })
   );
 
