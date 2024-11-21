@@ -11,11 +11,15 @@ const {
 const router = express.Router();
 
 router.post(
-  "/resend-verification-email",
-  authenticate.decodeExpiredToken,
+  "/send-verification-email",
+  validate({
+    body: Joi.object({
+      emailAddress: Joi.string().email().required(),
+    }),
+  }),
   async (req, res, next) => {
     try {
-      await authController.sendVerificationEmail(req.user.emailAddress);
+      await authController.sendVerificationEmail(req.body);
 
       res.status(200).json({
         message: RESPONSE_MESSAGES.VERIFICATION_EMAIL_SENT,
@@ -50,6 +54,27 @@ router.post(
       // sendErrorReportToSentry(error);
 
       authDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.post(
+  "/resend-verification-email",
+  authenticate.decodeExpiredToken,
+  async (req, res, next) => {
+    try {
+      await authController.sendVerificationEmail(req.user.emailAddress);
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.VERIFICATION_EMAIL_SENT,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      userDebugger(err);
 
       next(err);
     }
@@ -113,31 +138,6 @@ router.post(
       // sendErrorReportToSentry(error);
 
       authDebugger(err);
-
-      next(err);
-    }
-  }
-);
-
-router.post(
-  "/send-verification-email",
-  validate({
-    body: Joi.object({
-      emailAddress: Joi.string().email().required(),
-    }),
-  }),
-  async (req, res, next) => {
-    try {
-      await authController.sendVerificationEmail(req.body);
-
-      res.status(200).json({
-        message: RESPONSE_MESSAGES.VERIFICATION_EMAIL_SENT,
-        data: {},
-      });
-    } catch (err) {
-      // sendErrorReportToSentry(error);
-
-      userDebugger(err);
 
       next(err);
     }
