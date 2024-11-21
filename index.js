@@ -34,7 +34,7 @@ app.use("/email-events", async (req, res) => {
   try {
     const message = JSON.parse(req.body.Message);
 
-    console.log("WEB_HOOK_DATA", message);
+    console.log("WEB_HOOK_DATA_1", message);
 
     const result = await EmailSent.updateOne(
       { sesMessageId: message.mail.messageId },
