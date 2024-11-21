@@ -130,10 +130,31 @@ const getBeefreeAccessToken = async ({ currentUserId }) => {
   return access_token;
 };
 
+const changePassword = async ({ currentUserId, oldPassword, newPassword }) => {
+  const userDoc = await User.findById(currentUserId);
+
+  if (!userDoc) {
+    throw createHttpError(404, {
+      errorMessage: RESPONSE_MESSAGES.USER_NOT_FOUND,
+    });
+  }
+
+  if (userDoc.password !== oldPassword) {
+    throw createHttpError(404, {
+      errorMessage: RESPONSE_MESSAGES.PASSWORD_INVALID,
+    });
+  }
+
+  userDoc.password = newPassword;
+
+  await userDoc.save();
+};
+
 module.exports = {
   register,
   login,
   sendVerificationEmail,
   verifyEmailAddress,
   getBeefreeAccessToken,
+  changePassword,
 };
