@@ -26,7 +26,7 @@ router.post("/email-events", async (req, res, next) => {
 
       console.log("WEB_HOOK_DATA", message);
 
-      await EmailSent.updateOne({ sesMessageId: "abc123" }, [
+      await EmailSent.updateOne({ sesMessageId: message.mail.messageId }, [
         {
           $set: {
             emailEvents: {
