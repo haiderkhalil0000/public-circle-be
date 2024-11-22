@@ -13,13 +13,11 @@ const {
     VERIFICATION_EMAIL_SUBJECT,
     PUBLIC_CIRCLES_EMAIL_ADDRESS,
     TEMPLATE_KINDS,
+    PASSWORD_RESET_SUBJECT,
+    PASSWORD_RESET_CONTENT,
   },
   sesUtil,
 } = require("../utils");
-const {
-  PASSWORD_RESET_SUBJECT,
-  PASSWORD_RESET_CONTENT,
-} = require("../utils/constants.util");
 
 const { PUBLIC_CIRCLES_WEB_URL } = process.env;
 
