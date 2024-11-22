@@ -16,6 +16,10 @@ const {
   },
   sesUtil,
 } = require("../utils");
+const {
+  PASSWORD_RESET_SUBJECT,
+  PASSWORD_RESET_CONTENT,
+} = require("../utils/constants.util");
 
 const { PUBLIC_CIRCLES_WEB_URL } = process.env;
 
@@ -94,7 +98,7 @@ Public Circles Team`,
   });
 };
 
-const verifyEmailAddress = async ({ token }) => {
+const verifyJwtToken = async ({ token, source }) => {
   try {
     const decodedToken = decodeToken(token);
 
@@ -103,6 +107,21 @@ const verifyEmailAddress = async ({ token }) => {
         errorMessage: RESPONSE_MESSAGES.TOKEN_IS_INVALID_OR_EXPIRED,
       });
     }
+
+    if (source === "reset-password") {
+      const userDoc = await User.findOne({
+        emailAddress: decodedToken.emailAddress,
+        isResetPasswordRequested: true,
+      });
+
+      if (!userDoc) {
+        throw createHttpError(403, {
+          errorMessage: RESPONSE_MESSAGES.TOKEN_IS_INVALID_OR_EXPIRED,
+        });
+      }
+
+      return decodedToken;
+    }
   } catch (err) {
     if (err.name === "TokenExpiredError") {
       throw createHttpError(403, {
@@ -110,7 +129,7 @@ const verifyEmailAddress = async ({ token }) => {
       });
     } else if (err.name === "JsonWebTokenError") {
       throw createHttpError(403, {
-        errorMessage: RESPONSE_MESSAGES.INVALID_TOKEN,
+        errorMessage: RESPONSE_MESSAGES.TOKEN_IS_INVALID_OR_EXPIRED,
       });
     } else {
       throw { errorMessage: err.message };
@@ -150,11 +169,63 @@ const changePassword = async ({ currentUserId, oldPassword, newPassword }) => {
   await userDoc.save();
 };
 
+const mapDynamicValues = ({ content, firstName, url }) =>
+  content.replace(/{{firstName}}/g, firstName).replace(/{{reset-url}}/g, url);
+
+const forgotPassword = async ({ emailOrPhoneNumber }) => {
+  const userDoc = await User.findOne({
+    $or: [
+      { emailAddress: emailOrPhoneNumber },
+      { phoneNumber: emailOrPhoneNumber },
+    ],
+  });
+
+  if (!userDoc) {
+    throw createHttpError(404, {
+      errorMessage: RESPONSE_MESSAGES.USER_NOT_FOUND,
+    });
+  }
+
+  userDoc.isResetPasswordRequested = true;
+
+  await Promise.all([
+    userDoc.save(),
+    sesUtil.sendEmail({
+      fromEmailAddress: "saad.venndii@gmail.com",
+      toEmailAddress: userDoc.emailAddress,
+      subject: PASSWORD_RESET_SUBJECT,
+      content: mapDynamicValues({
+        content: PASSWORD_RESET_CONTENT,
+        firstName: userDoc.firstName,
+        url: `${PUBLIC_CIRCLES_WEB_URL}/auth/jwt/reset-password/?token=${createToken(
+          { emailAddress: userDoc.emailAddress }
+        )}`,
+      }),
+      contentType: TEMPLATE_KINDS.HTML,
+    }),
+  ]);
+};
+
+const resetPassword = async ({ emailAddress, newPassword }) => {
+  const result = await User.updateOne(
+    { emailAddress },
+    { password: newPassword, isResetPasswordRequested: false }
+  );
+
+  if (!result.matchedCount) {
+    throw createHttpError(404, {
+      errorMessage: RESPONSE_MESSAGES.PASSWORD_DID_NOT_RESET,
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
   sendVerificationEmail,
-  verifyEmailAddress,
+  verifyJwtToken,
   getBeefreeAccessToken,
   changePassword,
+  forgotPassword,
+  resetPassword,
 };

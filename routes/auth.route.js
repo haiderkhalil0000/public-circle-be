@@ -44,7 +44,10 @@ router.post(
   }),
   async (req, res, next) => {
     try {
-      await authController.verifyEmailAddress(req.body);
+      await authController.verifyJwtToken({
+        ...req.body,
+        soure: "verify-email",
+      });
 
       res.status(200).json({
         message: RESPONSE_MESSAGES.EMAIL_VERIFIED,
@@ -162,6 +165,67 @@ router.post(
 
       res.status(200).json({
         message: RESPONSE_MESSAGES.PASSWORD_CHANGED,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      authDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.post(
+  "/forgot-password",
+  validate({
+    body: Joi.object({
+      emailOrPhoneNumber: Joi.string().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      await authController.forgotPassword(req.body);
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.PASSWORD_RESET_REQUEST_SENT,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      authDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.post(
+  "/reset-password/:token",
+  validate({
+    params: Joi.object({
+      token: Joi.string().required(),
+    }),
+    body: Joi.object({
+      newPassword: Joi.string().min(6).max(20).required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const decodedToken = await authController.verifyJwtToken({
+        ...req.params,
+        source: "reset-password",
+      });
+
+      await authController.resetPassword({
+        emailAddress: decodedToken.emailAddress,
+        ...req.body,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.PASSWORD_RESET,
         data: {},
       });
     } catch (err) {
