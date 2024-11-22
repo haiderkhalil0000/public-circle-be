@@ -26,15 +26,21 @@ router.post("/email-events", async (req, res, next) => {
 
       console.log("WEB_HOOK_DATA", message);
 
-      await EmailSent.updateOne({ sesMessageId: message.mail.messageId }, [
-        {
-          $set: {
-            emailEvents: {
-              $mergeObjects: ["$emailEvents", { [message.eventType]: message }],
+      const result = await EmailSent.updateOne(
+        { sesMessageId: message.mail.messageId },
+        [
+          {
+            $set: {
+              emailEvents: {
+                $mergeObjects: [
+                  "$emailEvents",
+                  { [message.eventType]: message },
+                ],
+              },
             },
           },
-        },
-      ]);
+        ]
+      );
 
       if (!result.matchedCount) {
         throw createHttpError(400, {
