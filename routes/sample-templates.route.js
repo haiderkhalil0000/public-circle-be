@@ -11,8 +11,6 @@ const {
 
 const router = express.Router();
 
-router.use("/templates/samples", require("./sample-templates.route"));
-
 router.post(
   "/",
   authenticate.verifyToken,
