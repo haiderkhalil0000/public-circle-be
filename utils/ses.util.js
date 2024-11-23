@@ -8,7 +8,7 @@ const {
 } = require("@aws-sdk/client-ses");
 
 const { sesClient } = require("../startup/ses.config");
-const { TEMPLATE_KINDS } = require("./constants.util");
+const { TEMPLATE_CONTENT_TYPE } = require("./constants.util");
 
 const sendEmail = async ({
   fromEmailAddress,
@@ -29,7 +29,7 @@ const sendEmail = async ({
           Data: subject,
         },
         Body: {
-          [contentType === TEMPLATE_KINDS.HTML ? "Html" : "Text"]: {
+          [contentType === TEMPLATE_CONTENT_TYPE.HTML ? "Html" : "Text"]: {
             Charset: "UTF-8",
             Data: content,
           },
