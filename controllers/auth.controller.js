@@ -12,7 +12,7 @@ const {
     RESPONSE_MESSAGES,
     VERIFICATION_EMAIL_SUBJECT,
     PUBLIC_CIRCLES_EMAIL_ADDRESS,
-    TEMPLATE_KINDS,
+    TEMPLATE_CONTENT_TYPE,
     PASSWORD_RESET_SUBJECT,
     PASSWORD_RESET_CONTENT,
   },
@@ -92,7 +92,7 @@ ${PUBLIC_CIRCLES_WEB_URL}/auth/jwt/sign-up/?token=${token}
 
 Regards,
 Public Circles Team`,
-    contentType: TEMPLATE_KINDS.TEXT,
+    contentType: TEMPLATE_CONTENT_TYPE.TEXT,
   });
 };
 
@@ -199,7 +199,7 @@ const forgotPassword = async ({ emailOrPhoneNumber }) => {
           { emailAddress: userDoc.emailAddress }
         )}`,
       }),
-      contentType: TEMPLATE_KINDS.HTML,
+      contentType: TEMPLATE_CONTENT_TYPE.HTML,
     }),
   ]);
 };

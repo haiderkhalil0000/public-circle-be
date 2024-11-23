@@ -12,7 +12,6 @@ const schema = new mongoose.Schema(
   {
     company: {
       type: ObjectId,
-      required: true,
       index: true,
       ref: COMPANY,
     },

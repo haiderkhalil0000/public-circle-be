@@ -3,7 +3,7 @@ const createHttpError = require("http-errors");
 const { Template } = require("../models");
 const {
   basicUtil,
-  constants: { RESPONSE_MESSAGES, DOCUMENT_STATUS },
+  constants: { RESPONSE_MESSAGES, TEMPLATE_KINDS, TEMPLATE_STATUS },
 } = require("../utils");
 
 const createTemplate = async ({ companyId, name, kind, body, json }) => {
@@ -18,13 +18,18 @@ const createTemplate = async ({ companyId, name, kind, body, json }) => {
     });
   }
 
-  Template.create({
-    company: companyId,
+  const document = {
     name,
     kind,
     body,
     json,
-  });
+  };
+
+  if (kind === TEMPLATE_KINDS.REGULAR) {
+    document.company = companyId;
+  }
+
+  return Template.create(document);
 };
 
 const readTemplate = async ({ templateId }) => {
@@ -41,26 +46,37 @@ const readTemplate = async ({ templateId }) => {
   return template;
 };
 
-const readAllTemplates = async ({ companyId }) =>
-  Template.find({
-    company: companyId,
-    status: DOCUMENT_STATUS.ACTIVE,
-  });
+const readAllTemplates = async ({ companyId, kind }) => {
+  const query = { status: TEMPLATE_STATUS.ACTIVE };
+
+  if (kind === TEMPLATE_KINDS.REGULAR) {
+    query.company = companyId;
+    query.kind = TEMPLATE_KINDS.REGULAR;
+  } else {
+    query.kind = TEMPLATE_KINDS.SAMPLE;
+  }
+
+  return Template.find(query);
+};
 
 const readPaginatedTemplates = async ({
   companyId,
   pageNumber = 1,
   pageSize = 10,
+  kind,
 }) => {
+  const query = { status: TEMPLATE_STATUS.ACTIVE };
+
+  if (kind === TEMPLATE_KINDS.REGULAR) {
+    query.company = companyId;
+    query.kind = TEMPLATE_KINDS.REGULAR;
+  } else {
+    query.kind = TEMPLATE_KINDS.SAMPLE;
+  }
+
   const [totalRecords, templates] = await Promise.all([
-    Template.countDocuments({
-      company: companyId,
-      status: DOCUMENT_STATUS.ACTIVE,
-    }),
-    Template.find({
-      company: companyId,
-      status: DOCUMENT_STATUS.ACTIVE,
-    })
+    Template.countDocuments(query),
+    Template.find(query)
       .skip((parseInt(pageNumber) - 1) * pageSize)
       .limit(pageSize),
   ]);
@@ -89,7 +105,7 @@ const deleteTemplate = async ({ templateId }) => {
   const result = await Template.updateOne(
     { _id: templateId },
     {
-      status: DOCUMENT_STATUS.DELETED,
+      status: TEMPLATE_STATUS.DELETED,
     }
   );
 

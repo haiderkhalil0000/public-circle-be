@@ -189,6 +189,11 @@ module.exports = {
   },
 
   TEMPLATE_KINDS: {
+    REGULAR: "REGULAR",
+    SAMPLE: "SAMPLE",
+  },
+
+  TEMPLATE_CONTENT_TYPE: {
     TEXT: "TEXT",
     HTML: "HTML",
   },

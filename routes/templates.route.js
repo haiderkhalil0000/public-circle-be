@@ -11,19 +11,17 @@ const {
 
 const router = express.Router();
 
-router.use("/templates/samples", require("./sample-templates.route"));
-
 router.post(
   "/",
   authenticate.verifyToken,
   validate({
     body: Joi.object({
       name: Joi.string().required(),
-      kind: Joi.string()
-        .valid(TEMPLATE_KINDS.TEXT, TEMPLATE_KINDS.HTML)
-        .required(),
       body: Joi.string().required(),
       json: Joi.string().required(),
+      kind: Joi.string()
+        .valid(TEMPLATE_KINDS.REGULAR, TEMPLATE_KINDS.SAMPLE)
+        .required(),
     }),
   }),
   async (req, res, next) => {
@@ -48,25 +46,37 @@ router.post(
   }
 );
 
-router.get("/all", authenticate.verifyToken, async (req, res, next) => {
-  try {
-    const templates = await templatesController.readAllTemplates({
-      companyId: req.user.company._id,
-    });
+router.get(
+  "/all",
+  authenticate.verifyToken,
+  validate({
+    query: Joi.object({
+      kind: Joi.string()
+        .valid(TEMPLATE_KINDS.REGULAR, TEMPLATE_KINDS.SAMPLE)
+        .required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const templates = await templatesController.readAllTemplates({
+        companyId: req.user.company._id,
+        ...req.query,
+      });
 
-    res.status(200).json({
-      message: RESPONSE_MESSAGES.FETCHED_ALL_TEMPLATES,
-      data: templates,
-    });
-  } catch (err) {
-    // sendErrorReportToSentry(error);
-    console.log(err);
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.FETCHED_ALL_TEMPLATES,
+        data: templates,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
 
-    templateDebugger(err);
+      templateDebugger(err);
 
-    next(err);
+      next(err);
+    }
   }
-});
+);
 
 router.get(
   "/:templateId",
@@ -102,6 +112,9 @@ router.get(
     query: Joi.object({
       pageNumber: Joi.number().required(),
       pageSize: Joi.number().required(),
+      kind: Joi.string()
+        .valid(TEMPLATE_KINDS.REGULAR, TEMPLATE_KINDS.SAMPLE)
+        .required(),
     }),
   }),
   async (req, res, next) => {
@@ -135,9 +148,6 @@ router.patch(
     }),
     body: Joi.object({
       name: Joi.string().optional(),
-      kind: Joi.string()
-        .valid(TEMPLATE_KINDS.TEXT, TEMPLATE_KINDS.HTML)
-        .optional(),
       body: Joi.string().optional(),
       json: Joi.string().optional(),
     }),
