@@ -95,7 +95,7 @@ const createUserUnderACompany = async ({
   return Promise.all([
     User.create({
       emailAddress,
-      name,
+      firstName: name,
       role,
       company: companyId,
     }),
@@ -128,7 +128,7 @@ const readPaginatedUsersUnderACompany = async ({
 const readAllUsersUnderACompany = async ({ companyId }) =>
   User.find({
     company: companyId,
-  });
+  }).populate("role", "name");
 
 const readUserUnderACompany = async ({ companyId, userId }) => {
   basicUtil.validateObjectId({ inputString: userId });
