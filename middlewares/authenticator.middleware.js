@@ -9,7 +9,7 @@ const {
 
 const { JWT_SECRET } = process.env;
 
-const createToken = (data) => jwt.sign(data, JWT_SECRET, { expiresIn: "2d" });
+const createToken = (data) => jwt.sign(data, JWT_SECRET);
 
 const decodeToken = (token) => jwt.verify(token, JWT_SECRET);
 
