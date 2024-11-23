@@ -125,9 +125,11 @@ const readPaginatedUsersUnderACompany = async ({
   };
 };
 
-const readAllUsersUnderACompany = async ({ companyId }) =>
+const readAllUsersUnderACompany = async ({ companyId, currentUserId }) =>
   User.find({
+    _id: { $ne: currentUserId },
     company: companyId,
+    status: USER_STATUS.ACTIVE,
   }).populate("role", "name");
 
 const readUserUnderACompany = async ({ companyId, userId }) => {
