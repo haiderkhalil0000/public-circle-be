@@ -11,12 +11,12 @@ const {
 } = require("../utils");
 
 const getPossibleFilterKeys = async ({ companyId = "" }) => {
-  const totalDocs = await CompanyUser.countDocuments();
+  const totalDocs = await CompanyUser.countDocuments({ company: companyId });
   const sampleSize = Math.floor(totalDocs * 0.1);
 
   const randomDocuments = await CompanyUser.aggregate([
     { $match: { company: new mongoose.Types.ObjectId(companyId) } },
-    { $sample: { size: sampleSize } },
+    { $sample: { size: sampleSize ? sampleSize : 1 } },
   ]);
 
   if (!randomDocuments.length) {
