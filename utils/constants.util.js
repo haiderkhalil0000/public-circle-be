@@ -164,6 +164,7 @@ module.exports = {
     PASSWORD_RESET_REQUEST_SENT:
       "Password reset request has been sent. Please check your email to respond.",
     PASSWORD_DID_NOT_RESET: "Password did not reset, user not found!",
+    NO_SUBSCRIPTION_FOUND: "No active subscriptions found for this customer.",
   },
 
   INTERACTION_CHANNELS: {

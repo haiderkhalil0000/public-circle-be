@@ -23,6 +23,7 @@ router.post(
 
     try {
       const paymentIntent = await stripeController.createPaymentIntent({
+        customerId: req.user.company.stripe.id,
         amount,
       });
 
@@ -52,6 +53,31 @@ router.get(
   async (req, res, next) => {
     try {
       const subscriptions = await stripeController.getSubscriptions(req.query);
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.SUBSCRIPTIONS_FETCHED,
+        data: subscriptions,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      stripeDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.get(
+  "/active-subscriptions",
+  authenticate.verifyToken,
+  async (req, res, next) => {
+    try {
+      const subscriptions =
+        await stripeController.getActiveSubscriptionsOfACustomer({
+          customerId: req.user.company.stripe.id,
+        });
 
       res.status(200).json({
         message: RESPONSE_MESSAGES.SUBSCRIPTIONS_FETCHED,
