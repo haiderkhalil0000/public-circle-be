@@ -57,7 +57,7 @@ const updateUser = async ({
 
       companyDoc.stripe = await stripeController.createStripeCustomer({
         companyName: companyDoc.name,
-        companyId: companyDoc._id,
+        companyId: companyDoc._id.toString(),
       });
 
       await companyDoc.save();
