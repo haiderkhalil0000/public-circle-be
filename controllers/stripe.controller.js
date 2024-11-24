@@ -1,5 +1,8 @@
 const createHttpError = require("http-errors");
-const { RESPONSE_MESSAGES } = require("../utils/constants.util");
+
+const {
+  constants: { RESPONSE_MESSAGES },
+} = require("../utils");
 
 const { STRIPE_KEY } = process.env;
 
