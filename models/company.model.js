@@ -18,6 +18,7 @@ const schema = new mongoose.Schema(
     province: { type: String },
     country: { type: String },
     user: { type: ObjectId, ref: USER, required: true },
+    stripe: { type: Object, default: {} },
   },
   { timestamps: true }
 );

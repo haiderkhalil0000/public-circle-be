@@ -48,10 +48,19 @@ const updateUser = async ({
     if (companyDoc) {
       promises.push((companyDoc.name = companyName));
     } else {
+      const stripeController = require("./stripe.controller");
+
       companyDoc = await Company.create({
         name: companyName,
         user: currentUserId,
       });
+
+      companyDoc.stripe = await stripeController.createStripeCustomer({
+        companyName: companyDoc.name,
+        companyId: companyDoc._id,
+      });
+
+      await companyDoc.save();
 
       userUpdates.company = companyDoc._id;
     }
