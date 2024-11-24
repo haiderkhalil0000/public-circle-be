@@ -1,14 +1,15 @@
 const express = require("express");
 const Joi = require("joi");
 const axios = require("axios");
+const createHttpError = require("http-errors");
 const webhookDebugger = require("debug")("debug:webhook");
 
+const { EmailSent } = require("../models");
 const { authenticate, validate } = require("../middlewares");
 const { webhooksController } = require("../controllers");
 const {
   constants: { RESPONSE_MESSAGES },
 } = require("../utils");
-const { EmailSent } = require("../models");
 
 const router = express.Router();
 
