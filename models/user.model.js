@@ -25,6 +25,7 @@ const schema = new mongoose.Schema(
     isLoginWithEmailLocked: { type: Boolean, default: false },
     role: { type: ObjectId, ref: ROLE },
     isResetPasswordRequested: { type: Boolean, default: false },
+    signUpStepsCompleted: { type: Number, default: 0 },
     status: {
       type: String,
       default: USER_STATUS.ACTIVE,

@@ -47,6 +47,7 @@ const createTemplate = async ({ companyId, name, kind, body, json }) => {
   const existingTemplate = await Template.findOne({
     name,
     company: companyId,
+    status: TEMPLATE_STATUS.ACTIVE,
   });
 
   if (existingTemplate) {
