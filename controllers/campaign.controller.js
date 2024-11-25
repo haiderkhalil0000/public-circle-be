@@ -13,7 +13,13 @@ const {
 const {
   basicUtil,
   sesUtil,
-  constants: { CAMPAIGN_STATUS, RESPONSE_MESSAGES, CRON_STATUS, RUN_MODE },
+  constants: {
+    CAMPAIGN_STATUS,
+    RESPONSE_MESSAGES,
+    CRON_STATUS,
+    RUN_MODE,
+    TEMPLATE_CONTENT_TYPE,
+  },
 } = require("../utils");
 
 const validateSourceEmailAddress = async ({
@@ -267,7 +273,7 @@ const sendTestEmail = async ({
         toEmailAddress: item,
         subject: emailSubject,
         content: mappedContentArray[index],
-        contentType: emailTemplate.kind,
+        contentType: TEMPLATE_CONTENT_TYPE.HTML,
       })
     );
   });
@@ -357,7 +363,7 @@ const runCampaign = async ({ campaign }) => {
         toEmailAddress: item,
         subject: campaign.emailSubject,
         content: mappedContentArray[index],
-        contentType: template.kind,
+        contentType: TEMPLATE_CONTENT_TYPE.HTML,
       })
     );
   });
