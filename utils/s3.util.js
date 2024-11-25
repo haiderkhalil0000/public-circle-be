@@ -10,7 +10,6 @@ const uploadTemplateThumbnail = async ({ s3Path, buffer }) => {
     Key: s3Path,
     Body: buffer,
     ContentType: "image/png",
-    ACL: "public-read", // Ensure public access for the object
   };
 
   const command = new PutObjectCommand(uploadParams);
