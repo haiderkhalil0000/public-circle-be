@@ -1,10 +1,43 @@
 const createHttpError = require("http-errors");
+const puppeteer = require("puppeteer");
+const sharp = require("sharp");
 
 const { Template } = require("../models");
 const {
   basicUtil,
   constants: { RESPONSE_MESSAGES, TEMPLATE_KINDS, TEMPLATE_STATUS },
+  s3Util,
 } = require("../utils");
+
+const createThumbnail = async ({ html, width, height }) => {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+
+  // Set the content of the page
+  await page.setContent(html, {
+    waitUntil: "domcontentloaded",
+  });
+
+  // Set the viewport size to the desired thumbnail dimensions
+  await page.setViewport({
+    width: width * 2, // Use a higher resolution for better quality
+    height: height * 2,
+  });
+
+  // Take a screenshot
+  const screenshotBuffer = await page.screenshot({ type: "png" });
+
+  // Resize the screenshot to the desired thumbnail size
+  const resizedBuffer = await sharp(screenshotBuffer)
+    .resize(width, height)
+    .toBuffer();
+
+  await browser.close();
+
+  console.log(`Thumbnail created`);
+
+  return resizedBuffer;
+};
 
 const createTemplate = async ({ companyId, name, kind, body, json }) => {
   const existingTemplate = await Template.findOne({
@@ -28,6 +61,19 @@ const createTemplate = async ({ companyId, name, kind, body, json }) => {
   if (kind === TEMPLATE_KINDS.REGULAR) {
     document.company = companyId;
   }
+
+  const buffer = await createThumbnail({
+    html: body,
+    width: 200,
+    height: 150,
+  });
+
+  const url = await s3Util.uploadTemplateThumbnail({
+    s3Path: `/thumbnails/${companyId}/thumbnail.png`,
+    buffer,
+  });
+
+  document.thumbnailURL = url;
 
   return Template.create(document);
 };

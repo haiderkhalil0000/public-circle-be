@@ -11,7 +11,6 @@ const {
   constants: {
     RESPONSE_MESSAGES,
     VERIFICATION_EMAIL_SUBJECT,
-    PUBLIC_CIRCLES_EMAIL_ADDRESS,
     TEMPLATE_CONTENT_TYPE,
     PASSWORD_RESET_SUBJECT,
     PASSWORD_RESET_CONTENT,
@@ -19,7 +18,7 @@ const {
   sesUtil,
 } = require("../utils");
 
-const { PUBLIC_CIRCLES_WEB_URL } = process.env;
+const { PUBLIC_CIRCLES_WEB_URL, PUBLIC_CIRCLES_EMAIL_ADDRESS } = process.env;
 
 const { BEEFREE_CLIENT_ID, BEEFREE_CLIENT_SECRET } = process.env;
 
@@ -189,7 +188,7 @@ const forgotPassword = async ({ emailOrPhoneNumber }) => {
   await Promise.all([
     userDoc.save(),
     sesUtil.sendEmail({
-      fromEmailAddress: "saad.venndii@gmail.com",
+      fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
       toEmailAddress: userDoc.emailAddress,
       subject: PASSWORD_RESET_SUBJECT,
       content: mapDynamicValues({
