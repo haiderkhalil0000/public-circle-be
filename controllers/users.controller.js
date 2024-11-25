@@ -1,9 +1,9 @@
 const createHttpError = require("http-errors");
 
-const { User, Company } = require("../models");
+const { User, Company, CompanyUser, Campaign } = require("../models");
 const {
   basicUtil,
-  constants: { RESPONSE_MESSAGES, USER_STATUS },
+  constants: { RESPONSE_MESSAGES, USER_STATUS, CAMPAIGN_STATUS },
 } = require("../utils");
 
 const updateUser = async ({
@@ -195,6 +195,26 @@ const deleteUserUnderACompany = async ({ companyId, userId }) => {
   }
 };
 
+const readDashboardData = async ({ companyId }) => {
+  const { totalUsers, totalContacts, runningCampaignsCount, totalEmailsSent } =
+    await Promise.all([
+      User.countDocuments({ company: companyId, status: USER_STATUS.ACTIVE }),
+      CompanyUser.countDocuments({ company: companyId }),
+      Campaign.countDocuments({
+        company: companyId,
+        status: CAMPAIGN_STATUS.ACTIVE,
+      }),
+      EmailSent.countDocuments({ company: companyId }),
+    ]);
+
+  return {
+    totalUsers,
+    totalContacts,
+    runningCampaignsCount,
+    totalEmailsSent,
+  };
+};
+
 module.exports = {
   updateUser,
   createUserUnderACompany,
@@ -203,4 +223,5 @@ module.exports = {
   readUserUnderACompany,
   updateUserUnderACompany,
   deleteUserUnderACompany,
+  readDashboardData,
 };
