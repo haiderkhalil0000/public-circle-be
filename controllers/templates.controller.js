@@ -1,5 +1,5 @@
 const createHttpError = require("http-errors");
-const puppeteer = require("puppeteer");
+const puppeteer = require("puppeteer-core");
 const sharp = require("sharp");
 
 const { Template } = require("../models");
@@ -10,7 +10,11 @@ const {
 } = require("../utils");
 
 const createThumbnail = async ({ html, width, height }) => {
-  const browser = await puppeteer.launch();
+  // Specify the path to your local Chrome/Chromium executable
+  const browser = await puppeteer.launch({
+    executablePath: "/usr/bin/google-chrome", // Update this path
+  });
+
   const page = await browser.newPage();
 
   // Set the content of the page
