@@ -62,18 +62,18 @@ const createTemplate = async ({ companyId, name, kind, body, json }) => {
     document.company = companyId;
   }
 
-  // const buffer = await createThumbnail({
-  //   html: body,
-  //   width: 200,
-  //   height: 150,
-  // });
+  const buffer = await createThumbnail({
+    html: body,
+    width: 200,
+    height: 150,
+  });
 
-  // const url = await s3Util.uploadTemplateThumbnail({
-  //   s3Path: `/thumbnails/${companyId}/thumbnail.png`,
-  //   buffer,
-  // });
+  const url = await s3Util.uploadTemplateThumbnail({
+    s3Path: `/thumbnails/${companyId}/thumbnail.png`,
+    buffer,
+  });
 
-  // document.thumbnailURL = url;
+  document.thumbnailURL = url;
 
   return Template.create(document);
 };
