@@ -32,10 +32,10 @@ const schema = new mongoose.Schema(
       type: Object,
       required: true,
     },
-    // thumbnailURL: {
-    //   type: String,
-    //   required: true,
-    // },
+    thumbnailURL: {
+      type: String,
+      required: true,
+    },
     status: {
       type: String,
       enum: Object.values(TEMPLATE_STATUS),
