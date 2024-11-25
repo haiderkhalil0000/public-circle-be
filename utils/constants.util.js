@@ -134,6 +134,7 @@ module.exports = {
     ROLE_UPDATED: "Role updated successfully.",
     ROLE_DELETED: "Role deleted successfully.",
     SUBSCRIPTIONS_FETCHED: "Subscriptions fetched successfully.",
+    SUBSCRIPTION_CREATED: "Subscription created successfully.",
     SOCIAL_LINK_EXISTS_ALREADY: "Social link exists already!",
     SOCIAL_LINK_NOT_FOUND: "Social link not found!",
     SOCIAL_LINK_CREATED: "Social link created successfully.",

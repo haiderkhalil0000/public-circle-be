@@ -67,10 +67,17 @@ const getPlans = async ({ pageSize }) => {
   return plans.data;
 };
 
+const createSubscription = async ({ stripeCustomerId, items }) => {
+  await stripe.subscriptions.create({
+    customer: stripeCustomerId,
+    items,
+  });
+};
 module.exports = {
   createStripeCustomer,
   createPaymentIntent,
   getSubscriptions,
   getActiveSubscriptionsOfACustomer,
   getPlans,
+  createSubscription,
 };

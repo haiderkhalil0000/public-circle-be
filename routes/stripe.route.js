@@ -42,6 +42,36 @@ router.post(
   }
 );
 
+router.post(
+  "/subscriptions",
+  authenticate.verifyToken,
+  validate({
+    body: Joi.object({
+      items: Joi.array().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      await stripeController.createSubscription({
+        stripeCustomerId: req.user.company.stripe.id,
+        ...req.body,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.SUBSCRIPTION_CREATED,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      stripeDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 router.get(
   "/subscriptions",
   authenticate.verifyToken,
