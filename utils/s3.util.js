@@ -10,13 +10,16 @@ const uploadTemplateThumbnail = async ({ s3Path, buffer }) => {
     Key: s3Path,
     Body: buffer,
     ContentType: "image/png",
+    ACL: "public-read", // Ensure public access for the object
   };
 
   const command = new PutObjectCommand(uploadParams);
 
   await s3Client.send(command);
 
-  const publicUrl = `https://${S3BUCKET}.s3.${s3Client.config.region}.amazonaws.com/${s3Path}`;
+  const publicUrl = `https://${S3BUCKET}.s3.${
+    AWS_REGION || "ca-central-1"
+  }.amazonaws.com/${s3Path}`;
 
   console.log(`Thumbnail uploaded successfully to s3://${S3BUCKET}/${s3Path}`);
 
