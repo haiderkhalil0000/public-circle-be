@@ -162,7 +162,7 @@ router.post(
   async (req, res, next) => {
     try {
       await stripeController.attachPaymentMethod({
-        customerId: req.user.company.stripe.id,
+        stripeCustomerId: req.user.company.stripe.id,
         ...req.body,
       });
 
