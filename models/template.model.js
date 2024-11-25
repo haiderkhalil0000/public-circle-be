@@ -32,10 +32,9 @@ const schema = new mongoose.Schema(
       type: Object,
       required: true,
     },
-    dynamicTemplate: {
-      type: ObjectId,
-      index: true,
-      ref: DYNAMIC_TEMPLATE,
+    thumbnailURL: {
+      type: String,
+      required: true,
     },
     status: {
       type: String,

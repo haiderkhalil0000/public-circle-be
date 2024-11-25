@@ -230,8 +230,6 @@ module.exports = {
 
   VERIFICATION_EMAIL_SUBJECT: "Public Circles Email Verification",
 
-  PUBLIC_CIRCLES_EMAIL_ADDRESS: "saad.venndii@gmail.com",
-
   ROLE_STATUS: {
     ACTIVE: "ACTIVE",
     ARCHIVED: "ARCHIVED",
