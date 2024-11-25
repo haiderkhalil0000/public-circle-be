@@ -102,7 +102,17 @@ const readAllTemplates = async ({ companyId, kind }) => {
     query.kind = TEMPLATE_KINDS.SAMPLE;
   }
 
-  return Template.find(query);
+  const allTemplates = await Template.find(query).lean();
+
+  allTemplates.forEach((item) => {
+    if (item.body.includes("unsubscribe")) {
+      item.isUnSubPresent = true;
+    } else {
+      item.isUnSubPresent = false;
+    }
+  });
+
+  return allTemplates;
 };
 
 const readPaginatedTemplates = async ({
