@@ -1,8 +1,4 @@
-const {
-  S3Client,
-  PutObjectCommand,
-  getSignedUrl,
-} = require("@aws-sdk/client-s3");
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 
 const s3Client = new S3Client({ region: "ca-central-1" });
 
@@ -20,13 +16,11 @@ const uploadTemplateThumbnail = async ({ s3Path, buffer }) => {
 
   await s3Client.send(command);
 
-  const presignedUrl = await getSignedUrl(s3Client, command);
+  const publicUrl = `https://${S3BUCKET}.s3.${s3Client.config.region}.amazonaws.com/${s3Path}`;
 
   console.log(`Thumbnail uploaded successfully to s3://${S3BUCKET}/${s3Path}`);
 
-  console.log(response);
-
-  return presignedUrl;
+  return publicUrl;
 };
 
 module.exports = {

@@ -73,7 +73,7 @@ const createTemplate = async ({ companyId, name, kind, body, json }) => {
   });
 
   const url = await s3Util.uploadTemplateThumbnail({
-    s3Path: `/thumbnails/${companyId}/thumbnail.png`,
+    s3Path: `/thumbnails/${companyId}/${document.name}.png`,
     buffer,
   });
 
