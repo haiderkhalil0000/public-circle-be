@@ -4,7 +4,7 @@ const {
   getSignedUrl,
 } = require("@aws-sdk/client-s3");
 
-const s3Client = new S3Client({ region: "us-east-1" });
+const s3Client = new S3Client({ region: "ca-central-1" });
 
 const { S3BUCKET } = process.env;
 
