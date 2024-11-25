@@ -239,4 +239,27 @@ router.delete(
   }
 );
 
+router.get(
+  "/dashboard-data",
+  authenticate.verifyToken,
+  async (req, res, next) => {
+    try {
+      const dashboardData = await usersController.readDashboardData({
+        companyId: req.user.company._id,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.DASHBOARD_DATA_FETCHED,
+        data: dashboardData,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      userDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 module.exports = router;
