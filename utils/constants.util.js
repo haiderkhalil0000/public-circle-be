@@ -167,6 +167,7 @@ module.exports = {
     PASSWORD_DID_NOT_RESET: "Password did not reset, user not found!",
     NO_SUBSCRIPTION_FOUND: "No active subscriptions found for this customer.",
     DASHBOARD_DATA_FETCHED: "Dashboard data fetched successfully.",
+    PAYMENT_METHOD_ATTACHED: "Payment method attached successfully.",
   },
 
   INTERACTION_CHANNELS: {

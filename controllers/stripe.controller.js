@@ -73,6 +73,21 @@ const createSubscription = async ({ stripeCustomerId, items }) => {
     items,
   });
 };
+
+const attachPaymentMethod = async ({ stripeCustomerId, paymentMethodId }) => {
+  const paymentMethod = await stripe.paymentMethods.attach(paymentMethodId, {
+    customer: stripeCustomerId,
+  });
+
+  const customer = await stripe.customers.update(stripeCustomerId, {
+    invoice_settings: {
+      default_payment_method: paymentMethod.id,
+    },
+  });
+
+  console.log("Payment method attached and set as default:", customer);
+};
+
 module.exports = {
   createStripeCustomer,
   createPaymentIntent,
@@ -80,4 +95,5 @@ module.exports = {
   getActiveSubscriptionsOfACustomer,
   getPlans,
   createSubscription,
+  attachPaymentMethod,
 };

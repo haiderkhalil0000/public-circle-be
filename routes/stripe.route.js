@@ -151,4 +151,34 @@ router.get(
   }
 );
 
+router.post(
+  "/attach-payment-method",
+  authenticate.verifyToken,
+  validate({
+    body: Joi.object({
+      paymentMethodId: Joi.string().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      await stripeController.attachPaymentMethod({
+        customerId: req.user.company.stripe.id,
+        ...req.body,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.PAYMENT_METHOD_ATTACHED,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      stripeDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 module.exports = router;
