@@ -10,6 +10,36 @@ const {
 
 const router = express.Router();
 
+router.get(
+  "/dashboard-data",
+  authenticate.verifyToken,
+  validate({
+    query: Joi.object({
+      fromDate: Joi.string().optional(),
+      toDate: Joi.string().optional(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const dashboardData = await usersController.readDashboardData({
+        companyId: req.user.company._id,
+        ...req.query,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.DASHBOARD_DATA_FETCHED,
+        data: dashboardData,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      userDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 router.get("/me", authenticate.verifyToken, async (req, res, next) => {
   try {
     res.status(200).json({
@@ -228,29 +258,6 @@ router.delete(
       res.status(200).json({
         message: RESPONSE_MESSAGES.COMPANY_USER_DELETED,
         data: {},
-      });
-    } catch (err) {
-      // sendErrorReportToSentry(error);
-
-      userDebugger(err);
-
-      next(err);
-    }
-  }
-);
-
-router.get(
-  "/dashboard-data",
-  authenticate.verifyToken,
-  async (req, res, next) => {
-    try {
-      const dashboardData = await usersController.readDashboardData({
-        companyId: req.user.company._id,
-      });
-
-      res.status(200).json({
-        message: RESPONSE_MESSAGES.DASHBOARD_DATA_FETCHED,
-        data: dashboardData,
       });
     } catch (err) {
       // sendErrorReportToSentry(error);

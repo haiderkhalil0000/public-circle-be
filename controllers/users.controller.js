@@ -1,6 +1,13 @@
+const moment = require("moment");
 const createHttpError = require("http-errors");
 
-const { User, Company, CompanyUser, Campaign } = require("../models");
+const {
+  User,
+  Company,
+  CompanyUser,
+  Campaign,
+  EmailSent,
+} = require("../models");
 const {
   basicUtil,
   constants: { RESPONSE_MESSAGES, USER_STATUS, CAMPAIGN_STATUS },
@@ -195,23 +202,48 @@ const deleteUserUnderACompany = async ({ companyId, userId }) => {
   }
 };
 
-const readDashboardData = async ({ companyId }) => {
-  const { totalUsers, totalContacts, runningCampaignsCount, totalEmailsSent } =
-    await Promise.all([
-      User.countDocuments({ company: companyId, status: USER_STATUS.ACTIVE }),
-      CompanyUser.countDocuments({ company: companyId }),
-      Campaign.countDocuments({
-        company: companyId,
-        status: CAMPAIGN_STATUS.ACTIVE,
-      }),
-      EmailSent.countDocuments({ company: companyId }),
-    ]);
+const readDashboardData = async ({
+  companyId,
+  fromDate = "1 january 1970",
+  toDate = "1 january 2099",
+}) => {
+  const [
+    companyUsersCount,
+    companyContactsCount,
+    runningCampaignsCount,
+    emailsSentCount,
+    emailsSentCountInRange,
+  ] = await Promise.all([
+    User.countDocuments({ company: companyId, status: USER_STATUS.ACTIVE }),
+    CompanyUser.countDocuments({ company: companyId }),
+    Campaign.countDocuments({
+      company: companyId,
+      status: CAMPAIGN_STATUS.ACTIVE,
+    }),
+    EmailSent.countDocuments({ company: companyId }),
+    EmailSent.countDocuments({
+      company: companyId,
+      $and: [
+        {
+          createdAt: {
+            $gte: moment(fromDate).startOf("day").format(),
+          },
+        },
+        {
+          createdAt: {
+            $lte: moment(toDate).endOf("day").format(),
+          },
+        },
+      ],
+    }),
+  ]);
 
   return {
-    totalUsers,
-    totalContacts,
+    companyUsersCount,
+    companyContactsCount,
     runningCampaignsCount,
-    totalEmailsSent,
+    emailsSentCount,
+    emailsSentCountInRange,
   };
 };
 
