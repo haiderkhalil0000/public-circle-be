@@ -78,6 +78,14 @@ const login = async ({ emailAddress, password }) => {
 };
 
 const sendVerificationEmail = async ({ emailAddress }) => {
+  const user = await User.findOne({ emailAddress });
+
+  if (user) {
+    throw createHttpError(400, {
+      errorMessage: RESPONSE_MESSAGES.EMAIL_BELONGS_TO_OTHER,
+    });
+  }
+
   const token = createToken({ emailAddress });
 
   await sesUtil.sendEmail({
