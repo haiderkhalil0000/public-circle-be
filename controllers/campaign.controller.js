@@ -8,7 +8,6 @@ const {
   Segment,
   Configuration,
   EmailSent,
-  DynamicTemplate,
 } = require("../models");
 const {
   basicUtil,
@@ -37,9 +36,16 @@ const validateSourceEmailAddress = async ({
   );
 
   verifiedEmailOrDomains.push(
-    configurationDoc.emailConfigurations.domains.forEach(
-      (item) => item.emailAddress === sourceEmailAddress && item.isVerified
-    )
+    configurationDoc.emailConfigurations.domains.find((domain) => {
+      return domain.addresses.find((address) => {
+        if (
+          address.emailAddress === sourceEmailAddress &&
+          address.status === "ACTIVE"
+        ) {
+          return address.emailAddress;
+        }
+      });
+    })
   );
 
   if (!verifiedEmailOrDomains.filter(Boolean).length) {
