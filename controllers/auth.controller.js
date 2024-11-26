@@ -92,7 +92,7 @@ const sendVerificationEmail = async ({ emailAddress }) => {
   const token = createToken({ emailAddress });
 
   await Promise.all([
-    User.create({ emailAddress }),
+    // User.create({ emailAddress }),
     sesUtil.sendEmail({
       fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
       toEmailAddress: emailAddress,
@@ -119,16 +119,16 @@ const verifyJwtToken = async ({ token, source }) => {
       });
     }
 
-    const result = await User.findOneAndUpdate(
-      { emailAddress: decodedToken.emailAddress },
-      { isEmailVerified: true }
-    );
+    // const result = await User.findOneAndUpdate(
+    //   { emailAddress: decodedToken.emailAddress },
+    //   { isEmailVerified: true }
+    // );
 
-    if (!result.matchedCount) {
-      throw createHttpError(404, {
-        errorMessage: RESPONSE_MESSAGES.TOKEN_IS_INVALID_OR_EXPIRED,
-      });
-    }
+    // if (!result.matchedCount) {
+    //   throw createHttpError(404, {
+    //     errorMessage: RESPONSE_MESSAGES.TOKEN_IS_INVALID_OR_EXPIRED,
+    //   });
+    // }
 
     if (source === "reset-password") {
       const userDoc = await User.findOne({
