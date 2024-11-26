@@ -81,7 +81,7 @@ const login = async ({ emailAddress, password }) => {
 };
 
 const sendVerificationEmail = async ({ emailAddress }) => {
-  const user = await User.findOne({ emailAddress });
+  const user = await User.findOne({ emailAddress, isEmailVerified: true });
 
   if (user) {
     throw createHttpError(400, {
