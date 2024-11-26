@@ -13,6 +13,7 @@ const createThumbnail = async ({ html, width, height }) => {
   // Specify the path to your local Chrome/Chromium executable
   const browser = await puppeteer.launch({
     executablePath: "/usr/bin/google-chrome", // Update this path
+    args: ["--disable-web-security"],
   });
 
   const page = await browser.newPage();
