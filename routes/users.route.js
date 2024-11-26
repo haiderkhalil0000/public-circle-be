@@ -74,6 +74,7 @@ router.patch(
       province: Joi.string(),
       country: Joi.string(),
       role: Joi.string(),
+      signUpStepsCompleted: Joi.number(),
     }),
   }),
   async (req, res, next) => {

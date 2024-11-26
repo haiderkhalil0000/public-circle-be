@@ -29,6 +29,7 @@ const updateUser = async ({
   country,
   role,
   currentUserId,
+  signUpStepsCompleted,
 }) => {
   let companyDoc;
   const promises = [];
@@ -40,6 +41,7 @@ const updateUser = async ({
     phoneNumber,
     secondaryEmail,
     role,
+    signUpStepsCompleted,
   };
 
   if (role) {
