@@ -10,17 +10,15 @@ const {
 } = require("../utils");
 
 const createThumbnail = async ({ html, width, height }) => {
-  // Specify the path to your local Chrome/Chromium executable
   const browser = await puppeteer.launch({
-    executablePath: "/usr/bin/google-chrome", // Update this path
+    executablePath: "/usr/bin/google-chrome",
     args: ["--disable-web-security"],
   });
 
   const page = await browser.newPage();
 
-  // Set the content of the page
   await page.setContent(html, {
-    waitUntil: "domcontentloaded",
+    waitUntil: "load",
   });
 
   // Set the viewport size to the desired thumbnail dimensions
