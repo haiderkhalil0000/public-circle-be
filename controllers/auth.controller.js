@@ -18,9 +18,12 @@ const {
   sesUtil,
 } = require("../utils");
 
-const { PUBLIC_CIRCLES_WEB_URL, PUBLIC_CIRCLES_EMAIL_ADDRESS } = process.env;
-
-const { BEEFREE_CLIENT_ID, BEEFREE_CLIENT_SECRET } = process.env;
+const {
+  BEEFREE_CLIENT_ID,
+  BEEFREE_CLIENT_SECRET,
+  PUBLIC_CIRCLES_WEB_URL,
+  PUBLIC_CIRCLES_EMAIL_ADDRESS,
+} = process.env;
 
 const register = async ({ emailAddress, password }) => {
   const user = await User.findOne({ emailAddress });
@@ -88,19 +91,22 @@ const sendVerificationEmail = async ({ emailAddress }) => {
 
   const token = createToken({ emailAddress });
 
-  await sesUtil.sendEmail({
-    fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
-    toEmailAddress: emailAddress,
-    subject: VERIFICATION_EMAIL_SUBJECT,
-    content: `Welcome to Public Circles,
+  await Promise.all([
+    User.create({ emailAddress }),
+    sesUtil.sendEmail({
+      fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
+      toEmailAddress: emailAddress,
+      subject: VERIFICATION_EMAIL_SUBJECT,
+      content: `Welcome to Public Circles,
 
 Please verify your email address by using the following link:
 ${PUBLIC_CIRCLES_WEB_URL}/auth/jwt/sign-up/?token=${token}
 
 Regards,
 Public Circles Team`,
-    contentType: TEMPLATE_CONTENT_TYPE.TEXT,
-  });
+      contentType: TEMPLATE_CONTENT_TYPE.TEXT,
+    }),
+  ]);
 };
 
 const verifyJwtToken = async ({ token, source }) => {
@@ -109,6 +115,17 @@ const verifyJwtToken = async ({ token, source }) => {
 
     if (!decodedToken.emailAddress) {
       throw createHttpError(403, {
+        errorMessage: RESPONSE_MESSAGES.TOKEN_IS_INVALID_OR_EXPIRED,
+      });
+    }
+
+    const result = await User.findOneAndUpdate(
+      { emailAddress: decodedToken.emailAddress },
+      { isEmailVerified: true }
+    );
+
+    if (!result.matchedCount) {
+      throw createHttpError(404, {
         errorMessage: RESPONSE_MESSAGES.TOKEN_IS_INVALID_OR_EXPIRED,
       });
     }

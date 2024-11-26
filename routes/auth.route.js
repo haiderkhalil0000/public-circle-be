@@ -28,7 +28,7 @@ router.post(
     } catch (err) {
       // sendErrorReportToSentry(error);
 
-      userDebugger(err);
+      authDebugger(err);
 
       next(err);
     }
@@ -77,7 +77,7 @@ router.post(
     } catch (err) {
       // sendErrorReportToSentry(error);
 
-      userDebugger(err);
+      authDebugger(err);
 
       next(err);
     }
