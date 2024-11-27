@@ -70,8 +70,8 @@ const createTemplate = async ({ companyId, name, kind, body, json }) => {
     height: 150,
   });
 
-  const url = await s3Util.uploadTemplateThumbnail({
-    s3Path: `/thumbnails/${companyId}/${document.name}.png`,
+  const url = await s3Util.uploadImageToS3({
+    s3Path: `thumbnails/${companyId}/${document.name}.png`,
     buffer,
   });
 
@@ -148,6 +148,21 @@ const readPaginatedTemplates = async ({
 
 const updateTemplate = async ({ templateId, templateData }) => {
   basicUtil.validateObjectId({ inputString: templateId });
+
+  if (templateData.body) {
+    const buffer = await createThumbnail({
+      html: body,
+      width: 150,
+      height: 150,
+    });
+
+    const url = await s3Util.uploadImageToS3({
+      s3Path: `thumbnails/${companyId}/${document.name}.png`,
+      buffer,
+    });
+
+    templateData.thumbnailURL = url;
+  }
 
   const result = await Template.updateOne(
     { _id: templateId },

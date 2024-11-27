@@ -2,6 +2,7 @@ const express = require("express");
 const Joi = require("joi");
 const userDebugger = require("debug")("debug:user");
 
+const { upload } = require("../startup/multer.config");
 const { authenticate, validate } = require("../middlewares");
 const { usersController } = require("../controllers");
 const {
@@ -57,6 +58,7 @@ router.get("/me", authenticate.verifyToken, async (req, res, next) => {
 
 router.patch(
   "/",
+  upload.single("profilePicture"),
   authenticate.verifyToken,
   validate({
     body: Joi.object({
@@ -81,6 +83,7 @@ router.patch(
     try {
       await usersController.updateUser({
         ...req.body,
+        profilePicture: req.file,
         currentUserId: req.user._id,
       });
 

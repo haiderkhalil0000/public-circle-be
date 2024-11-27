@@ -15,6 +15,7 @@ const schema = new mongoose.Schema(
     company: { type: ObjectId, ref: COMPANY },
     emailAddress: { type: String, index: true, required: true },
     password: { type: String },
+    profilePicture: { type: String },
     firstName: { type: String, index: true },
     lastName: { type: String, index: true },
     phoneNumber: { type: String, index: true },
@@ -25,7 +26,7 @@ const schema = new mongoose.Schema(
     isLoginWithEmailLocked: { type: Boolean, default: false },
     role: { type: ObjectId, ref: ROLE },
     isResetPasswordRequested: { type: Boolean, default: false },
-    signUpStepsCompleted: { type: Number, default: 0 },
+    signUpStepsCompleted: { type: Number, min: 0, max: 7, default: 0 },
     status: {
       type: String,
       default: USER_STATUS.ACTIVE,

@@ -11,11 +11,13 @@ const {
 const {
   basicUtil,
   constants: { RESPONSE_MESSAGES, USER_STATUS, CAMPAIGN_STATUS },
+  s3Util,
 } = require("../utils");
 
 const updateUser = async ({
   emailAddress,
   password,
+  profilePicture,
   firstName,
   lastName,
   companyName,
@@ -33,9 +35,13 @@ const updateUser = async ({
 }) => {
   let companyDoc;
   const promises = [];
+
   const userUpdates = {
     emailAddress,
     password,
+    profilePicture: await s3Util.uploadImageToS3({
+      s3Path: `user-profile-pictures/${currentUserId}/${profilePicture.fieldname}.png`,
+    }),
     firstName,
     lastName,
     phoneNumber,
@@ -79,7 +85,7 @@ const updateUser = async ({
     promises.push(
       Company.updateOne(
         { user: currentUserId },
-        { companySize, postalCode, city, province, country }
+        { companySize, address, postalCode, city, province, country }
       )
     );
   }
