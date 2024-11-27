@@ -208,7 +208,7 @@ const updateCampaign = async ({ campaignId, campaignData }) => {
 
   await campaign.save();
 
-  if (runMode === RUN_MODE.INSTANT) {
+  if (campaignData.runMode === RUN_MODE.INSTANT) {
     await runCampaign({ campaign });
   }
 };
