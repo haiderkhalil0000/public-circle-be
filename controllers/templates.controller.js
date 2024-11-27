@@ -30,16 +30,14 @@ const createThumbnail = async ({ html, width, height }) => {
   // Take a screenshot
   const screenshotBuffer = await page.screenshot({ type: "png" });
 
-  // Resize the screenshot to the desired thumbnail size
-  const resizedBuffer = await sharp(screenshotBuffer)
-    .resize(width, height)
-    .toBuffer();
+  // // Resize the screenshot to the desired thumbnail size
+  // const resizedBuffer = await sharp(screenshotBuffer)
+  //   .resize(width, height)
+  //   .toBuffer();
 
   await browser.close();
 
-  console.log(`Thumbnail created`);
-
-  return resizedBuffer;
+  return screenshotBuffer;
 };
 
 const createTemplate = async ({ companyId, name, kind, body, json }) => {
