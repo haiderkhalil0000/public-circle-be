@@ -100,6 +100,7 @@ const createUserUnderACompany = async ({
   const existingUserDoc = await User.findOne({
     emailAddress,
     company: companyId,
+    status: USER_STATUS.ACTIVE,
   });
 
   if (existingUserDoc) {
