@@ -94,6 +94,7 @@ const createUserUnderACompany = async ({
   name,
   role,
   companyId,
+  currentUserId,
 }) => {
   basicUtil.validateObjectId({ inputString: role });
 
@@ -118,7 +119,7 @@ const createUserUnderACompany = async ({
       role,
       company: companyId,
     }),
-    authController.sendVerificationEmail({ emailAddress }),
+    authController.sendInvitationEmail({ emailAddress, currentUserId }),
   ]);
 };
 

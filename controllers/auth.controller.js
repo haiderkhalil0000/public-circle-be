@@ -241,6 +241,35 @@ const resetPassword = async ({ emailAddress, newPassword }) => {
   }
 };
 
+const sendInvitationEmail = async ({ emailAddress, currentUserId }) => {
+  const [user, currentUser] = await Promise.all([
+    User.findOne({ emailAddress, isEmailVerified: true }),
+    User.findById(currentUserId).populate("company", "name"),
+  ]);
+
+  if (user) {
+    throw createHttpError(400, {
+      errorMessage: RESPONSE_MESSAGES.EMAIL_BELONGS_TO_OTHER,
+    });
+  }
+
+  const token = createToken({ emailAddress });
+
+  await sesUtil.sendEmail({
+    fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
+    toEmailAddress: emailAddress,
+    subject: VERIFICATION_EMAIL_SUBJECT,
+    content: `${currentUser.firstName} has invited you to use Public Cricles with them, in a workspace called ${currentUser.company.name}.
+
+Please follow the link below to continue to Public Circles:
+${PUBLIC_CIRCLES_WEB_URL}/auth/jwt/sign-up/?source=invite&token=${token}
+
+Regards,
+Public Circles Team`,
+    contentType: TEMPLATE_CONTENT_TYPE.TEXT,
+  });
+};
+
 module.exports = {
   register,
   login,
@@ -250,4 +279,5 @@ module.exports = {
   changePassword,
   forgotPassword,
   resetPassword,
+  sendInvitationEmail,
 };

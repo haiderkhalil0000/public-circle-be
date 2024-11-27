@@ -113,6 +113,7 @@ router.post(
       await usersController.createUserUnderACompany({
         ...req.body,
         companyId: req.user.company._id,
+        currentUserId: req.user._id,
       });
 
       res.status(200).json({
