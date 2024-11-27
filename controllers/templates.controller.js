@@ -68,7 +68,7 @@ const createTemplate = async ({ companyId, name, kind, body, json }) => {
 
   const buffer = await createThumbnail({
     html: body,
-    width: 200,
+    width: 150,
     height: 150,
   });
 
