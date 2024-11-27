@@ -204,7 +204,7 @@ const updateCampaign = async ({ campaignId, campaignData }) => {
     });
   }
 
-  campaign = { ...campaign, campaignData };
+  Object.assign(campaign, campaignData);
 
   await campaign.save();
 };
