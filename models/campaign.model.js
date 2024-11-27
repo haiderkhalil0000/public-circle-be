@@ -65,6 +65,7 @@ const schema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    history: [{ type: Object }],
     status: {
       type: String,
       enum: Object.values(CAMPAIGN_STATUS),

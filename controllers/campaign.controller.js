@@ -174,6 +174,8 @@ const readAllCampaigns = async ({ companyId }) => {
 const updateCampaign = async ({ campaignId, campaignData }) => {
   basicUtil.validateObjectId({ inputString: campaignId });
 
+  let campaign = await Campaign.findById(campaignId);
+
   if (campaignData.segmentIds || campaignData.emailTemplateId) {
     basicUtil.validateObjectId({ inputString: campaignData.emailTemplateId });
 
@@ -188,16 +190,23 @@ const updateCampaign = async ({ campaignId, campaignData }) => {
     delete campaignData.emailTemplateId;
   }
 
-  const result = await Campaign.updateOne(
-    { _id: campaignId },
-    { ...campaignData }
-  );
+  if (campaignData.runMode) {
+    campaignData.cronStatus = CRON_STATUS.PENDING;
+    campaignData.processedCount = 0;
 
-  if (!result.matchedCount) {
-    throw createHttpError(404, {
-      errorMessage: RESPONSE_MESSAGES.CAMPAIGN_NOT_FOUND,
+    campaignData.history = campaign.history;
+
+    campaignData.history.push({
+      oldRunMode: campaign.runMode,
+      newRunMode: campaignData.runMode,
+      oldProcessedCount: campaign.processedCount,
+      newProcessedCount: campaignData.processedCount,
     });
   }
+
+  campaign = { ...campaign, campaignData };
+
+  await campaign.save();
 };
 
 const deleteCampaign = async ({ campaignId }) => {

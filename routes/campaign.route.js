@@ -141,6 +141,9 @@ router.patch(
       sourceEmailAddress: Joi.string().email().optional(),
       emailSubject: Joi.string().optional(),
       emailTemplateId: Joi.string().optional(),
+      runMode: Joi.string()
+        .valid(RUN_MODE.INSTANT, RUN_MODE.SCHEDULE)
+        .optional(),
       runSchedule: Joi.string().optional(),
       isRecurring: Joi.boolean().optional(),
       recurringPeriod: Joi.string().optional(),
