@@ -207,6 +207,10 @@ const updateCampaign = async ({ campaignId, campaignData }) => {
   Object.assign(campaign, campaignData);
 
   await campaign.save();
+
+  if (runMode === RUN_MODE.INSTANT) {
+    await runCampaign({ campaign });
+  }
 };
 
 const deleteCampaign = async ({ campaignId }) => {
