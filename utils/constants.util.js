@@ -168,6 +168,7 @@ module.exports = {
     NO_SUBSCRIPTION_FOUND: "No active subscriptions found for this customer.",
     DASHBOARD_DATA_FETCHED: "Dashboard data fetched successfully.",
     PAYMENT_METHOD_ATTACHED: "Payment method attached successfully.",
+    INVITATION_EMAIL_SENT: "Invitation email sent successfully.",
   },
 
   INTERACTION_CHANNELS: {

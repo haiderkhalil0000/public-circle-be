@@ -91,22 +91,19 @@ const sendVerificationEmail = async ({ emailAddress }) => {
 
   const token = createToken({ emailAddress });
 
-  await Promise.all([
-    // User.create({ emailAddress }),
-    sesUtil.sendEmail({
-      fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
-      toEmailAddress: emailAddress,
-      subject: VERIFICATION_EMAIL_SUBJECT,
-      content: `Welcome to Public Circles,
+  await sesUtil.sendEmail({
+    fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
+    toEmailAddress: emailAddress,
+    subject: VERIFICATION_EMAIL_SUBJECT,
+    content: `Welcome to Public Circles,
 
 Please verify your email address by using the following link:
-${PUBLIC_CIRCLES_WEB_URL}/auth/jwt/sign-up/?token=${token}
+${PUBLIC_CIRCLES_WEB_URL}/auth/jwt/sign-up/?source=register&token=${token}
 
 Regards,
 Public Circles Team`,
-      contentType: TEMPLATE_CONTENT_TYPE.TEXT,
-    }),
-  ]);
+    contentType: TEMPLATE_CONTENT_TYPE.TEXT,
+  });
 };
 
 const verifyJwtToken = async ({ token, source }) => {
