@@ -3,7 +3,10 @@ const jwt = require("jsonwebtoken");
 
 const { User, Company, AccessToken } = require("../models");
 const {
-  constants: { RESPONSE_MESSAGES },
+  constants: {
+    MODELS: { ROLE },
+    RESPONSE_MESSAGES,
+  },
 } = require("../utils");
 // const sendErrorReportToSentry = require("../utils/send-error-report-to-sentry");
 
@@ -36,7 +39,7 @@ const verifyToken = async (req, res, next) => {
     const { _id: userId } = decodedToken;
 
     const [user, company] = await Promise.all([
-      User.findById(userId),
+      User.findById(userId).populate(ROLE),
       Company.findOne({ user: userId }),
     ]);
 
