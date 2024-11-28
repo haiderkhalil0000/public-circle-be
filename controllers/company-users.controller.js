@@ -46,7 +46,7 @@ const getPossibleFilterValues = async ({ companyId, key }) => {
   return uniqueValues;
 };
 
-const getFiltersCount = async ({ filters }) => {
+const getFiltersCount = async ({ filters, companyId }) => {
   const promises = [];
 
   Object.keys(filters).forEach((key) => {
@@ -55,6 +55,7 @@ const getFiltersCount = async ({ filters }) => {
       : [filters[key]];
 
     const promise = CompanyUser.countDocuments({
+      company: companyId,
       [key]: Array.isArray(filters[key]) ? { $in: filters[key] } : filters[key],
     }).then((count) => ({
       filterKey: key,

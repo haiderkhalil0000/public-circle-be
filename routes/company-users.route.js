@@ -77,9 +77,10 @@ router.post(
   }),
   async (req, res, next) => {
     try {
-      const filterCount = await companyUsersController.getFiltersCount(
-        req.body
-      );
+      const filterCount = await companyUsersController.getFiltersCount({
+        ...req.body,
+        companyId: req.user.company._id,
+      });
 
       res.status(200).json({
         message: RESPONSE_MESSAGES.FETCHED_FILTER_COUNT,
