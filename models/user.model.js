@@ -24,7 +24,11 @@ const schema = new mongoose.Schema(
     invalidLoginAttempts: { type: Number, default: 0 },
     isEmailVerified: { type: Boolean, default: false },
     isLoginWithEmailLocked: { type: Boolean, default: false },
-    role: { type: ObjectId, ref: ROLE },
+    role: {
+      type: ObjectId,
+      default: new mongoose.Types.ObjectId("673133ab145111f65ba06075"),
+      ref: ROLE,
+    },
     isResetPasswordRequested: { type: Boolean, default: false },
     signUpStepsCompleted: { type: Number, min: 0, max: 7, default: 0 },
     referralCode: { type: String },
