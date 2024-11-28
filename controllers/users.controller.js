@@ -1,5 +1,6 @@
 const moment = require("moment");
 const createHttpError = require("http-errors");
+const randomString = require("randomstring");
 
 const {
   User,
@@ -50,6 +51,12 @@ const updateUser = async ({
     secondaryEmail,
     role,
     signUpStepsCompleted,
+    referralCode: firstName
+      ? `urc_${firstName.replace(/ /g, "")}_${randomString.generate({
+          length: 4,
+          charset: "numeric",
+        })}`
+      : undefined,
   };
 
   if (role) {
@@ -504,6 +511,20 @@ const readDashboardData = async ({
   };
 };
 
+const verifyReferralCode = async ({ referralCode, currentUserId }) => {
+  const [userDoc, currentUserDoc] = await Promise.all([
+    User.findOne({
+      referralCode,
+    }),
+    User.findById(currentUserId),
+  ]);
+
+  userDoc.referree = currentUserDoc._id;
+  currentUserDoc.referrer = userDoc._id;
+
+  await Promise.all([userDoc.save(), currentUserDoc.save()]);
+};
+
 module.exports = {
   updateUser,
   createUserUnderACompany,
@@ -513,4 +534,5 @@ module.exports = {
   updateUserUnderACompany,
   deleteUserUnderACompany,
   readDashboardData,
+  verifyReferralCode,
 };

@@ -282,4 +282,33 @@ router.delete(
   }
 );
 
+router.post(
+  "/referral-codes/verify",
+  authenticate.verifyToken,
+  validate({
+    body: Joi.object({
+      referralCode: Joi.string().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      await usersController.verifyReferralCode({
+        ...req.body,
+        currentUserId: req.user._id,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.REFERRAL_CODE_ACCEPTED,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      userDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 module.exports = router;

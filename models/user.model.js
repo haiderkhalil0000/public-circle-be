@@ -27,6 +27,9 @@ const schema = new mongoose.Schema(
     role: { type: ObjectId, ref: ROLE },
     isResetPasswordRequested: { type: Boolean, default: false },
     signUpStepsCompleted: { type: Number, min: 0, max: 7, default: 0 },
+    referralCode: { type: String },
+    referrer: { type: ObjectId, ref: USER },
+    referree: { type: ObjectId, ref: USER },
     status: {
       type: String,
       default: USER_STATUS.ACTIVE,

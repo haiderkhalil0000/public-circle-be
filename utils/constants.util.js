@@ -169,6 +169,7 @@ module.exports = {
     DASHBOARD_DATA_FETCHED: "Dashboard data fetched successfully.",
     PAYMENT_METHOD_ATTACHED: "Payment method attached successfully.",
     INVITATION_EMAIL_SENT: "Invitation email sent successfully.",
+    REFERRAL_CODE_ACCEPTED: "Referral code accepted.",
   },
 
   INTERACTION_CHANNELS: {
