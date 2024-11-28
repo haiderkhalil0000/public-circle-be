@@ -38,8 +38,29 @@ const getActiveSubscriptionsOfACustomer = async ({ customerId }) => {
     status: "active",
   });
 
+  const subscriptionsLimited = [];
+
   if (subscriptions.data.length > 0) {
-    return subscriptions.data;
+    // return subscriptions.data;
+
+    for (const subscription of subscriptions.data) {
+      for (const item of subscription.items.data) {
+        const price = item.price;
+        const productId = price.product;
+
+        const product = await stripe.products.retrieve(productId);
+
+        const priceAmount = price.unit_amount / 100;
+        const priceCurrency = price.currency.toUpperCase();
+
+        subscriptionsLimited.push({
+          productName: product.name,
+          productPrice: `${priceAmount} ${priceCurrency}`,
+        });
+      }
+    }
+
+    return subscriptionsLimited;
   } else {
     throw createHttpError(400, {
       errorMessage: RESPONSE_MESSAGES.NO_SUBSCRIPTION_FOUND,
