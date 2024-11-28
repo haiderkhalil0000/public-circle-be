@@ -329,7 +329,16 @@ const getGraphData = async ({ graphScope }) => {
     ]);
 
     // Format the results to include all weeks, even those with no data
-    return formatAndFillResults(result, allWeeks, weeksMap);
+    const formatedResults = formatAndFillResults(result, allWeeks, weeksMap);
+
+    if (!formatedResults.week6) {
+      delete formatedResults.week6;
+      if (!formatedResults.week5) {
+        delete formatedResults.week5;
+      }
+    }
+
+    return formatedResults;
   }
 
   if (graphScope === GRAPH_SCOPES.WEEK) {
