@@ -13,6 +13,7 @@ const {
   basicUtil,
   sesUtil,
   constants: {
+    MODELS: { CAMPAIGN },
     CAMPAIGN_STATUS,
     RESPONSE_MESSAGES,
     CRON_STATUS,
@@ -414,6 +415,20 @@ const runCampaign = async ({ campaign }) => {
   );
 };
 
+const readCampaignLogs = ({ pageNumber, pageSize, campaignId }) =>
+  EmailSent.find({ campaign: campaignId })
+    .skip((parseInt(pageNumber) - 1) * pageSize)
+    .limit(pageSize)
+    .populate("company")
+    .populate(CAMPAIGN);
+
+const readAllCampaignLogs = ({ pageNumber, pageSize, companyId }) =>
+  EmailSent.find({ company: companyId })
+    .skip((parseInt(pageNumber) - 1) * pageSize)
+    .limit(pageSize)
+    .populate("company")
+    .populate(CAMPAIGN);
+
 module.exports = {
   createCampaign,
   readCampaign,
@@ -423,4 +438,6 @@ module.exports = {
   deleteCampaign,
   sendTestEmail,
   runCampaign,
+  readCampaignLogs,
+  readAllCampaignLogs,
 };

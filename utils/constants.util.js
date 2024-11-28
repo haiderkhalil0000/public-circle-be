@@ -170,6 +170,7 @@ module.exports = {
     PAYMENT_METHOD_ATTACHED: "Payment method attached successfully.",
     INVITATION_EMAIL_SENT: "Invitation email sent successfully.",
     REFERRAL_CODE_ACCEPTED: "Referral code accepted.",
+    CAMPAIGN_LOGS_FETCHED: "Campaign logs fetched successfully.",
   },
 
   INTERACTION_CHANNELS: {

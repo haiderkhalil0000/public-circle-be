@@ -72,6 +72,71 @@ router.get("/all", authenticate.verifyToken, async (req, res, next) => {
 });
 
 router.get(
+  "/logs/:campaignId",
+  authenticate.verifyToken,
+  validate({
+    params: Joi.object({
+      campaignId: Joi.string().required(),
+    }),
+    query: Joi.object({
+      pageNumber: Joi.number().optional(),
+      pageSize: Joi.number().optional(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const campaignLogs = await campaignsController.readCampaignLogs({
+        ...req.params,
+        ...req.query,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.CAMPAIGN_LOGS_FETCHED,
+        data: campaignLogs,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      campaignDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.get(
+  "/logs",
+  authenticate.verifyToken,
+  validate({
+    query: Joi.object({
+      pageNumber: Joi.number().optional(),
+      pageSize: Joi.number().optional(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const campaignLogs = await campaignsController.readAllCampaignLogs({
+        ...req.query,
+        companyId: req.user.company._id,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.CAMPAIGN_LOGS_FETCHED,
+        data: campaignLogs,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      campaignDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.get(
   "/:campaignId",
   authenticate.verifyToken,
   validate({
