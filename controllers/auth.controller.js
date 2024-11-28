@@ -26,7 +26,7 @@ const {
 } = process.env;
 
 const register = async ({ emailAddress, password }) => {
-  const user = await User.findOne({ emailAddress });
+  const user = await User.findOne({ emailAddress, isEmailVerified: true });
 
   if (user) {
     throw createHttpError(400, {
