@@ -329,16 +329,16 @@ const getGraphData = async ({ graphScope }) => {
     ]);
 
     // Format the results to include all weeks, even those with no data
-    const formatedResults = formatAndFillResults(result, allWeeks, weeksMap);
+    const formattedResults = formatAndFillResults(result, allWeeks, weeksMap);
 
-    if (!formatedResults.week6) {
-      delete formatedResults.week6;
-      if (!formatedResults.week5) {
-        delete formatedResults.week5;
+    if (!formattedResults.week6) {
+      delete formattedResults.week6;
+      if (!formattedResults.week5) {
+        delete formattedResults.week5;
       }
     }
 
-    return formatedResults;
+    return formattedResults;
   }
 
   if (graphScope === GRAPH_SCOPES.WEEK) {
@@ -398,7 +398,60 @@ const getGraphData = async ({ graphScope }) => {
       },
     ]);
 
-    return formatAndFillResults(result, allHours, hoursMap);
+    const formattedResults = formatAndFillResults(result, allHours, hoursMap);
+
+    const gmtOffset = moment().utcOffset() / 60;
+
+    const timeObject = {
+      "12:00AM-1:00AM": 0,
+      "1:00AM-2:00AM": 0,
+      "2:00AM-3:00AM": 0,
+      "3:00AM-4:00AM": 0,
+      "4:00AM-5:00AM": 0,
+      "5:00AM-6:00AM": 0,
+      "6:00AM-7:00AM": 0,
+      "7:00AM-8:00AM": 0,
+      "8:00AM-9:00AM": 0,
+      "9:00AM-10:00AM": 0,
+      "10:00AM-11:00AM": 0,
+      "11:00AM-12:00PM": 0,
+      "12:00PM-1:00PM": 0,
+      "1:00PM-2:00PM": 0,
+      "2:00PM-3:00PM": 0,
+      "3:00PM-4:00PM": 0,
+      "4:00PM-5:00PM": 0,
+      "5:00PM-6:00PM": 0,
+      "6:00PM-7:00PM": 0,
+      "7:00PM-8:00PM": 0,
+      "8:00PM-9:00PM": 2,
+      "9:00PM-10:00PM": 1,
+      "10:00PM-11:00PM": 0,
+      "11:00PM-12:00AM": 0,
+    };
+
+    // Helper function to format time string to moment object
+    const adjustTime = (timeString, offset) => {
+      const format = "h:mma"; // 12-hour format with AM/PM
+      const [start, end] = timeString
+        .split("-")
+        .map((time) => moment(time, format));
+
+      // Add the GMT offset to both start and end times
+      start.add(offset, "hours");
+      end.add(offset, "hours");
+
+      // Format the new time back to the string
+      return `${start.format(format)}-${end.format(format)}`;
+    };
+
+    // Adjust all time ranges in the object
+    const adjustedObject = Object.keys(timeObject).reduce((acc, timeRange) => {
+      const adjustedRange = adjustTime(timeRange, gmtOffset);
+      acc[adjustedRange] = timeObject[timeRange]; // Copy the value associated with the time range
+      return acc;
+    }, {});
+
+    return adjustedObject;
   }
 };
 
