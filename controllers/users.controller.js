@@ -10,7 +10,7 @@ const {
 } = require("../models");
 const {
   basicUtil,
-  constants: { RESPONSE_MESSAGES, USER_STATUS, CAMPAIGN_STATUS },
+  constants: { RESPONSE_MESSAGES, USER_STATUS, CAMPAIGN_STATUS, GRAPH_SCOPES },
   s3Util,
 } = require("../utils");
 
@@ -214,10 +214,190 @@ const deleteUserUnderACompany = async ({ companyId, userId }) => {
   }
 };
 
+const getGraphData = async ({ graphScope }) => {
+  const matchStage = {};
+  let groupStage = {};
+  const now = moment();
+
+  // Utility to format and fill results
+  const formatAndFillResults = (result, allKeys, keyMap) => {
+    const counts = result.reduce((acc, item) => {
+      acc[keyMap[item._id]] = item.count;
+      return acc;
+    }, {});
+    return allKeys.reduce((final, key) => {
+      final[keyMap[key]] = counts[keyMap[key]] || 0;
+      return final;
+    }, {});
+  };
+
+  if (graphScope === GRAPH_SCOPES.YEAR) {
+    const startOfYear = now.startOf("year").toDate();
+    const endOfYear = now.endOf("year").toDate();
+    matchStage.createdAt = { $gte: startOfYear, $lte: endOfYear };
+    groupStage = { _id: { $month: "$createdAt" } };
+
+    const monthsMap = {
+      1: "jan",
+      2: "feb",
+      3: "mar",
+      4: "apr",
+      5: "may",
+      6: "jun",
+      7: "jul",
+      8: "aug",
+      9: "sep",
+      10: "oct",
+      11: "nov",
+      12: "dec",
+    };
+    const allMonths = Object.keys(monthsMap).map(Number);
+
+    const result = await EmailSent.aggregate([
+      { $match: matchStage },
+      {
+        $group: {
+          _id: groupStage._id,
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    return formatAndFillResults(result, allMonths, monthsMap);
+  }
+
+  if (graphScope === GRAPH_SCOPES.MONTH) {
+    const startOfMonth = now.startOf("month").toDate();
+    const endOfMonth = now.endOf("month").toDate();
+
+    // Match documents for the current month
+    matchStage.createdAt = { $gte: startOfMonth, $lte: endOfMonth };
+
+    // Group by custom week numbers based on the start date of each week
+    groupStage = {
+      $cond: [
+        { $lte: [{ $dayOfMonth: "$createdAt" }, 7] },
+        "week1",
+        {
+          $cond: [
+            { $lte: [{ $dayOfMonth: "$createdAt" }, 14] },
+            "week2",
+            {
+              $cond: [
+                { $lte: [{ $dayOfMonth: "$createdAt" }, 21] },
+                "week3",
+                {
+                  $cond: [
+                    { $lte: [{ $dayOfMonth: "$createdAt" }, 28] },
+                    "week4",
+                    {
+                      $cond: [
+                        { $lte: [{ $dayOfMonth: "$createdAt" }, 35] },
+                        "week5",
+                        "week6",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    // Define all possible weeks for the current month
+    const weeksMap = {
+      week1: "week1",
+      week2: "week2",
+      week3: "week3",
+      week4: "week4",
+      week5: "week5",
+      week6: "week6",
+    };
+
+    const allWeeks = Object.keys(weeksMap);
+
+    const result = await EmailSent.aggregate([
+      { $match: matchStage },
+      {
+        $group: {
+          _id: groupStage,
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    // Format the results to include all weeks, even those with no data
+    return formatAndFillResults(result, allWeeks, weeksMap);
+  }
+
+  if (graphScope === GRAPH_SCOPES.WEEK) {
+    const startOfWeek = now.startOf("week").toDate();
+    const endOfWeek = now.endOf("week").toDate();
+    matchStage.createdAt = { $gte: startOfWeek, $lte: endOfWeek };
+    groupStage = { _id: { $dayOfWeek: "$createdAt" } };
+
+    const daysMap = {
+      1: "sunday",
+      2: "monday",
+      3: "tuesday",
+      4: "wednesday",
+      5: "thursday",
+      6: "friday",
+      7: "saturday",
+    };
+    const allDays = Object.keys(daysMap).map(Number);
+
+    const result = await EmailSent.aggregate([
+      { $match: matchStage },
+      {
+        $group: {
+          _id: groupStage._id,
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    return formatAndFillResults(result, allDays, daysMap);
+  }
+
+  if (graphScope === GRAPH_SCOPES.DAY) {
+    const startOfDay = now.startOf("day").toDate();
+    const endOfDay = now.endOf("day").toDate();
+    matchStage.createdAt = { $gte: startOfDay, $lte: endOfDay };
+    groupStage = { _id: { $hour: "$createdAt" } };
+
+    const hoursMap = Array.from({ length: 24 }, (_, i) => i).reduce(
+      (acc, hour) => {
+        const start = moment({ hour }).format("h:00A");
+        const end = moment({ hour }).add(1, "hour").format("h:00A");
+        acc[hour] = `${start}-${end}`;
+        return acc;
+      },
+      {}
+    );
+    const allHours = Object.keys(hoursMap).map(Number);
+
+    const result = await EmailSent.aggregate([
+      { $match: matchStage },
+      {
+        $group: {
+          _id: groupStage._id,
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    return formatAndFillResults(result, allHours, hoursMap);
+  }
+};
+
 const readDashboardData = async ({
   companyId,
   fromDate = "1 january 1970",
   toDate = "1 january 2099",
+  graphScope,
 }) => {
   const [
     companyUsersCount,
@@ -225,6 +405,7 @@ const readDashboardData = async ({
     runningCampaignsCount,
     emailsSentCount,
     emailsSentCountInRange,
+    emailsSentGraphData,
   ] = await Promise.all([
     User.countDocuments({ company: companyId, status: USER_STATUS.ACTIVE }),
     CompanyUser.countDocuments({ company: companyId }),
@@ -248,6 +429,7 @@ const readDashboardData = async ({
         },
       ],
     }),
+    getGraphData({ graphScope }),
   ]);
 
   return {
@@ -256,6 +438,7 @@ const readDashboardData = async ({
     runningCampaignsCount,
     emailsSentCount,
     emailsSentCountInRange,
+    emailsSentGraphData,
   };
 };
 

@@ -6,7 +6,7 @@ const { upload } = require("../startup/multer.config");
 const { authenticate, validate } = require("../middlewares");
 const { usersController } = require("../controllers");
 const {
-  constants: { RESPONSE_MESSAGES },
+  constants: { RESPONSE_MESSAGES, GRAPH_SCOPES },
 } = require("../utils");
 
 const router = express.Router();
@@ -18,6 +18,14 @@ router.get(
     query: Joi.object({
       fromDate: Joi.string().optional(),
       toDate: Joi.string().optional(),
+      graphScope: Joi.string()
+        .valid(
+          GRAPH_SCOPES.YEAR,
+          GRAPH_SCOPES.MONTH,
+          GRAPH_SCOPES.WEEK,
+          GRAPH_SCOPES.DAY
+        )
+        .optional(),
     }),
   }),
   async (req, res, next) => {

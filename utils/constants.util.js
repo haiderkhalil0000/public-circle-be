@@ -306,4 +306,11 @@ We received a request to reset your password. To proceed, simply click the butto
 <span style="word-break: break-word; padding-left: 20px; padding-right: 20px; font-size: 14px; display: inline-block; letter-spacing: normal;"><span style="word-break: break-word; line-height: 28px;">Reset Password</span></span></div><!--[if mso]></center></v:textbox></v:roundrect><![endif]--></a></div></td></tr></table><table class="paragraph_block block-4" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" 
 style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td class="pad"><div style="color:#000;direction:ltr;font-family:Arial,Helvetica Neue,Helvetica,sans-serif;font-size:14px;font-weight:400;letter-spacing:0;line-height:120%;text-align:left;mso-line-height-alt:16.8px"><p style="margin:0;margin-bottom:16px">&nbsp;</p><p style="margin:0;margin-bottom:16px">Having troubles? Just copy and paste this link into your browser:</p><p style="margin:0;margin-bottom:16px">
 <a href="{{reset-url}}" target="_blank" style="text-decoration: underline; color: #0068A5;" rel="noopener">{{reset-url}}</a></p><p style="margin:0;margin-bottom:16px">If you didn't make this request, no further action is required.</p><p style="margin:0">Thank you,<br>Public Circles team</p></div></td></tr></table></td></tr></tbody></table></td></tr></tbody></table></td></tr></tbody></table><!-- End --></body></html>`,
+
+  GRAPH_SCOPES: {
+    YEAR: "YEAR",
+    MONTH: "MONTH",
+    WEEK: "WEEK",
+    DAY: "DAY",
+  },
 };
