@@ -396,6 +396,7 @@ const runCampaign = async ({ campaign }) => {
     promises.push(
       EmailSent.create({
         company: campaign.company,
+        campaign: campaign._id,
         fromEmailAddress: campaign.sourceEmailAddress,
         toEmailAddress: emailAddresses[index],
         emailSubject: campaign.emailSubject,
