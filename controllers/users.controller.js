@@ -65,12 +65,13 @@ const updateUser = async ({
 
   if (companyName) {
     companyDoc = await Company.findOne({
-      name: companyName,
       user: currentUserId,
     });
 
     if (companyDoc) {
-      promises.push((companyDoc.name = companyName));
+      companyDoc.name = companyName;
+
+      promises.push(companyDoc.save());
     } else {
       const stripeController = require("./stripe.controller");
 
@@ -381,19 +382,28 @@ const getGraphData = async ({ graphScope, companyId }) => {
   if (graphScope === GRAPH_SCOPES.DAY) {
     const startOfDay = now.startOf("day").toDate();
     const endOfDay = now.endOf("day").toDate();
-    matchStage.createdAt = { $gte: startOfDay, $lte: endOfDay };
-    groupStage = { _id: { $hour: "$createdAt" } };
+    const localTimezone = moment().format("Z"); // Local timezone offset (e.g., "+05:30")
 
-    const hoursMap = Array.from({ length: 24 }, (_, i) => i).reduce(
-      (acc, hour) => {
-        const start = moment({ hour }).format("h:00A");
-        const end = moment({ hour }).add(1, "hour").format("h:00A");
-        acc[hour] = `${start}-${end}`;
-        return acc;
+    matchStage.createdAt = { $gte: startOfDay, $lte: endOfDay };
+
+    // Group by the hour in the local timezone
+    groupStage = {
+      _id: {
+        $dateToString: {
+          format: "%H", // Extract hour as two digits (00-23)
+          date: "$createdAt",
+          timezone: localTimezone,
+        },
       },
-      {}
-    );
-    const allHours = Object.keys(hoursMap).map(Number);
+    };
+
+    const hoursMap = Array.from({ length: 24 }, (_, hour) => {
+      const start = moment({ hour }).format("h:00A");
+      const end = moment({ hour }).add(1, "hour").format("h:00A");
+      return `${start}-${end}`;
+    });
+
+    const allHours = Array.from({ length: 24 }, (_, hour) => hour);
 
     const result = await EmailSent.aggregate([
       { $match: matchStage },
@@ -403,62 +413,24 @@ const getGraphData = async ({ graphScope, companyId }) => {
           count: { $sum: 1 },
         },
       },
+      { $sort: { _id: 1 } }, // Ensure sorting by hour
     ]);
 
-    const formattedResults = formatAndFillResults(result, allHours, hoursMap);
-
-    const gmtOffset = moment().utcOffset() / 60;
-
-    const timeObject = {
-      "12:00AM-1:00AM": 0,
-      "1:00AM-2:00AM": 0,
-      "2:00AM-3:00AM": 0,
-      "3:00AM-4:00AM": 0,
-      "4:00AM-5:00AM": 0,
-      "5:00AM-6:00AM": 0,
-      "6:00AM-7:00AM": 0,
-      "7:00AM-8:00AM": 0,
-      "8:00AM-9:00AM": 0,
-      "9:00AM-10:00AM": 0,
-      "10:00AM-11:00AM": 0,
-      "11:00AM-12:00PM": 0,
-      "12:00PM-1:00PM": 0,
-      "1:00PM-2:00PM": 0,
-      "2:00PM-3:00PM": 0,
-      "3:00PM-4:00PM": 0,
-      "4:00PM-5:00PM": 0,
-      "5:00PM-6:00PM": 0,
-      "6:00PM-7:00PM": 0,
-      "7:00PM-8:00PM": 0,
-      "8:00PM-9:00PM": 2,
-      "9:00PM-10:00PM": 1,
-      "10:00PM-11:00PM": 0,
-      "11:00PM-12:00AM": 0,
-    };
-
-    // Helper function to format time string to moment object
-    const adjustTime = (timeString, offset) => {
-      const format = "h:mma"; // 12-hour format with AM/PM
-      const [start, end] = timeString
-        .split("-")
-        .map((time) => moment(time, format));
-
-      // Add the GMT offset to both start and end times
-      start.add(offset, "hours");
-      end.add(offset, "hours");
-
-      // Format the new time back to the string
-      return `${start.format(format)}-${end.format(format)}`;
-    };
-
-    // Adjust all time ranges in the object
-    const adjustedObject = Object.keys(timeObject).reduce((acc, timeRange) => {
-      const adjustedRange = adjustTime(timeRange, gmtOffset);
-      acc[adjustedRange] = timeObject[timeRange]; // Copy the value associated with the time range
+    // Map the results to local time buckets
+    const formattedResults = result.reduce((acc, item) => {
+      const hour = parseInt(item._id, 10);
+      const timeRange = hoursMap[hour];
+      acc[timeRange] = item.count;
       return acc;
     }, {});
 
-    return adjustedObject;
+    // Fill missing hours with 0
+    const finalResults = hoursMap.reduce((acc, timeRange, index) => {
+      acc[timeRange] = formattedResults[timeRange] || 0;
+      return acc;
+    }, {});
+
+    return finalResults;
   }
 };
 
@@ -476,7 +448,11 @@ const readDashboardData = async ({
     emailsSentCountInRange,
     emailsSentGraphData,
   ] = await Promise.all([
-    User.countDocuments({ company: companyId, status: USER_STATUS.ACTIVE }),
+    User.countDocuments({
+      company: companyId,
+      isEmailVerified: true,
+      status: USER_STATUS.ACTIVE,
+    }),
     CompanyUser.countDocuments({ company: companyId }),
     Campaign.countDocuments({
       company: companyId,

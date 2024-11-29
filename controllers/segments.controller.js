@@ -59,7 +59,10 @@ const readPaginatedSegments = async ({ companyId, pageNumber, pageSize }) => {
 
   for (const segment of segments) {
     promises.push(
-      companyUsersController.getFiltersCount({ filters: segment.filters })
+      companyUsersController.getFiltersCount({
+        filters: segment.filters,
+        companyId,
+      })
     );
   }
 

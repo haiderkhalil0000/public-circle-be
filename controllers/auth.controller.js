@@ -116,16 +116,10 @@ const verifyJwtToken = async ({ token, source }) => {
       });
     }
 
-    // const result = await User.findOneAndUpdate(
-    //   { emailAddress: decodedToken.emailAddress },
-    //   { isEmailVerified: true }
-    // );
-
-    // if (!result.matchedCount) {
-    //   throw createHttpError(404, {
-    //     errorMessage: RESPONSE_MESSAGES.TOKEN_IS_INVALID_OR_EXPIRED,
-    //   });
-    // }
+    await User.findOneAndUpdate(
+      { emailAddress: decodedToken.emailAddress },
+      { isEmailVerified: true }
+    );
 
     if (source === "reset-password") {
       const userDoc = await User.findOne({
