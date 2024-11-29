@@ -89,7 +89,10 @@ const readAllSegments = async ({ companyId }) => {
 
   for (const segment of allSegments) {
     promises.push(
-      companyUsersController.getFiltersCount({ filters: segment.filters })
+      companyUsersController.getFiltersCount({
+        filters: segment.filters,
+        companyId,
+      })
     );
   }
 
