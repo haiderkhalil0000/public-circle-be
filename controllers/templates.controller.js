@@ -151,7 +151,7 @@ const updateTemplate = async ({ templateId, templateData }) => {
 
   if (templateData.body) {
     const buffer = await createThumbnail({
-      html: body,
+      html: templateData.body,
       width: 150,
       height: 150,
     });
