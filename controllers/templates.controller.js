@@ -150,14 +150,17 @@ const updateTemplate = async ({ templateId, templateData, companyId }) => {
   basicUtil.validateObjectId({ inputString: templateId });
 
   if (templateData.body) {
-    const buffer = await createThumbnail({
-      html: templateData.body,
-      width: 150,
-      height: 150,
-    });
+    const [buffer, template] = await Promise.all([
+      createThumbnail({
+        html: templateData.body,
+        width: 150,
+        height: 150,
+      }),
+      Template.findById(templateId),
+    ]);
 
     const url = await s3Util.uploadImageToS3({
-      s3Path: `thumbnails/${companyId}/${document.name}.png`,
+      s3Path: `thumbnails/${companyId}/${template.name}.png`,
       buffer,
     });
 
