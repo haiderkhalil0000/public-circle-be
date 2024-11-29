@@ -20,12 +20,8 @@ router.post("/email-events", async (req, res, next) => {
     // Parse the incoming SNS message
     const body = req.body;
 
-    console.log("email-events body:", body);
-
     if (messageType === "Notification") {
       const message = JSON.parse(req.body.Message);
-
-      console.log("WEB_HOOK_DATA", message);
 
       const result = await EmailSent.updateOne(
         { sesMessageId: message.mail.messageId },

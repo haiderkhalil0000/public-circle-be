@@ -24,28 +24,11 @@ app.get("/", (req, res) =>
   })
 );
 
-const { EmailSent } = require("./models");
+app.use(require("./routes"));
+
 const {
   constants: { ENVIRONMENT },
 } = require("./utils");
-
-app.use("/emails-sent", async (req, res) => {
-  try {
-    const [totalCount, emailDocs] = await Promise.all([
-      EmailSent.countDocuments(),
-      EmailSent.find().sort({ createdAt: -1 }).limit(10),
-    ]);
-
-    res.json({
-      message: "",
-      data: { totalCount, emailDocs },
-    });
-  } catch (err) {
-    console.log(err);
-  }
-});
-
-app.use(require("./routes"));
 
 if (process.env.ENVIRONMENT === ENVIRONMENT.PRODUCTION) {
   //cronJobs
