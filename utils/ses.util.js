@@ -39,8 +39,6 @@ const sendEmail = async ({
     })
   );
 
-  console.log("result", result);
-
   return result;
 };
 
