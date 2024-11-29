@@ -221,8 +221,8 @@ const deleteUserUnderACompany = async ({ companyId, userId }) => {
   }
 };
 
-const getGraphData = async ({ graphScope }) => {
-  const matchStage = {};
+const getGraphData = async ({ graphScope, companyId }) => {
+  const matchStage = { company: companyId };
   let groupStage = {};
   const now = moment();
 
@@ -498,7 +498,7 @@ const readDashboardData = async ({
         },
       ],
     }),
-    getGraphData({ graphScope }),
+    getGraphData({ graphScope, companyId }),
   ]);
 
   return {
