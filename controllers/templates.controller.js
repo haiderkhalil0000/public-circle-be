@@ -146,7 +146,7 @@ const readPaginatedTemplates = async ({
   return { totalRecords, templates };
 };
 
-const updateTemplate = async ({ templateId, templateData }) => {
+const updateTemplate = async ({ templateId, templateData, companyId }) => {
   basicUtil.validateObjectId({ inputString: templateId });
 
   if (templateData.body) {

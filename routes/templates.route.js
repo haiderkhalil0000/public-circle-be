@@ -157,6 +157,7 @@ router.patch(
       await templatesController.updateTemplate({
         ...req.params,
         templateData: req.body,
+        companyId: req.user.company_id,
       });
 
       res.status(200).json({
