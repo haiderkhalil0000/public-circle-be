@@ -12,7 +12,9 @@ const {
 
 const { JWT_SECRET } = process.env;
 
-const createToken = (data) => jwt.sign(data, JWT_SECRET);
+const createToken = ({ payload, options }) => {
+  return jwt.sign(payload, JWT_SECRET, options);
+};
 
 const decodeToken = (token) => jwt.verify(token, JWT_SECRET);
 
@@ -36,12 +38,31 @@ const verifyToken = async (req, res, next) => {
   try {
     const decodedToken = decodeToken(token);
 
-    const { _id: userId } = decodedToken;
+    const { _id: userId, emailAddress } = decodedToken;
 
-    const [user, company] = await Promise.all([
-      User.findById(userId).populate(ROLE),
-      Company.findOne({ user: userId }),
-    ]);
+    const userQuery = {};
+    const companyQuery = {};
+
+    let user = {};
+    let company = {};
+
+    if (decodedToken._id) {
+      companyQuery.user = userId;
+
+      const [userDoc, companyDoc] = await Promise.all([
+        User.findById(userId).populate(ROLE),
+        Company.findOne(companyQuery),
+      ]);
+
+      user = userDoc;
+      company = companyDoc;
+    } else {
+      userQuery.emailAddress = emailAddress;
+      user = await User.findOne(userQuery).populate(ROLE);
+
+      companyQuery.user = user._id;
+      company = await Company.findOne(companyQuery);
+    }
 
     if (!user) {
       return res.status(401).json({

@@ -81,7 +81,9 @@ router.post(
       res.status(200).json({
         message: RESPONSE_MESSAGES.USER_REGISTERED,
         data: {
-          token: authenticate.createToken({ emailAddress: user.emailAddress }),
+          token: authenticate.createToken({
+            payload: { _id: user._id, emailAddress: user.emailAddress },
+          }),
           user,
         },
       });
@@ -112,7 +114,9 @@ router.post(
       res.status(200).json({
         message: RESPONSE_MESSAGES.USER_LOGGED_IN,
         data: {
-          token: authenticate.createToken({ emailAddress: user.emailAddress }),
+          token: authenticate.createToken({
+            payload: { _id: user._id, emailAddress: user.emailAddress },
+          }),
           user,
         },
       });

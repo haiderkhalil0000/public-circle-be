@@ -89,7 +89,10 @@ const sendVerificationEmail = async ({ emailAddress }) => {
     });
   }
 
-  const token = createToken({ emailAddress });
+  const token = createToken({
+    payload: { emailAddress },
+    options: { expiresIn: "15m" },
+  });
 
   await sesUtil.sendEmail({
     fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
@@ -211,7 +214,10 @@ const forgotPassword = async ({ emailOrPhoneNumber }) => {
         content: PASSWORD_RESET_CONTENT,
         firstName: userDoc.firstName,
         url: `${PUBLIC_CIRCLES_WEB_URL}/auth/jwt/reset-password/?token=${createToken(
-          { emailAddress: userDoc.emailAddress }
+          {
+            payload: { emailAddress: userDoc.emailAddress },
+            options: { expiresIn: "15m" },
+          }
         )}`,
       }),
       contentType: TEMPLATE_CONTENT_TYPE.HTML,
@@ -244,7 +250,10 @@ const sendInvitationEmail = async ({ emailAddress, currentUserId }) => {
     });
   }
 
-  const token = createToken({ emailAddress });
+  const token = createToken({
+    payload: { emailAddress },
+    options: { expiresIn: "15m" },
+  });
 
   await sesUtil.sendEmail({
     fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
