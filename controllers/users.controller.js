@@ -44,6 +44,7 @@ const updateUser = async ({
       profilePicture &&
       (await s3Util.uploadImageToS3({
         s3Path: `user-profile-pictures/${currentUserId}/${profilePicture.fieldname}.png`,
+        buffer: profilePicture.buffer,
       })),
     firstName,
     lastName,

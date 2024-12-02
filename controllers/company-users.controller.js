@@ -3,6 +3,7 @@ const _ = require("lodash");
 const createHttpError = require("http-errors");
 const fs = require("fs");
 const csvParser = require("csv-parser");
+const { Readable } = require("stream");
 
 const { CompanyUser } = require("../models");
 const {
@@ -161,46 +162,49 @@ const uploadCsv = async ({ companyId, file }) => {
   const results = [];
 
   if (!file) {
-    return res.status(400).send("No file uploaded.");
+    throw createHttpError(400, {
+      errorMessage: "No file uploaded.",
+    });
   }
 
   const webhooksController = require("./webhooks.controller");
 
-  // Read and parse the CSV file from disk
-  fs.createReadStream(file.path)
-    .pipe(csvParser()) // Parse the CSV file
-    .on("data", (data) => {
-      results.push(data); // Collect each row of CSV data
-    })
-    .on("end", async () => {
-      try {
-        await webhooksController.recieveCompanyUsersData({
-          companyId,
-          users: results,
-        });
+  try {
+    // Convert the buffer into a readable stream
+    const fileStream = Readable.from(file.buffer);
 
-        fs.unlink(file.path, (err) => {
-          if (err) {
-            console.error("Error removing file:", err);
-          } else {
-            console.log("File removed successfully.");
-          }
-        });
-      } catch (err) {
-        console.error(err);
-
+    // Parse the CSV from the buffer
+    fileStream
+      .pipe(csvParser())
+      .on("data", (data) => {
+        results.push(data); // Collect each row of CSV data
+      })
+      .on("end", async () => {
+        try {
+          // Pass the parsed data to the controller
+          await webhooksController.recieveCompanyUsersData({
+            companyId,
+            users: results,
+          });
+        } catch (err) {
+          console.error("Error processing CSV data:", err);
+          throw createHttpError(500, {
+            errorMessage: "Something went wrong while processing the CSV!",
+          });
+        }
+      })
+      .on("error", (err) => {
+        console.error("Error reading CSV buffer:", err);
         throw createHttpError(500, {
-          errorMessage: "Something went wrong!",
+          errorMessage: "Error reading CSV data!",
         });
-      }
-    })
-    .on("error", (err) => {
-      console.error("Error reading CSV file:", err);
-
-      throw createHttpError(500, {
-        errorMessage: "Error reading CSV file!",
       });
+  } catch (err) {
+    console.error("Unexpected error:", err);
+    throw createHttpError(500, {
+      errorMessage: "Unexpected error occurred!",
     });
+  }
 };
 
 module.exports = {
