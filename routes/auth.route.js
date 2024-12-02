@@ -65,7 +65,7 @@ router.post(
 
 router.post(
   "/register",
-  authenticate.verifyEmailToken,
+  authenticate.verifyToken,
   validate({
     body: Joi.object({
       password: Joi.string().required(),
@@ -81,7 +81,7 @@ router.post(
       res.status(200).json({
         message: RESPONSE_MESSAGES.USER_REGISTERED,
         data: {
-          token: authenticate.createToken({ _id: user._id }),
+          token: authenticate.createToken({ emailAddress: user.emailAddress }),
           user,
         },
       });
@@ -112,7 +112,7 @@ router.post(
       res.status(200).json({
         message: RESPONSE_MESSAGES.USER_LOGGED_IN,
         data: {
-          token: authenticate.createToken({ _id: user._id }),
+          token: authenticate.createToken({ emailAddress: user.emailAddress }),
           user,
         },
       });

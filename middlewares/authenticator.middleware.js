@@ -66,48 +66,6 @@ const verifyToken = async (req, res, next) => {
   }
 };
 
-const verifyEmailToken = async (req, res, next) => {
-  const authorization = req.headers["authorization"];
-
-  if (!authorization) {
-    return res
-      .status(401)
-      .json({ message: RESPONSE_MESSAGES.TOKEN_IS_REQUIRED, data: {} });
-  }
-
-  const token = authorization.split(" ")[1];
-
-  if (!token) {
-    return res
-      .status(401)
-      .json({ message: RESPONSE_MESSAGES.TOKEN_IS_REQUIRED, data: {} });
-  }
-
-  try {
-    const decodedToken = decodeToken(token);
-
-    if (!decodedToken.emailAddress) {
-      return res.status(401).json({
-        message: RESPONSE_MESSAGES.INVALID_TOKEN,
-        data: {},
-      });
-    }
-
-    req.user = {};
-    req.user.emailAddress = decodedToken.emailAddress;
-
-    next();
-  } catch (err) {
-    // sendErrorReportToSentry(err);
-    console.log(err);
-
-    return res.status(401).json({
-      message: RESPONSE_MESSAGES.INVALID_TOKEN,
-      data: {},
-    });
-  }
-};
-
 const verifyWebhookToken = async (req, res, next) => {
   const authorization = req.headers["authorization"];
 
@@ -194,10 +152,9 @@ const decodeExpiredToken = async (req, res, next) => {
 };
 
 module.exports = {
-  verifyToken,
   createToken,
+  verifyToken,
   decodeToken,
   decodeExpiredToken,
-  verifyEmailToken,
   verifyWebhookToken,
 };
