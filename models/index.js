@@ -13,4 +13,5 @@ module.exports = {
   SocialLink: require("./social-link.model"),
   Asset: require("./assets.model"),
   EmailSent: require("./emails-sent.model"),
+  RefreshToken: require("./refresh-token.model"),
 };

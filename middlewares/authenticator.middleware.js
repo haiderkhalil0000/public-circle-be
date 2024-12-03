@@ -10,13 +10,17 @@ const {
 } = require("../utils");
 // const sendErrorReportToSentry = require("../utils/send-error-report-to-sentry");
 
-const { JWT_SECRET } = process.env;
+const { ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET } = process.env;
 
-const createToken = ({ payload, options }) => {
-  return jwt.sign(payload, JWT_SECRET, options);
+const generateAccessToken = ({ payload, options }) => {
+  return jwt.sign(payload, ACCESS_TOKEN_SECRET, options);
 };
 
-const decodeToken = (token) => jwt.verify(token, JWT_SECRET);
+const generateRefreshToken = ({ payload, options }) => {
+  return jwt.sign(payload, REFRESH_TOKEN_SECRET, options);
+};
+
+const decodeToken = (token) => jwt.verify(token, ACCESS_TOKEN_SECRET);
 
 const verifyToken = async (req, res, next) => {
   const authorization = req.headers["authorization"];
@@ -173,7 +177,8 @@ const decodeExpiredToken = async (req, res, next) => {
 };
 
 module.exports = {
-  createToken,
+  generateAccessToken,
+  generateRefreshToken,
   verifyToken,
   decodeToken,
   decodeExpiredToken,

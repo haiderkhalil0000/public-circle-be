@@ -4,7 +4,7 @@ const axios = require("axios");
 
 const { User } = require("../models");
 const {
-  createToken,
+  generateAccessToken,
   decodeToken,
 } = require("../middlewares/authenticator.middleware");
 const {
@@ -23,6 +23,7 @@ const {
   BEEFREE_CLIENT_SECRET,
   PUBLIC_CIRCLES_WEB_URL,
   PUBLIC_CIRCLES_EMAIL_ADDRESS,
+  ACCESS_TOKEN_EXPIRY,
 } = process.env;
 
 const register = async ({ emailAddress, password }) => {
@@ -89,9 +90,9 @@ const sendVerificationEmail = async ({ emailAddress }) => {
     });
   }
 
-  const token = createToken({
+  const token = generateAccessToken({
     payload: { emailAddress },
-    options: { expiresIn: "15m" },
+    options: { expiresIn: ACCESS_TOKEN_EXPIRY },
   });
 
   await sesUtil.sendEmail({
@@ -213,10 +214,10 @@ const forgotPassword = async ({ emailOrPhoneNumber }) => {
       content: mapDynamicValues({
         content: PASSWORD_RESET_CONTENT,
         firstName: userDoc.firstName,
-        url: `${PUBLIC_CIRCLES_WEB_URL}/auth/jwt/reset-password/?token=${createToken(
+        url: `${PUBLIC_CIRCLES_WEB_URL}/auth/jwt/reset-password/?token=${generateAccessToken(
           {
             payload: { emailAddress: userDoc.emailAddress },
-            options: { expiresIn: "15m" },
+            options: { expiresIn: ACCESS_TOKEN_EXPIRY },
           }
         )}`,
       }),
@@ -250,9 +251,9 @@ const sendInvitationEmail = async ({ emailAddress, currentUserId }) => {
     });
   }
 
-  const token = createToken({
+  const token = generateAccessToken({
     payload: { emailAddress },
-    options: { expiresIn: "15m" },
+    options: { expiresIn: ACCESS_TOKEN_EXPIRY },
   });
 
   await sesUtil.sendEmail({

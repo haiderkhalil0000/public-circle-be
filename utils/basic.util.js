@@ -1,5 +1,6 @@
 const _ = require("lodash");
 const createHttpError = require("http-errors");
+const jsonwebtoken = require("jsonwebtoken");
 
 const { RESPONSE_MESSAGES } = require("./constants.util");
 
@@ -13,6 +14,8 @@ const validateObjectId = ({ inputString }) => {
   return;
 };
 
+const decodeJwt = ({ jwt, jwtSecret }) => jsonwebtoken.verify(jwt, jwtSecret);
+
 const fiterUniqueObjectsFromArray = (arrayOfObjects) =>
   _.uniqWith(arrayOfObjects, _.isEqual);
 
@@ -20,6 +23,7 @@ const fiterUniqueStringsFromArray = (arrayOfStrings) => _.uniq(arrayOfStrings);
 
 module.exports = {
   validateObjectId,
+  decodeJwt,
   fiterUniqueObjectsFromArray,
   fiterUniqueStringsFromArray,
 };

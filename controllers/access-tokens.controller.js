@@ -24,9 +24,11 @@ const createAccessToken = async ({ title, companyId }) => {
     title,
   });
 
-  const { createToken } = require("../middlewares/authenticator.middleware");
+  const {
+    generateAccessToken,
+  } = require("../middlewares/authenticator.middleware");
 
-  return createToken({ payload: { _id: accessTokenDoc._id } });
+  return generateAccessToken({ payload: { _id: accessTokenDoc._id } });
 };
 
 const readAccessToken = async ({ accessTokenId, companyId }) => {

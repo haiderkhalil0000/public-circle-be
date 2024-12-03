@@ -12,6 +12,7 @@ module.exports = {
     CRON_JOB: "cron-job",
     COMPANY: "companies",
     ACCESS_TOKEN: "access-token",
+    REFRESH_TOKEN: "refresh-token",
     ROLE: "role",
     SOCIAL_LINK: "social-link",
     ASSET: "asset",
@@ -171,6 +172,9 @@ module.exports = {
     INVITATION_EMAIL_SENT: "Invitation email sent successfully.",
     REFERRAL_CODE_ACCEPTED: "Referral code accepted.",
     CAMPAIGN_LOGS_FETCHED: "Campaign logs fetched successfully.",
+    REFRESH_TOKEN_NOT_FOUND: "Refresh token not found!",
+    REFRESH_TOKEN_INVALID: "Refresh is invalid or expired!",
+    TOKEN_GENERATED: "Token generated successfully.",
   },
 
   INTERACTION_CHANNELS: {

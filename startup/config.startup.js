@@ -2,7 +2,7 @@ const helmet = require("helmet");
 const compression = require("compression");
 const morgan = require("morgan");
 
-const { ENVIRONMENT, MONGODB_URL, JWT_SECRET } = process.env;
+const { ENVIRONMENT, MONGODB_URL, ACCESS_TOKEN_SECRET } = process.env;
 
 module.exports = function (app) {
   if (!ENVIRONMENT) {
@@ -15,8 +15,8 @@ module.exports = function (app) {
     process.exit(1);
   }
 
-  if (!JWT_SECRET) {
-    console.log("FATAL ERROR: JWT_SECRET is not defined!");
+  if (!ACCESS_TOKEN_SECRET) {
+    console.log("FATAL ERROR: ACCESS_TOKEN_SECRET is not defined!");
     process.exit(1);
   }
 

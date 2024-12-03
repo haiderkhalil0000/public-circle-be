@@ -1,12 +1,15 @@
 const express = require("express");
 const Joi = require("joi");
+const createHttpError = require("http-errors");
 const authDebugger = require("debug")("debug:auth");
 
 const { authenticate, validate } = require("../middlewares");
-const { authController } = require("../controllers");
+const { authController, refreshTokensController } = require("../controllers");
 const {
   constants: { RESPONSE_MESSAGES },
 } = require("../utils");
+
+const { ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY } = process.env;
 
 const router = express.Router();
 
@@ -81,8 +84,9 @@ router.post(
       res.status(200).json({
         message: RESPONSE_MESSAGES.USER_REGISTERED,
         data: {
-          token: authenticate.createToken({
+          token: authenticate.generateAccessToken({
             payload: { _id: user._id, emailAddress: user.emailAddress },
+            options: { expiresIn: ACCESS_TOKEN_EXPIRY },
           }),
           user,
         },
@@ -111,11 +115,24 @@ router.post(
     try {
       const user = await authController.login(req.body);
 
+      const refreshToken = authenticate.generateRefreshToken({
+        payload: { _id: user._id, emailAddress: user.emailAddress },
+        options: { expiresIn: REFRESH_TOKEN_EXPIRY },
+      });
+
+      refreshTokensController.storeRefreshToken({ refreshToken });
+
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: true,
+      });
+
       res.status(200).json({
         message: RESPONSE_MESSAGES.USER_LOGGED_IN,
         data: {
-          token: authenticate.createToken({
+          token: authenticate.generateAccessToken({
             payload: { _id: user._id, emailAddress: user.emailAddress },
+            options: { expiresIn: ACCESS_TOKEN_EXPIRY },
           }),
           user,
         },
@@ -272,4 +289,54 @@ router.post(
     }
   }
 );
+
+router.get("/token", async (req, res, next) => {
+  try {
+    if (req.cookies.refreshToken) {
+      const { refreshToken } = req.cookies;
+
+      const refreshTokenDoc = await refreshTokensController.readRefreshToken({
+        refreshToken,
+      });
+
+      if (!refreshToken || !refreshTokenDoc) {
+        throw createHttpError(403, {
+          errorMessage: RESPONSE_MESSAGES.REFRESH_TOKEN_NOT_FOUND,
+        });
+      }
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.TOKEN_GENERATED,
+        data: refreshTokensController.readAccessTokenFromRefreshToken({
+          refreshToken,
+        }),
+      });
+    }
+  } catch (err) {
+    // sendErrorReportToSentry(error);
+
+    authDebugger(err);
+
+    next(err);
+  }
+});
+
+router.post("/logout", authenticate.verifyToken, async (req, res, next) => {
+  try {
+    await refreshTokensController.revokeRefreshToken({
+      token: req.cookies.refreshToken,
+    });
+
+    res.clearCookie("refreshToken");
+
+    res.status(200).json({ message: "Logged out", data: {} });
+  } catch (err) {
+    // sendErrorReportToSentry(error);
+
+    authDebugger(err);
+
+    next(err);
+  }
+});
+
 module.exports = router;
