@@ -223,23 +223,32 @@ const deleteUserUnderACompany = async ({ companyId, userId }) => {
   }
 };
 
+const MONTH_NAMES = moment.months().map((month) => month.substring(0, 3)); // ['Jan', 'Feb', ... 'Dec']
+
 const getGraphData = async ({ graphScope, companyId }) => {
   const matchStage = { company: companyId };
-  let groupStage = {};
   const now = moment();
 
-  // Utility to format and fill results
-  const formatAndFillResults = (result, allKeys, keyMap) => {
+  // Utility: Generate Key Maps
+  const generateKeyMap = (keys, labels) =>
+    keys.reduce((map, key, index) => {
+      map[key] = labels[index] || key;
+      return map;
+    }, {});
+
+  // Utility: Fill Missing Data
+  const fillMissingData = (result, keys, keyMap) => {
     const counts = result.reduce((acc, item) => {
       acc[keyMap[item._id]] = item.count;
       return acc;
     }, {});
-    return allKeys.reduce((final, key) => {
+    return keys.reduce((final, key) => {
       final[keyMap[key]] = counts[keyMap[key]] || 0;
       return final;
     }, {});
   };
 
+  // Logic for Each Scope
   if (graphScope === GRAPH_SCOPES.YEAR) {
     const startOfYear = now
       .clone()
@@ -248,32 +257,24 @@ const getGraphData = async ({ graphScope, companyId }) => {
       .toDate();
     const endOfYear = now.endOf("year").toDate();
     matchStage.createdAt = { $gte: startOfYear, $lte: endOfYear };
-    groupStage = { _id: { $year: "$createdAt" } };
 
-    const currentYear = now.year();
     const last10Years = Array.from(
       { length: 10 },
-      (_, i) => currentYear - 9 + i
+      (_, i) => now.year() - 9 + i
     );
+    const keyMap = generateKeyMap(last10Years, last10Years.map(String));
 
     const result = await EmailSent.aggregate([
       { $match: matchStage },
       {
         $group: {
-          _id: groupStage._id,
+          _id: { $year: "$createdAt" },
           count: { $sum: 1 },
         },
       },
     ]);
 
-    return formatAndFillResults(
-      result,
-      last10Years,
-      last10Years.reduce((map, year) => {
-        map[year] = year.toString();
-        return map;
-      }, {})
-    );
+    return fillMissingData(result, last10Years, keyMap);
   }
 
   if (graphScope === GRAPH_SCOPES.MONTH) {
@@ -287,35 +288,21 @@ const getGraphData = async ({ graphScope, companyId }) => {
       $gte: startOfLast12Months,
       $lte: endOfCurrentMonth,
     };
-    groupStage = {
-      _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } },
-    };
 
-    const last12Months = Array.from({ length: 12 }, (_, i) =>
-      now
-        .clone()
-        .subtract(11 - i, "months")
-        .format("YYYY-MM")
-    );
+    const last12Months = Array.from({ length: 12 }, (_, i) => i + 1); // 1-12
+    const keyMap = generateKeyMap(last12Months, MONTH_NAMES);
 
     const result = await EmailSent.aggregate([
       { $match: matchStage },
       {
         $group: {
-          _id: groupStage._id,
+          _id: { $month: "$createdAt" },
           count: { $sum: 1 },
         },
       },
     ]);
 
-    return formatAndFillResults(
-      result,
-      last12Months,
-      last12Months.reduce((map, month) => {
-        map[month] = month;
-        return map;
-      }, {})
-    );
+    return fillMissingData(result, last12Months, keyMap);
   }
 
   if (graphScope === GRAPH_SCOPES.DAY) {
@@ -326,38 +313,30 @@ const getGraphData = async ({ graphScope, companyId }) => {
       .toDate();
     const endOfToday = now.endOf("day").toDate();
     matchStage.createdAt = { $gte: startOfLast30Days, $lte: endOfToday };
-    groupStage = {
-      _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-    };
 
-    const last30Days = Array.from({ length: 30 }, (_, i) =>
+    const last30Days = Array.from({ length: 30 }, (_, i) => `Day${i + 1}`);
+    const dateKeys = Array.from({ length: 30 }, (_, i) =>
       now
         .clone()
         .subtract(29 - i, "days")
         .format("YYYY-MM-DD")
     );
+    const keyMap = generateKeyMap(dateKeys, last30Days);
 
     const result = await EmailSent.aggregate([
       { $match: matchStage },
       {
         $group: {
-          _id: groupStage._id,
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
           count: { $sum: 1 },
         },
       },
     ]);
 
-    return formatAndFillResults(
-      result,
-      last30Days,
-      last30Days.reduce((map, day) => {
-        map[day] = day;
-        return map;
-      }, {})
-    );
+    return fillMissingData(result, dateKeys, keyMap);
   }
 
-  throw createHttpError(400, { errorMessage: "Invalid graph scope!" });
+  throw createHttpError(400, `Invalid graph scope: ${graphScope}`);
 };
 
 const readDashboardData = async ({
