@@ -357,7 +357,7 @@ const getGraphData = async ({ graphScope, companyId }) => {
     );
   }
 
-  throw new Error("Invalid graphScope");
+  throw createHttpError(400, { errorMessage: "Invalid graph scope!" });
 };
 
 const readDashboardData = async ({
