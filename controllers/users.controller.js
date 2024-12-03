@@ -241,26 +241,20 @@ const getGraphData = async ({ graphScope, companyId }) => {
   };
 
   if (graphScope === GRAPH_SCOPES.YEAR) {
-    const startOfYear = now.startOf("year").toDate();
+    const startOfYear = now
+      .clone()
+      .subtract(9, "years")
+      .startOf("year")
+      .toDate();
     const endOfYear = now.endOf("year").toDate();
     matchStage.createdAt = { $gte: startOfYear, $lte: endOfYear };
-    groupStage = { _id: { $month: "$createdAt" } };
+    groupStage = { _id: { $year: "$createdAt" } };
 
-    const monthsMap = {
-      1: "jan",
-      2: "feb",
-      3: "mar",
-      4: "apr",
-      5: "may",
-      6: "jun",
-      7: "jul",
-      8: "aug",
-      9: "sep",
-      10: "oct",
-      11: "nov",
-      12: "dec",
-    };
-    const allMonths = Object.keys(monthsMap).map(Number);
+    const currentYear = now.year();
+    const last10Years = Array.from(
+      { length: 10 },
+      (_, i) => currentYear - 9 + i
+    );
 
     const result = await EmailSent.aggregate([
       { $match: matchStage },
@@ -272,100 +266,37 @@ const getGraphData = async ({ graphScope, companyId }) => {
       },
     ]);
 
-    return formatAndFillResults(result, allMonths, monthsMap);
+    return formatAndFillResults(
+      result,
+      last10Years,
+      last10Years.reduce((map, year) => {
+        map[year] = year.toString();
+        return map;
+      }, {})
+    );
   }
 
   if (graphScope === GRAPH_SCOPES.MONTH) {
-    const startOfMonth = now.startOf("month").toDate();
-    const endOfMonth = now.endOf("month").toDate();
-
-    // Match documents for the current month
-    matchStage.createdAt = { $gte: startOfMonth, $lte: endOfMonth };
-
-    // Group by custom week numbers based on the start date of each week
+    const startOfLast12Months = now
+      .clone()
+      .subtract(11, "months")
+      .startOf("month")
+      .toDate();
+    const endOfCurrentMonth = now.endOf("month").toDate();
+    matchStage.createdAt = {
+      $gte: startOfLast12Months,
+      $lte: endOfCurrentMonth,
+    };
     groupStage = {
-      $cond: [
-        { $lte: [{ $dayOfMonth: "$createdAt" }, 7] },
-        "week1",
-        {
-          $cond: [
-            { $lte: [{ $dayOfMonth: "$createdAt" }, 14] },
-            "week2",
-            {
-              $cond: [
-                { $lte: [{ $dayOfMonth: "$createdAt" }, 21] },
-                "week3",
-                {
-                  $cond: [
-                    { $lte: [{ $dayOfMonth: "$createdAt" }, 28] },
-                    "week4",
-                    {
-                      $cond: [
-                        { $lte: [{ $dayOfMonth: "$createdAt" }, 35] },
-                        "week5",
-                        "week6",
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
+      _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } },
     };
 
-    // Define all possible weeks for the current month
-    const weeksMap = {
-      week1: "week1",
-      week2: "week2",
-      week3: "week3",
-      week4: "week4",
-      week5: "week5",
-      week6: "week6",
-    };
-
-    const allWeeks = Object.keys(weeksMap);
-
-    const result = await EmailSent.aggregate([
-      { $match: matchStage },
-      {
-        $group: {
-          _id: groupStage,
-          count: { $sum: 1 },
-        },
-      },
-    ]);
-
-    // Format the results to include all weeks, even those with no data
-    const formattedResults = formatAndFillResults(result, allWeeks, weeksMap);
-
-    if (!formattedResults.week6) {
-      delete formattedResults.week6;
-      if (!formattedResults.week5) {
-        delete formattedResults.week5;
-      }
-    }
-
-    return formattedResults;
-  }
-
-  if (graphScope === GRAPH_SCOPES.WEEK) {
-    const startOfWeek = now.startOf("week").toDate();
-    const endOfWeek = now.endOf("week").toDate();
-    matchStage.createdAt = { $gte: startOfWeek, $lte: endOfWeek };
-    groupStage = { _id: { $dayOfWeek: "$createdAt" } };
-
-    const daysMap = {
-      1: "sunday",
-      2: "monday",
-      3: "tuesday",
-      4: "wednesday",
-      5: "thursday",
-      6: "friday",
-      7: "saturday",
-    };
-    const allDays = Object.keys(daysMap).map(Number);
+    const last12Months = Array.from({ length: 12 }, (_, i) =>
+      now
+        .clone()
+        .subtract(11 - i, "months")
+        .format("YYYY-MM")
+    );
 
     const result = await EmailSent.aggregate([
       { $match: matchStage },
@@ -377,34 +308,34 @@ const getGraphData = async ({ graphScope, companyId }) => {
       },
     ]);
 
-    return formatAndFillResults(result, allDays, daysMap);
+    return formatAndFillResults(
+      result,
+      last12Months,
+      last12Months.reduce((map, month) => {
+        map[month] = month;
+        return map;
+      }, {})
+    );
   }
 
   if (graphScope === GRAPH_SCOPES.DAY) {
-    const startOfDay = now.startOf("day").toDate();
-    const endOfDay = now.endOf("day").toDate();
-    const localTimezone = moment().format("Z"); // Local timezone offset (e.g., "+05:30")
-
-    matchStage.createdAt = { $gte: startOfDay, $lte: endOfDay };
-
-    // Group by the hour in the local timezone
+    const startOfLast30Days = now
+      .clone()
+      .subtract(29, "days")
+      .startOf("day")
+      .toDate();
+    const endOfToday = now.endOf("day").toDate();
+    matchStage.createdAt = { $gte: startOfLast30Days, $lte: endOfToday };
     groupStage = {
-      _id: {
-        $dateToString: {
-          format: "%H", // Extract hour as two digits (00-23)
-          date: "$createdAt",
-          timezone: localTimezone,
-        },
-      },
+      _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
     };
 
-    const hoursMap = Array.from({ length: 24 }, (_, hour) => {
-      const start = moment({ hour }).format("h:00A");
-      const end = moment({ hour }).add(1, "hour").format("h:00A");
-      return `${start}-${end}`;
-    });
-
-    const allHours = Array.from({ length: 24 }, (_, hour) => hour);
+    const last30Days = Array.from({ length: 30 }, (_, i) =>
+      now
+        .clone()
+        .subtract(29 - i, "days")
+        .format("YYYY-MM-DD")
+    );
 
     const result = await EmailSent.aggregate([
       { $match: matchStage },
@@ -414,25 +345,19 @@ const getGraphData = async ({ graphScope, companyId }) => {
           count: { $sum: 1 },
         },
       },
-      { $sort: { _id: 1 } }, // Ensure sorting by hour
     ]);
 
-    // Map the results to local time buckets
-    const formattedResults = result.reduce((acc, item) => {
-      const hour = parseInt(item._id, 10);
-      const timeRange = hoursMap[hour];
-      acc[timeRange] = item.count;
-      return acc;
-    }, {});
-
-    // Fill missing hours with 0
-    const finalResults = hoursMap.reduce((acc, timeRange, index) => {
-      acc[timeRange] = formattedResults[timeRange] || 0;
-      return acc;
-    }, {});
-
-    return finalResults;
+    return formatAndFillResults(
+      result,
+      last30Days,
+      last30Days.reduce((map, day) => {
+        map[day] = day;
+        return map;
+      }, {})
+    );
   }
+
+  throw new Error("Invalid graphScope");
 };
 
 const readDashboardData = async ({
