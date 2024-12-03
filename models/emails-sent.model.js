@@ -4,6 +4,7 @@ const { ObjectId } = mongoose.Schema.Types;
 const {
   constants: {
     MODELS: { EMAILS_SENT, COMPANY, CAMPAIGN },
+    EMAIL_KIND,
   },
 } = require("../utils");
 
@@ -11,23 +12,26 @@ const schema = new mongoose.Schema(
   {
     company: {
       type: ObjectId,
-      required: true,
       index: true,
       ref: COMPANY,
     },
     campaign: {
       type: ObjectId,
-      required: true,
       index: true,
       ref: CAMPAIGN,
     },
+    kind: {
+      type: String,
+      required: true,
+      enum: Object.values(EMAIL_KIND),
+    },
     fromEmailAddress: {
       type: String,
-      require: true,
+      required: true,
     },
     toEmailAddress: {
       type: String,
-      require: true,
+      required: true,
     },
     emailSubject: {
       type: String,

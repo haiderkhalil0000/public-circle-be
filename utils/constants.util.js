@@ -20,7 +20,8 @@ module.exports = {
 
   RESPONSE_MESSAGES: {
     INVALID_TOKEN: "Not authenticated, invalid token provided!",
-    TOKEN_IS_INVALID_OR_EXPIRED: "Token is invalid or expired!",
+    TOKEN_IS_INVALID_OR_EXPIRED:
+      "Not authenticated, token is invalid or expired!",
     TOKEN_IS_REQUIRED: "Not authenticated, token is required!",
     EMAIL_BELONGS_TO_OTHER: "This email address belongs to someone else!",
     USER_REGISTERED: "User registered successfully.",
@@ -318,5 +319,10 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
     MONTH: "MONTH",
     WEEK: "WEEK",
     DAY: "DAY",
+  },
+
+  EMAIL_KIND: {
+    VERIFICATION: "VERIFICATION",
+    REGULAR: "REGULAR",
   },
 };

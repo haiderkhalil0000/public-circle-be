@@ -19,6 +19,7 @@ const {
     CRON_STATUS,
     RUN_MODE,
     TEMPLATE_CONTENT_TYPE,
+    EMAIL_KIND,
   },
 } = require("../utils");
 
@@ -435,6 +436,7 @@ const runCampaign = async ({ campaign }) => {
       EmailSent.create({
         company: campaign.company,
         campaign: campaign._id,
+        kind: EMAIL_KIND.REGULAR,
         fromEmailAddress: campaign.sourceEmailAddress,
         toEmailAddress: emailAddresses[index],
         emailSubject: campaign.emailSubject,

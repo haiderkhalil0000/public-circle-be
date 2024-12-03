@@ -2,7 +2,7 @@ const createHttpError = require("http-errors");
 const moment = require("moment");
 const axios = require("axios");
 
-const { User } = require("../models");
+const { User, EmailSent } = require("../models");
 const {
   generateAccessToken,
   decodeToken,
@@ -14,6 +14,7 @@ const {
     TEMPLATE_CONTENT_TYPE,
     PASSWORD_RESET_SUBJECT,
     PASSWORD_RESET_CONTENT,
+    EMAIL_KIND,
   },
   sesUtil,
 } = require("../utils");
@@ -95,19 +96,34 @@ const sendVerificationEmail = async ({ emailAddress }) => {
     options: { expiresIn: ACCESS_TOKEN_EXPIRY },
   });
 
-  await sesUtil.sendEmail({
-    fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
-    toEmailAddress: emailAddress,
-    subject: VERIFICATION_EMAIL_SUBJECT,
-    content: `Welcome to Public Circles,
+  await Promise.all([
+    sesUtil.sendEmail({
+      fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
+      toEmailAddress: emailAddress,
+      subject: VERIFICATION_EMAIL_SUBJECT,
+      content: `Welcome to Public Circles,
 
 Please verify your email address by using the following link:
 ${PUBLIC_CIRCLES_WEB_URL}/auth/jwt/sign-up/?source=register&token=${token}
 
 Regards,
 Public Circles Team`,
-    contentType: TEMPLATE_CONTENT_TYPE.TEXT,
-  });
+      contentType: TEMPLATE_CONTENT_TYPE.TEXT,
+    }),
+    EmailSent.create({
+      kind: EMAIL_KIND.VERIFICATION,
+      fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
+      toEmailAddress: emailAddress,
+      emailSubject: VERIFICATION_EMAIL_SUBJECT,
+      emailContent: `Welcome to Public Circles,
+
+Please verify your email address by using the following link:
+${PUBLIC_CIRCLES_WEB_URL}/auth/jwt/sign-up/?source=register&token=${token}
+
+Regards,
+Public Circles Team`,
+    }),
+  ]);
 };
 
 const verifyJwtToken = async ({ token, source }) => {

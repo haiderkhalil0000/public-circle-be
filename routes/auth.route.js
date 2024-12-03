@@ -3,7 +3,11 @@ const Joi = require("joi");
 const createHttpError = require("http-errors");
 const authDebugger = require("debug")("debug:auth");
 
-const { authenticate, validate } = require("../middlewares");
+const {
+  authenticate,
+  validate,
+  isVerificationEmailSent,
+} = require("../middlewares");
 const { authController, refreshTokensController } = require("../controllers");
 const {
   constants: { RESPONSE_MESSAGES },
@@ -68,7 +72,7 @@ router.post(
 
 router.post(
   "/register",
-  authenticate.verifyToken,
+  isVerificationEmailSent,
   validate({
     body: Joi.object({
       password: Joi.string().required(),
@@ -78,7 +82,7 @@ router.post(
     try {
       const user = await authController.register({
         ...req.body,
-        emailAddress: req.user.emailAddress,
+        emailAddress: req.emailAddress,
       });
 
       res.status(200).json({
