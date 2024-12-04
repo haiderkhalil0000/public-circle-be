@@ -464,12 +464,10 @@ const runCampaign = async ({ campaign }) => {
   );
 };
 
-const readCampaignLogs = ({ pageNumber, pageSize, campaignId }) =>
-  EmailSent.find({ campaign: campaignId })
+const readPaginatedCampaignLogs = ({ companyId, pageNumber, pageSize }) =>
+  Campaign.find({ company: companyId, processedCount: { $gte: 1 } })
     .skip((parseInt(pageNumber) - 1) * pageSize)
-    .limit(pageSize)
-    .populate("company")
-    .populate(CAMPAIGN);
+    .limit(pageSize);
 
 const readAllCampaignLogs = ({ pageNumber, pageSize, companyId }) =>
   EmailSent.find({ company: companyId })
@@ -487,6 +485,6 @@ module.exports = {
   deleteCampaign,
   sendTestEmail,
   runCampaign,
-  readCampaignLogs,
+  readPaginatedCampaignLogs,
   readAllCampaignLogs,
 };

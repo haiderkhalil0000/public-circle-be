@@ -72,12 +72,9 @@ router.get("/all", authenticate.verifyToken, async (req, res, next) => {
 });
 
 router.get(
-  "/logs/:campaignId",
+  "/logs/all",
   authenticate.verifyToken,
   validate({
-    params: Joi.object({
-      campaignId: Joi.string().required(),
-    }),
     query: Joi.object({
       pageNumber: Joi.number().optional(),
       pageSize: Joi.number().optional(),
@@ -85,9 +82,9 @@ router.get(
   }),
   async (req, res, next) => {
     try {
-      const campaignLogs = await campaignsController.readCampaignLogs({
-        ...req.params,
+      const campaignLogs = await campaignsController.readAllCampaignLogs({
         ...req.query,
+        companyId: req.user.company._id,
       });
 
       res.status(200).json({
@@ -116,7 +113,7 @@ router.get(
   }),
   async (req, res, next) => {
     try {
-      const campaignLogs = await campaignsController.readAllCampaignLogs({
+      const campaignLogs = await campaignsController.readPaginatedCampaignLogs({
         ...req.query,
         companyId: req.user.company._id,
       });
