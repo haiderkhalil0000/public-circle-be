@@ -31,7 +31,7 @@ const schema = new mongoose.Schema(
       ref: ROLE,
     },
     isResetPasswordRequested: { type: Boolean, default: false },
-    signUpStepsCompleted: { type: Number, min: 0, max: 7, default: 0 },
+    signUpStepsCompleted: { type: Number, min: 0, max: 8, default: 0 },
     referralCode: { type: String },
     referrer: { type: ObjectId, ref: USER },
     referree: { type: ObjectId, ref: USER },

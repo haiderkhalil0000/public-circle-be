@@ -60,7 +60,13 @@ const readCampaignRunsStats = async ({ campaignId }) => {
   };
 };
 
+const readCampaignRunEmailsSent = ({ campaignRunId, pageNumber, pageSize }) =>
+  EmailSent.find({ campaignRun: campaignRunId })
+    .skip((parseInt(pageNumber) - 1) * pageSize)
+    .limit(pageSize);
+
 module.exports = {
   readPaginatedCampaignsRun,
   readCampaignRunsStats,
+  readCampaignRunEmailsSent,
 };

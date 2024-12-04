@@ -179,6 +179,8 @@ module.exports = {
     TOKEN_GENERATED: "Token generated successfully.",
     FETCHED_CAMPAIGN_RUNS: "Campaign runs fetched successfully.",
     FETCHED_CAMPAIGN_RUN_STATS: "Campaign run stats fetched successfully.",
+    FETCHED_CAMPAIGN_RUN_EMAIL_SENT:
+      "Campaign run emails sent fetched successfully.",
     INVALID_REFERRAL_CODE: "Referral code is invalid!",
   },
 

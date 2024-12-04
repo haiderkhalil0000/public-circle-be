@@ -73,4 +73,40 @@ router.get(
   }
 );
 
+router.get(
+  "/emails-sent/:campaignRunId",
+  authenticate.verifyToken,
+  validate({
+    params: Joi.object({
+      campaignRunId: Joi.string().required(),
+    }),
+    query: Joi.object({
+      pageNumber: Joi.number().required(),
+      pageSize: Joi.number().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const campaignRunEmailsSent =
+        await campaignsRunController.readCampaignRunEmailsSent({
+          ...req.params,
+          ...req.query,
+        });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.FETCHED_CAMPAIGN_RUN_EMAIL_SENT,
+        data: campaignRunEmailsSent,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      console.log(err);
+
+      campaignDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 module.exports = router;
