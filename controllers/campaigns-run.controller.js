@@ -1,6 +1,30 @@
 const { CampaignRun, EmailSent } = require("../models");
 const { basicUtil } = require("../utils");
 
+const readCampaignRunsStats = async ({ campaignId }) => {
+  basicUtil.validateObjectId({ inputString: campaignId });
+
+  let campaignRunIds = await CampaignRun.distinct("_id", {
+    campaign: campaignId,
+  });
+
+  const query = { campaignRun: { $in: campaignRunIds } };
+
+  const [totalEmailsSent, totalEmailsOpened] = await Promise.all([
+    EmailSent.countDocuments(query),
+    EmailSent.countDocuments({
+      ...query,
+      "emailEvents.Open": { $exists: true },
+    }),
+  ]);
+
+  return {
+    totalCampaignRuns: campaignRunIds.length,
+    totalEmailsSent,
+    totalEmailsOpened,
+  };
+};
+
 const readPaginatedCampaignsRun = async ({
   campaignId,
   pageNumber = 1,
@@ -33,30 +57,6 @@ const readPaginatedCampaignsRun = async ({
   return {
     totalRecords,
     campaignRuns,
-  };
-};
-
-const readCampaignRunsStats = async ({ campaignId }) => {
-  basicUtil.validateObjectId({ inputString: campaignId });
-
-  let campaignRunIds = await CampaignRun.distinct("_id", {
-    campaign: campaignId,
-  });
-
-  const query = { campaignRun: { $in: campaignRunIds } };
-
-  const [totalEmailsSent, totalEmailsOpened] = await Promise.all([
-    EmailSent.countDocuments(query),
-    EmailSent.countDocuments({
-      ...query,
-      "emailEvents.Open": { $exists: true },
-    }),
-  ]);
-
-  return {
-    totalCampaignRuns: campaignRunIds.length,
-    totalEmailsSent,
-    totalEmailsOpened,
   };
 };
 

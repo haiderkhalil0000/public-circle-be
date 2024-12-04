@@ -464,10 +464,45 @@ const runCampaign = async ({ campaign }) => {
   );
 };
 
-const readPaginatedCampaignLogs = ({ companyId, pageNumber, pageSize }) =>
-  Campaign.find({ company: companyId, processedCount: { $gte: 1 } })
+const readPaginatedCampaignLogs = async ({
+  companyId,
+  pageNumber,
+  pageSize,
+}) => {
+  const campaignDocs = await Campaign.find({
+    company: companyId,
+    processedCount: { $gte: 1 },
+  })
     .skip((parseInt(pageNumber) - 1) * pageSize)
-    .limit(pageSize);
+    .limit(pageSize)
+    .lean();
+
+  const promises = [];
+
+  campaignDocs.forEach((item) => {
+    promises.push(CampaignRun.countDocuments({ campaign: item._id }));
+  });
+
+  const campaignRunCountDocs = await Promise.all(promises);
+
+  campaignDocs.forEach((item, index) => {
+    item.totalRuns = campaignRunCountDocs[index];
+  });
+
+  promises.length = 0;
+
+  campaignDocs.forEach((item) => {
+    promises.push(EmailSent.countDocuments({ campaign: item._id }));
+  });
+
+  const emailCountsInCampaign = await Promise.all(promises);
+
+  campaignDocs.forEach((item, index) => {
+    item.usersCount = emailCountsInCampaign[index];
+  });
+
+  return campaignDocs;
+};
 
 const readAllCampaignLogs = ({ pageNumber, pageSize, companyId }) =>
   EmailSent.find({ company: companyId })
