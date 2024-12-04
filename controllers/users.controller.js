@@ -388,6 +388,12 @@ const verifyReferralCode = async ({ referralCode, currentUserId }) => {
     User.findById(currentUserId),
   ]);
 
+  if (!userDoc) {
+    throw createHttpError(400, {
+      errorMessage: RESPONSE_MESSAGES.INVALID_REFERRAL_CODE,
+    });
+  }
+
   userDoc.referree = currentUserDoc._id;
   currentUserDoc.referrer = userDoc._id;
 

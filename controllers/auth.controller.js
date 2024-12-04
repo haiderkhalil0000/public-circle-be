@@ -61,7 +61,7 @@ const login = async ({ emailAddress, password }) => {
       user.save();
 
       throw createHttpError(403, {
-        errorMessage: TOO_MANY_INVALID_LOGIN_ATTEMTPS,
+        errorMessage: RESPONSE_MESSAGES.TOO_MANY_INVALID_LOGIN_ATTEMTPS,
       });
     }
 
