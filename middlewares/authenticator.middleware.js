@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 // const sentry = require("@sentry/node");
 
-const { User, Company, AccessToken } = require("../models");
+const { User, AccessToken } = require("../models");
 const {
   constants: {
     MODELS: { ROLE },
@@ -40,35 +40,15 @@ const verifyToken = async (req, res, next) => {
   }
 
   try {
-    const decodedToken = decodeToken(token);
+    const decodedToken = decodeToken(token) ?? {};
 
-    const { _id: userId, emailAddress } = decodedToken;
+    const { _id, emailAddress } = decodedToken;
 
-    const userQuery = {};
-    const companyQuery = {};
+    const userDoc = await User.findOne({ _id, emailAddress })
+      .populate("company")
+      .populate(ROLE);
 
-    let user = {};
-    let company = {};
-
-    if (decodedToken._id) {
-      companyQuery.user = userId;
-
-      const [userDoc, companyDoc] = await Promise.all([
-        User.findById(userId).populate(ROLE),
-        Company.findOne(companyQuery),
-      ]);
-
-      user = userDoc;
-      company = companyDoc;
-    } else {
-      userQuery.emailAddress = emailAddress;
-      user = await User.findOne(userQuery).populate(ROLE);
-
-      companyQuery.user = user._id;
-      company = await Company.findOne(companyQuery);
-    }
-
-    if (!user) {
+    if (!userDoc) {
       return res.status(401).json({
         message: RESPONSE_MESSAGES.INVALID_TOKEN,
         data: {},
@@ -76,12 +56,13 @@ const verifyToken = async (req, res, next) => {
     }
 
     // sentry.setUser(user);
-    req.user = user;
-    req.user.company = company;
+
+    req.user = userDoc;
 
     next();
   } catch (err) {
     // sendErrorReportToSentry(err);
+
     console.log(err);
 
     return res.status(401).json({

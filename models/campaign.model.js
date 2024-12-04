@@ -34,10 +34,6 @@ const schema = new mongoose.Schema(
       required: true,
       ref: TEMPLATE,
     },
-    dynamicEmailTemplate: {
-      type: ObjectId,
-      ref: DYNAMIC_TEMPLATE,
-    },
     runMode: {
       type: String,
       required: true,
