@@ -54,6 +54,7 @@ const getActiveSubscriptionsOfACustomer = async ({ customerId }) => {
         const priceCurrency = price.currency.toUpperCase();
 
         subscriptionsLimited.push({
+          productId,
           productName: product.name,
           productPrice: `${priceAmount} ${priceCurrency}`,
         });
