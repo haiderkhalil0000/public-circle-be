@@ -11,7 +11,7 @@ const {
 } = require("../models");
 const {
   basicUtil,
-  constants: { RESPONSE_MESSAGES, USER_STATUS, CAMPAIGN_STATUS, GRAPH_SCOPES },
+  constants: { RESPONSE_MESSAGES, USER_STATUS, CAMPAIGN_STATUS, USER_KIND },
   s3Util,
 } = require("../utils");
 
@@ -117,7 +117,7 @@ const createUserUnderACompany = async ({
 
   const existingUserDoc = await User.findOne({
     emailAddress,
-    company: companyId,
+    isEmailVerified: true,
     status: USER_STATUS.ACTIVE,
   });
 
@@ -135,6 +135,7 @@ const createUserUnderACompany = async ({
       firstName: name,
       role,
       company: companyId,
+      kind: USER_KIND.SECONDARY,
     }),
     authController.sendInvitationEmail({ emailAddress, currentUserId }),
   ]);

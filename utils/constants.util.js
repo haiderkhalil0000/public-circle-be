@@ -325,4 +325,9 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
     VERIFICATION: "VERIFICATION",
     REGULAR: "REGULAR",
   },
+
+  USER_KIND: {
+    PRIMARY: "PRIMARY",
+    SECONDARY: "SECONDARY",
+  },
 };

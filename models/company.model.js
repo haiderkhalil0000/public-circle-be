@@ -2,11 +2,9 @@ const mongoose = require("mongoose");
 
 const {
   constants: {
-    MODELS: { COMPANY, USER },
+    MODELS: { COMPANY },
   },
 } = require("../utils");
-
-const ObjectId = mongoose.Types.ObjectId;
 
 const schema = new mongoose.Schema(
   {
@@ -17,7 +15,6 @@ const schema = new mongoose.Schema(
     city: { type: String },
     province: { type: String },
     country: { type: String },
-    user: { type: ObjectId, ref: USER, required: true },
     stripe: { type: Object, default: {} },
   },
   { timestamps: true }

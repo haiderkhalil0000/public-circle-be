@@ -5,6 +5,7 @@ const {
   constants: {
     MODELS: { USER, COMPANY, ROLE },
     USER_STATUS,
+    USER_KIND,
   },
 } = require("../utils");
 
@@ -34,6 +35,12 @@ const schema = new mongoose.Schema(
     referralCode: { type: String },
     referrer: { type: ObjectId, ref: USER },
     referree: { type: ObjectId, ref: USER },
+    kind: {
+      type: String,
+      required: true,
+      default: USER_KIND.PRIMARY,
+      enum: Object.values(USER_KIND),
+    },
     status: {
       type: String,
       default: USER_STATUS.ACTIVE,
