@@ -296,26 +296,30 @@ router.post(
 
 router.get("/token", async (req, res, next) => {
   try {
-    if (req.cookies.refreshToken) {
-      const { refreshToken } = req.cookies;
-
-      const refreshTokenDoc = await refreshTokensController.readRefreshToken({
-        refreshToken,
-      });
-
-      if (!refreshToken || !refreshTokenDoc) {
-        throw createHttpError(403, {
-          errorMessage: RESPONSE_MESSAGES.REFRESH_TOKEN_NOT_FOUND,
-        });
-      }
-
-      res.status(200).json({
-        message: RESPONSE_MESSAGES.TOKEN_GENERATED,
-        data: refreshTokensController.readAccessTokenFromRefreshToken({
-          refreshToken,
-        }),
+    if (!req.cookies || !req.cookies.refreshToken) {
+      throw createHttpError(400, {
+        errorMessage: RESPONSE_MESSAGES.REFRESH_TOKEN_NOT_FOUND,
       });
     }
+
+    const { refreshToken } = req.cookies ?? {};
+
+    const refreshTokenDoc = await refreshTokensController.readRefreshToken({
+      refreshToken,
+    });
+
+    if (!refreshToken || !refreshTokenDoc) {
+      throw createHttpError(403, {
+        errorMessage: RESPONSE_MESSAGES.REFRESH_TOKEN_NOT_FOUND,
+      });
+    }
+
+    res.status(200).json({
+      message: RESPONSE_MESSAGES.TOKEN_GENERATED,
+      data: refreshTokensController.readAccessTokenFromRefreshToken({
+        refreshToken,
+      }),
+    });
   } catch (err) {
     // sendErrorReportToSentry(error);
 
