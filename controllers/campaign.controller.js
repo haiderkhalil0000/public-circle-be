@@ -8,6 +8,7 @@ const {
   Segment,
   Configuration,
   EmailSent,
+  CampaignRun,
 } = require("../models");
 const {
   basicUtil,
@@ -373,10 +374,16 @@ const runCampaign = async ({ campaign }) => {
   const promises = [];
   const segmentPromises = [];
 
-  await Campaign.updateOne(
-    { _id: campaign._id },
-    { cronStatus: CRON_STATUS.PROCESSING }
-  );
+  const [_, campaignRunDoc] = await Promise.all([
+    Campaign.updateOne(
+      { _id: campaign._id },
+      { cronStatus: CRON_STATUS.PROCESSING }
+    ),
+    CampaignRun.create({
+      company: campaign.company,
+      campaign: campaign._id,
+    }),
+  ]);
 
   for (const segment of campaign.segments) {
     segmentPromises.push(Segment.findById(segment));
@@ -436,6 +443,7 @@ const runCampaign = async ({ campaign }) => {
       EmailSent.create({
         company: campaign.company,
         campaign: campaign._id,
+        campaignRun: campaignRunDoc._id,
         kind: EMAIL_KIND.REGULAR,
         fromEmailAddress: campaign.sourceEmailAddress,
         toEmailAddress: emailAddresses[index],

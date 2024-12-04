@@ -6,6 +6,7 @@ module.exports = {
     CONFIGURATION: "configuration",
     EMAILS_SENT: "emails-sent",
     CAMPAIGN: "campaign",
+    CAMPAIGN_RUN: "campaign-run",
     SEGMENT: "segment",
     TEMPLATE: "template",
     DYNAMIC_TEMPLATE: "dynamic-template",
@@ -176,6 +177,8 @@ module.exports = {
     REFRESH_TOKEN_NOT_FOUND: "Refresh token not found!",
     REFRESH_TOKEN_INVALID: "Refresh is invalid or expired!",
     TOKEN_GENERATED: "Token generated successfully.",
+    FETCHED_CAMPAIGN_RUNS: "Campaign runs fetched successfully.",
+    FETCHED_CAMPAIGN_RUN_STATS: "Campaign run stats fetched successfully.",
   },
 
   INTERACTION_CHANNELS: {

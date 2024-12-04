@@ -4,6 +4,7 @@ module.exports = {
   CompanyUser: require("./company-user.model"),
   Configuration: require("./configuration.model"),
   Campaign: require("./campaign.model"),
+  CampaignRun: require("./campaign-run.model"),
   Segment: require("./segment.model"),
   Template: require("./template.model"),
   Cron: require("./cron.model"),

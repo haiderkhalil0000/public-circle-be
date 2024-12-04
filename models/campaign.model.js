@@ -3,14 +3,12 @@ const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema.Types;
 const {
   constants: {
-    MODELS: { CAMPAIGN, COMPANY, SEGMENT, TEMPLATE, DYNAMIC_TEMPLATE },
+    MODELS: { CAMPAIGN, COMPANY, SEGMENT, TEMPLATE },
+    CAMPAIGN_STATUS,
+    RUN_MODE,
+    CRON_STATUS,
   },
 } = require("../utils");
-const {
-  CAMPAIGN_STATUS,
-  RUN_MODE,
-  CRON_STATUS,
-} = require("../utils/constants.util");
 
 const schema = new mongoose.Schema(
   {
