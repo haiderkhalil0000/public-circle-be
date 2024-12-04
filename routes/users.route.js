@@ -6,33 +6,24 @@ const { upload } = require("../startup/multer.config");
 const { authenticate, validate } = require("../middlewares");
 const { usersController } = require("../controllers");
 const {
-  constants: { RESPONSE_MESSAGES, GRAPH_SCOPES },
+  constants: { RESPONSE_MESSAGES },
 } = require("../utils");
 
 const router = express.Router();
 
-router.get(
-  "/dashboard-data",
+router.post(
+  "/get-dashboard-data",
   authenticate.verifyToken,
   validate({
-    query: Joi.object({
-      fromDate: Joi.string().optional(),
-      toDate: Joi.string().optional(),
-      graphScope: Joi.string()
-        .valid(
-          GRAPH_SCOPES.YEAR,
-          GRAPH_SCOPES.MONTH,
-          GRAPH_SCOPES.WEEK,
-          GRAPH_SCOPES.DAY
-        )
-        .optional(),
+    body: Joi.object({
+      graphScope: Joi.object().optional(),
     }),
   }),
   async (req, res, next) => {
     try {
       const dashboardData = await usersController.readDashboardData({
         companyId: req.user.company._id,
-        ...req.query,
+        ...req.body,
       });
 
       res.status(200).json({
