@@ -89,7 +89,7 @@ router.post(
         message: RESPONSE_MESSAGES.USER_REGISTERED,
         data: {
           token: authenticate.generateAccessToken({
-            payload: { _id: user._id, emailAddress: user.emailAddress },
+            payload: { emailAddress: user.emailAddress },
             options: { expiresIn: ACCESS_TOKEN_EXPIRY },
           }),
           user,
@@ -135,7 +135,7 @@ router.post(
         message: RESPONSE_MESSAGES.USER_LOGGED_IN,
         data: {
           token: authenticate.generateAccessToken({
-            payload: { _id: user._id, emailAddress: user.emailAddress },
+            payload: { emailAddress: user.emailAddress },
             options: { expiresIn: ACCESS_TOKEN_EXPIRY },
           }),
           user,

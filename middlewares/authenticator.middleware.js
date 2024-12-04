@@ -42,9 +42,9 @@ const verifyToken = async (req, res, next) => {
   try {
     const decodedToken = decodeToken(token) ?? {};
 
-    const { _id, emailAddress } = decodedToken;
+    const { emailAddress } = decodedToken;
 
-    const userDoc = await User.findOne({ _id, emailAddress })
+    const userDoc = await User.findOne({ emailAddress })
       .populate("company")
       .populate(ROLE);
 
