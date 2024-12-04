@@ -65,8 +65,45 @@ const readCampaignRunEmailsSent = ({ campaignRunId, pageNumber, pageSize }) =>
     .skip((parseInt(pageNumber) - 1) * pageSize)
     .limit(pageSize);
 
+const readCampaignRunEmailsSentStats = async ({ campaignRunId }) => {
+  const [
+    totalEmailsSent,
+    totalEmailsDelivered,
+    totalEmailsOpened,
+    totalEmailsSpammed,
+  ] = await Promise.all([
+    EmailSent.countDocuments({
+      campaignRun: campaignRunId,
+      "emailEvents.Send": { $exists: true },
+    }),
+
+    EmailSent.countDocuments({
+      campaignRun: campaignRunId,
+      "emailEvents.Delivery": { $exists: true },
+    }),
+
+    EmailSent.countDocuments({
+      campaignRun: campaignRunId,
+      "emailEvents.Open": { $exists: true },
+    }),
+
+    EmailSent.countDocuments({
+      campaignRun: campaignRunId,
+      "emailEvents.Complaint": { $exists: true },
+    }),
+  ]);
+
+  return {
+    totalEmailsSent,
+    totalEmailsDelivered,
+    totalEmailsOpened,
+    totalEmailsSpammed,
+  };
+};
+
 module.exports = {
   readPaginatedCampaignsRun,
   readCampaignRunsStats,
+  readCampaignRunEmailsSentStats,
   readCampaignRunEmailsSent,
 };

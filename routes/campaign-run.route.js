@@ -74,6 +74,35 @@ router.get(
 );
 
 router.get(
+  "/emails-sent/stats/:campaignRunId",
+  authenticate.verifyToken,
+  validate({
+    params: Joi.object({
+      campaignRunId: Joi.string().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const campaignRunEmailsSentStats =
+        await campaignsRunController.readCampaignRunEmailsSentStats(req.params);
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.FETCHED_CAMPAIGN_RUN_EMAIL_SENT,
+        data: campaignRunEmailsSentStats,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      console.log(err);
+
+      campaignDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.get(
   "/emails-sent/:campaignRunId",
   authenticate.verifyToken,
   validate({
