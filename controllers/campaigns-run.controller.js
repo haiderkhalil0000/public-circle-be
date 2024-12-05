@@ -44,51 +44,20 @@ const readPaginatedCampaignsRun = async ({
     CampaignRun.find(query)
       .skip((parseInt(pageNumber) - 1) * pageSize)
       .limit(pageSize)
-      .populate(CAMPAIGN)
       .lean(),
   ]);
 
-  // const promises = [];
+  const promises = [];
 
-  const promises = campaignRuns.map(async (item) => {
-    // Replace segmentIds with the corresponding segment objects
-    const segments = await Promise.all(
-      item.campaign.segments.map((segmentId) =>
-        Segment.findById(segmentId).select("filters")
-      )
-    );
-
-    // Update the segments in place
-    item.campaign.segments = segments;
-    return item; // Optionally return the updated item
+  campaignRuns.forEach((item) => {
+    promises.push(EmailSent.countDocuments({ campaignRun: item._id }));
   });
 
-  await Promise.all(promises);
+  const emailCountsInCampaignRun = await Promise.all(promises);
 
-  const companyUsersController = require("./company-users.controller");
-  await Promise.all(
-    campaignRuns.map(async (campaignRun) => {
-      let totalUsersCount = 0;
-
-      await Promise.all(
-        campaignRun.campaign.segments.map(async (segment) => {
-          const result = await companyUsersController.getFiltersCount({
-            companyId: campaignRun.company,
-            filters: segment.filters,
-          });
-
-          if (Array.isArray(result)) {
-            totalUsersCount += result.reduce(
-              (sum, item) => sum + item.filterCount,
-              0
-            );
-          }
-        })
-      );
-
-      campaignRun.usersCount = totalUsersCount;
-    })
-  );
+  campaignRuns.forEach((item, index) => {
+    item.emailsSentCount = emailCountsInCampaignRun[index];
+  });
 
   return {
     totalRecords,
