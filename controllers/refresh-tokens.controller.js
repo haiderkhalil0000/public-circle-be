@@ -11,9 +11,11 @@ const verifyAndDecodeRefreshToken = ({ refreshToken }) =>
   });
 
 const readAccessTokenFromRefreshToken = ({ refreshToken }) => {
-  const decodedRefreshToken = verifyAndDecodeRefreshToken({
+  let decodedRefreshToken = verifyAndDecodeRefreshToken({
     refreshToken,
   });
+
+  decodedRefreshToken = { emailAddress: decodedRefreshToken.emailAddress };
 
   return authenticate.generateAccessToken({
     payload: decodedRefreshToken,

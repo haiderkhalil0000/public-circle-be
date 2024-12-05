@@ -4,14 +4,16 @@ const http = require("http");
 const express = require("express");
 const helmet = require("helmet");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 
 const { configure, database } = require("./startup");
 
 const app = express();
 
 app.use(helmet());
-app.use(express.json({ type: ["application/json", "text/plain"] }));
+app.use(cookieParser());
 app.use(cors());
+app.use(express.json({ type: ["application/json", "text/plain"] }));
 
 const server = http.createServer(app);
 
