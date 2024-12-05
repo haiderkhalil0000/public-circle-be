@@ -320,7 +320,7 @@ const getGraphData = async ({ graphScope, companyId }) => {
     matchStage.createdAt = { $gte: startOfMonth, $lte: endOfMonth };
 
     const daysInMonth = moment().year(year).month(monthIndex).daysInMonth();
-    const days = Array.from({ length: daysInMonth }, (_, i) => `Day${i + 1}`);
+    const days = Array.from({ length: daysInMonth }, (_, i) => `${i + 1}`);
     const dateKeys = Array.from({ length: daysInMonth }, (_, i) =>
       moment()
         .year(year)
