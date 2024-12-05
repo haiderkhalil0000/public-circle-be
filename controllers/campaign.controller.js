@@ -475,6 +475,7 @@ const readPaginatedCampaignLogs = async ({
   })
     .skip((parseInt(pageNumber) - 1) * pageSize)
     .limit(pageSize)
+    .populate("segments")
     .lean();
 
   const promises = [];
@@ -491,15 +492,30 @@ const readPaginatedCampaignLogs = async ({
 
   promises.length = 0;
 
-  campaignDocs.forEach((item) => {
-    promises.push(EmailSent.countDocuments({ campaign: item._id }));
-  });
+  const companyUsersController = require("./company-users.controller");
 
-  const emailCountsInCampaign = await Promise.all(promises);
+  await Promise.all(
+    campaignDocs.map(async (campaign) => {
+      let totalUsersCount = 0;
+      await Promise.all(
+        campaign.segments.map(async (segment) => {
+          const result = await companyUsersController.getFiltersCount({
+            companyId: campaign.company,
+            filters: segment.filters,
+          });
 
-  campaignDocs.forEach((item, index) => {
-    item.usersCount = emailCountsInCampaign[index];
-  });
+          if (Array.isArray(result)) {
+            totalUsersCount += result.reduce(
+              (sum, item) => sum + item.filterCount,
+              0
+            );
+          }
+
+          campaign.usersCount = totalUsersCount;
+        })
+      );
+    })
+  );
 
   return campaignDocs;
 };
