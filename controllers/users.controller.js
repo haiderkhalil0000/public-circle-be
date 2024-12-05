@@ -396,7 +396,18 @@ const verifyReferralCode = async ({ referralCode, currentUserId }) => {
     User.findById(currentUserId),
   ]);
 
+  if (currentUserDoc.invalidReferralCodeAttempts >= 8) {
+    throw createHttpError(400, {
+      errorMessage: RESPONSE_MESSAGES.REFERRAL_CODE_INPUT_LOCKED,
+    });
+  }
+
   if (!userDoc) {
+    currentUserDoc.invalidReferralCodeAttempts =
+      currentUserDoc.invalidReferralCodeAttempts + 1;
+
+    currentUserDoc.save();
+
     throw createHttpError(400, {
       errorMessage: RESPONSE_MESSAGES.INVALID_REFERRAL_CODE,
     });
@@ -404,6 +415,7 @@ const verifyReferralCode = async ({ referralCode, currentUserId }) => {
 
   userDoc.referree = currentUserDoc._id;
   currentUserDoc.referrer = userDoc._id;
+  currentUserDoc.invalidReferralCodeAttempts = 0;
 
   await Promise.all([userDoc.save(), currentUserDoc.save()]);
 };
