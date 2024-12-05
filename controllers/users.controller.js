@@ -15,6 +15,8 @@ const {
   s3Util,
 } = require("../utils");
 
+const { ADMIN_ROLE_ID } = process.env;
+
 const updateUser = async ({
   emailAddress,
   password,
@@ -109,11 +111,17 @@ const updateUser = async ({
 const createUserUnderACompany = async ({
   emailAddress,
   name,
-  role,
+  roleId,
   companyId,
   currentUserId,
 }) => {
-  basicUtil.validateObjectId({ inputString: role });
+  basicUtil.validateObjectId({ inputString: roleId });
+
+  if (roleId.toString() === ADMIN_ROLE_ID) {
+    throw createHttpError(400, {
+      errorMessage: RESPONSE_MESSAGES.ADMIN_ROLE_NOT_ALLOWED,
+    });
+  }
 
   const existingUserDoc = await User.findOne({
     emailAddress,
@@ -133,7 +141,7 @@ const createUserUnderACompany = async ({
     User.create({
       emailAddress,
       firstName: name,
-      role,
+      role: roleId,
       company: companyId,
       kind: USER_KIND.SECONDARY,
     }),

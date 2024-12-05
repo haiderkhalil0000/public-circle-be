@@ -9,6 +9,8 @@ const {
   },
 } = require("../utils");
 
+const { ADMIN_ROLE_ID } = process.env;
+
 const ObjectId = mongoose.Types.ObjectId;
 
 const schema = new mongoose.Schema(
@@ -27,7 +29,7 @@ const schema = new mongoose.Schema(
     isLoginWithEmailLocked: { type: Boolean, default: false },
     role: {
       type: ObjectId,
-      default: new mongoose.Types.ObjectId("673133ab145111f65ba06075"),
+      default: new mongoose.Types.ObjectId(ADMIN_ROLE_ID),
       ref: ROLE,
     },
     isResetPasswordRequested: { type: Boolean, default: false },

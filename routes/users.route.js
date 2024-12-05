@@ -107,7 +107,7 @@ router.post(
     body: Joi.object({
       emailAddress: Joi.string().email().required(),
       name: Joi.string().required(),
-      role: Joi.string().required(),
+      roleId: Joi.string().required(),
     }),
   }),
   async (req, res, next) => {

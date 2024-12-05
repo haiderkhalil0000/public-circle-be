@@ -182,6 +182,7 @@ module.exports = {
     FETCHED_CAMPAIGN_RUN_EMAIL_SENT:
       "Campaign run emails sent fetched successfully.",
     INVALID_REFERRAL_CODE: "Referral code is invalid!",
+    ADMIN_ROLE_NOT_ALLOWED: "Role 'Admin' can't be assigned!",
   },
 
   INTERACTION_CHANNELS: {
