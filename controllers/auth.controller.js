@@ -239,6 +239,22 @@ const forgotPassword = async ({ emailOrPhoneNumber }) => {
       }),
       contentType: TEMPLATE_CONTENT_TYPE.HTML,
     }),
+    EmailSent.create({
+      kind: EMAIL_KIND.PASSWORD_RESET,
+      fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
+      toEmailAddress: userDoc.emailAddress,
+      emailSubject: PASSWORD_RESET_SUBJECT,
+      emailContent: mapDynamicValues({
+        content: PASSWORD_RESET_CONTENT,
+        firstName: userDoc.firstName,
+        url: `${PUBLIC_CIRCLES_WEB_URL}/auth/jwt/reset-password/?token=${generateAccessToken(
+          {
+            payload: { emailAddress: userDoc.emailAddress },
+            options: { expiresIn: ACCESS_TOKEN_EXPIRY },
+          }
+        )}`,
+      }),
+    }),
   ]);
 };
 
@@ -272,19 +288,34 @@ const sendInvitationEmail = async ({ emailAddress, currentUserId }) => {
     options: { expiresIn: ACCESS_TOKEN_EXPIRY },
   });
 
-  await sesUtil.sendEmail({
-    fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
-    toEmailAddress: emailAddress,
-    subject: VERIFICATION_EMAIL_SUBJECT,
-    content: `${currentUser.firstName} has invited you to use Public Cricles with them, in a workspace called ${currentUser.company.name}.
+  await Promise.all([
+    sesUtil.sendEmail({
+      fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
+      toEmailAddress: emailAddress,
+      subject: VERIFICATION_EMAIL_SUBJECT,
+      content: `${currentUser.firstName} has invited you to use Public Cricles with them, in a workspace called ${currentUser.company.name}.
 
 Please follow the link below to continue to Public Circles:
 ${PUBLIC_CIRCLES_WEB_URL}/auth/jwt/sign-up/?source=invite&token=${token}
 
 Regards,
 Public Circles Team`,
-    contentType: TEMPLATE_CONTENT_TYPE.TEXT,
-  });
+      contentType: TEMPLATE_CONTENT_TYPE.TEXT,
+    }),
+    EmailSent.create({
+      kind: EMAIL_KIND.INVITATION,
+      fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
+      toEmailAddress: emailAddress,
+      emailSubject: VERIFICATION_EMAIL_SUBJECT,
+      emailContent: `${currentUser.firstName} has invited you to use Public Cricles with them, in a workspace called ${currentUser.company.name}.
+
+Please follow the link below to continue to Public Circles:
+${PUBLIC_CIRCLES_WEB_URL}/auth/jwt/sign-up/?source=invite&token=${token}
+
+Regards,
+Public Circles Team`,
+    }),
+  ]);
 };
 
 module.exports = {

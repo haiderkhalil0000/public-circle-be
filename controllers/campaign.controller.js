@@ -338,6 +338,24 @@ const sendTestEmail = async ({
     );
   });
 
+  const result = await Promise.all(promises);
+
+  promises.length = 0;
+
+  result.forEach((item, index) => {
+    promises.push(
+      EmailSent.create({
+        company: companyId,
+        kind: EMAIL_KIND.TEST,
+        fromEmailAddress: sourceEmailAddress,
+        toEmailAddress: emailAddresses[index],
+        emailSubject,
+        emailContent: mappedContentArray[index],
+        sesMessageId: item.MessageId,
+      })
+    );
+  });
+
   await Promise.all(promises);
 };
 
@@ -454,14 +472,18 @@ const runCampaign = async ({ campaign }) => {
     );
   });
 
-  await Campaign.updateOne(
-    { _id: campaign._id },
-    {
-      cronStatus: CRON_STATUS.PROCESSED,
-      lastProcessed: moment().format(),
-      $inc: { processedCount: 1 },
-    }
+  promises.push(
+    Campaign.updateOne(
+      { _id: campaign._id },
+      {
+        cronStatus: CRON_STATUS.PROCESSED,
+        lastProcessed: moment().format(),
+        $inc: { processedCount: 1 },
+      }
+    )
   );
+
+  await Promise.all(promises);
 };
 
 const readPaginatedCampaignLogs = async ({

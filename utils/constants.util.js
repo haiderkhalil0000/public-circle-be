@@ -331,8 +331,11 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
   },
 
   EMAIL_KIND: {
-    VERIFICATION: "VERIFICATION",
     REGULAR: "REGULAR",
+    TEST: "TEST",
+    VERIFICATION: "VERIFICATION",
+    PASSWORD_RESET: "PASSWORD_RESET",
+    INVITATION: "INVITATION",
   },
 
   USER_KIND: {
