@@ -6,7 +6,8 @@ const authDebugger = require("debug")("debug:auth");
 const {
   authenticate,
   validate,
-  isVerificationEmailSent,
+  validateVerificationEmailSent,
+  validateRefreshToken,
 } = require("../middlewares");
 const { authController, refreshTokensController } = require("../controllers");
 const {
@@ -72,7 +73,7 @@ router.post(
 
 router.post(
   "/register",
-  isVerificationEmailSent,
+  validateVerificationEmailSent,
   validate({
     body: Joi.object({
       password: Joi.string().required(),
@@ -126,18 +127,14 @@ router.post(
 
       refreshTokensController.storeRefreshToken({ refreshToken });
 
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: true,
-      });
-
       res.status(200).json({
         message: RESPONSE_MESSAGES.USER_LOGGED_IN,
         data: {
-          token: authenticate.generateAccessToken({
+          accessToken: authenticate.generateAccessToken({
             payload: { emailAddress: user.emailAddress },
             options: { expiresIn: ACCESS_TOKEN_EXPIRY },
           }),
+          refreshToken,
           user,
         },
       });
@@ -294,30 +291,22 @@ router.post(
   }
 );
 
-router.get("/token", async (req, res, next) => {
+router.get("/token", validateRefreshToken, async (req, res, next) => {
   try {
-    if (!req.cookies || !req.cookies.refreshToken) {
-      throw createHttpError(400, {
-        errorMessage: RESPONSE_MESSAGES.REFRESH_TOKEN_NOT_FOUND,
-      });
-    }
-
-    const { refreshToken } = req.cookies ?? {};
-
     const refreshTokenDoc = await refreshTokensController.readRefreshToken({
-      refreshToken,
+      refreshToken: req.refreshToken,
     });
 
-    if (!refreshToken || !refreshTokenDoc) {
+    if (!refreshTokenDoc) {
       throw createHttpError(403, {
-        errorMessage: RESPONSE_MESSAGES.REFRESH_TOKEN_NOT_FOUND,
+        errorMessage: RESPONSE_MESSAGES.TOKEN_IS_INVALID_OR_EXPIRED,
       });
     }
 
     res.status(200).json({
       message: RESPONSE_MESSAGES.TOKEN_GENERATED,
       data: refreshTokensController.readAccessTokenFromRefreshToken({
-        refreshToken,
+        refreshToken: req.refreshToken,
       }),
     });
   } catch (err) {
@@ -329,13 +318,11 @@ router.get("/token", async (req, res, next) => {
   }
 });
 
-router.post("/logout", authenticate.verifyToken, async (req, res, next) => {
+router.post("/logout", validateRefreshToken, async (req, res, next) => {
   try {
     await refreshTokensController.revokeRefreshToken({
-      token: req.cookies.refreshToken,
+      refreshToken: req.refreshToken,
     });
-
-    res.clearCookie("refreshToken");
 
     res.status(200).json({ message: "Logged out", data: {} });
   } catch (err) {

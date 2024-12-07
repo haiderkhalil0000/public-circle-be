@@ -3,5 +3,6 @@ module.exports = {
   validate: require("./validator.middleware"),
   upload: require("./multer.middleware.js"),
   error: require("./error.middleware.js"),
-  isVerificationEmailSent: require("./is-verification-email-sent.middleware.js"),
+  validateVerificationEmailSent: require("./validate-verification-email-sent.middleware.js"),
+  validateRefreshToken: require("./validate-refresh-token.middleware.js"),
 };

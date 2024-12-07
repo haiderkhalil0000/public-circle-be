@@ -30,8 +30,8 @@ const storeRefreshToken = async ({ refreshToken }) => {
 const readRefreshToken = ({ refreshToken }) =>
   RefreshToken.findOne({ token: refreshToken });
 
-const revokeRefreshToken = async ({ token }) => {
-  await RefreshToken.findOneAndDelete({ token });
+const revokeRefreshToken = async ({ refreshToken }) => {
+  await RefreshToken.findOneAndDelete({ token: refreshToken });
 };
 
 module.exports = {

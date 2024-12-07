@@ -6,7 +6,7 @@ const {
 
 const { ACCESS_TOKEN_SECRET } = process.env;
 
-module.exports = async function isVerificationEmailSent(req, res, next) {
+module.exports = async function validateVerificationEmailSent(req, res, next) {
   const authorization = req.headers["authorization"];
 
   if (!authorization) {
