@@ -4,5 +4,4 @@ module.exports = {
   upload: require("./multer.middleware.js"),
   error: require("./error.middleware.js"),
   validateVerificationEmailSent: require("./validate-verification-email-sent.middleware.js"),
-  validateRefreshToken: require("./validate-refresh-token.middleware.js"),
 };

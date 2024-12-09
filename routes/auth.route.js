@@ -1,15 +1,13 @@
 const express = require("express");
 const Joi = require("joi");
-const createHttpError = require("http-errors");
 const authDebugger = require("debug")("debug:auth");
 
 const {
   authenticate,
   validate,
   validateVerificationEmailSent,
-  validateRefreshToken,
 } = require("../middlewares");
-const { authController, refreshTokensController } = require("../controllers");
+const { authController } = require("../controllers");
 const {
   constants: { RESPONSE_MESSAGES },
 } = require("../utils");
@@ -120,21 +118,13 @@ router.post(
     try {
       const user = await authController.login(req.body);
 
-      const refreshToken = authenticate.generateRefreshToken({
-        payload: { _id: user._id, emailAddress: user.emailAddress },
-        options: { expiresIn: REFRESH_TOKEN_EXPIRY },
-      });
-
-      refreshTokensController.storeRefreshToken({ refreshToken });
-
       res.status(200).json({
         message: RESPONSE_MESSAGES.USER_LOGGED_IN,
         data: {
-          accessToken: authenticate.generateAccessToken({
+          token: authenticate.generateAccessToken({
             payload: { emailAddress: user.emailAddress },
             options: { expiresIn: ACCESS_TOKEN_EXPIRY },
           }),
-          refreshToken,
           user,
         },
       });
@@ -291,40 +281,17 @@ router.post(
   }
 );
 
-router.get("/token", validateRefreshToken, async (req, res, next) => {
+router.get("/token", authenticate.verifyToken, async (req, res, next) => {
   try {
-    const refreshTokenDoc = await refreshTokensController.readRefreshToken({
-      refreshToken: req.refreshToken,
-    });
-
-    if (!refreshTokenDoc) {
-      throw createHttpError(403, {
-        errorMessage: RESPONSE_MESSAGES.TOKEN_IS_INVALID_OR_EXPIRED,
-      });
-    }
-
     res.status(200).json({
       message: RESPONSE_MESSAGES.TOKEN_GENERATED,
-      data: refreshTokensController.readAccessTokenFromRefreshToken({
-        refreshToken: req.refreshToken,
-      }),
+      data: {
+        token: authenticate.generateAccessToken({
+          payload: { emailAddress: req.user.emailAddress },
+          options: { expiresIn: ACCESS_TOKEN_EXPIRY },
+        }),
+      },
     });
-  } catch (err) {
-    // sendErrorReportToSentry(error);
-
-    authDebugger(err);
-
-    next(err);
-  }
-});
-
-router.post("/logout", validateRefreshToken, async (req, res, next) => {
-  try {
-    await refreshTokensController.revokeRefreshToken({
-      refreshToken: req.refreshToken,
-    });
-
-    res.status(200).json({ message: "Logged out", data: {} });
   } catch (err) {
     // sendErrorReportToSentry(error);
 
