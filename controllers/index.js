@@ -14,4 +14,5 @@ module.exports = {
   stripeController: require("./stripe.controller"),
   socialLinksController: require("./social-links.controller"),
   assetsController: require("./assetsController"),
+  emailsSentController: require("./emails-sent-controller"),
 };

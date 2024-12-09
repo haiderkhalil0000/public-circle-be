@@ -8,19 +8,23 @@ const { RESPONSE_MESSAGES } = require("../utils/constants.util");
 
 const router = express.Router();
 
-router.get(
-  "/stats/:campaignId",
+router.post(
+  "/get-stats/:campaignId",
   authenticate.verifyToken,
   validate({
     params: Joi.object({
       campaignId: Joi.string().required(),
     }),
+    body: Joi.object({
+      graphScope: Joi.object().optional(),
+    }),
   }),
   async (req, res, next) => {
     try {
-      const campaigns = await campaignsRunController.readCampaignRunsStats(
-        req.params
-      );
+      const campaigns = await campaignsRunController.readCampaignRunsStats({
+        ...req.params,
+        ...req.body,
+      });
 
       res.status(200).json({
         message: RESPONSE_MESSAGES.FETCHED_CAMPAIGN_RUN_STATS,
@@ -73,18 +77,24 @@ router.get(
   }
 );
 
-router.get(
-  "/emails-sent/stats/:campaignRunId",
+router.post(
+  "/emails-sent/get-stats/:campaignRunId",
   authenticate.verifyToken,
   validate({
     params: Joi.object({
       campaignRunId: Joi.string().required(),
     }),
+    body: Joi.object({
+      graphScope: Joi.object().optional(),
+    }),
   }),
   async (req, res, next) => {
     try {
       const campaignRunEmailsSentStats =
-        await campaignsRunController.readCampaignRunEmailsSentStats(req.params);
+        await campaignsRunController.readCampaignRunEmailsSentStats({
+          ...req.params,
+          ...req.body,
+        });
 
       res.status(200).json({
         message: RESPONSE_MESSAGES.FETCHED_CAMPAIGN_RUN_EMAIL_SENT,
