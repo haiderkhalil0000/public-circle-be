@@ -34,6 +34,7 @@ const updateUser = async ({
   role,
   currentUserId,
   signUpStepsCompleted,
+  watchTutorialStepsCompleted,
 }) => {
   let companyDoc;
   const promises = [];
@@ -53,6 +54,7 @@ const updateUser = async ({
     secondaryEmail,
     role,
     signUpStepsCompleted,
+    watchTutorialStepsCompleted,
     referralCode: firstName
       ? `urc_${firstName.replace(/ /g, "")}_${randomString.generate({
           length: 4,
