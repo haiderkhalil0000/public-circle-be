@@ -39,7 +39,7 @@ const readAsset = async ({ assetId }) => {
 };
 
 const readPaginatedAssets = async ({ pageNumber, pageSize }) => {
-  const [totalCount, assets] = await Promise.all([
+  const [totalRecords, assets] = await Promise.all([
     Asset.countDocuments(),
     Asset.find()
       .skip((parseInt(pageNumber) - 1) * pageSize)
@@ -47,7 +47,7 @@ const readPaginatedAssets = async ({ pageNumber, pageSize }) => {
   ]);
 
   return {
-    totalCount,
+    totalRecords,
     assets,
   };
 };

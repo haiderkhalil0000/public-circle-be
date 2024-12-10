@@ -36,7 +36,7 @@ const readRole = async ({ roleId }) => {
 };
 
 const readPaginatedRoles = async ({ pageNumber, pageSize }) => {
-  const [totalCount, roles] = await Promise.all([
+  const [totalRecords, roles] = await Promise.all([
     Role.countDocuments(),
     Role.find()
       .skip((parseInt(pageNumber) - 1) * pageSize)
@@ -44,7 +44,7 @@ const readPaginatedRoles = async ({ pageNumber, pageSize }) => {
   ]);
 
   return {
-    totalCount,
+    totalRecords,
     roles,
   };
 };

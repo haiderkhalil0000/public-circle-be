@@ -544,7 +544,7 @@ const readPaginatedCampaignLogs = async ({
     })
   );
 
-  return { totalRecords, campaignDocs };
+  return { totalRecords, campaignLogs: campaignDocs };
 };
 
 const readAllCampaignLogs = ({ pageNumber, pageSize, companyId }) =>

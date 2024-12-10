@@ -53,7 +53,7 @@ const readPaginatedAccessTokens = async ({
   pageNumber,
   pageSize,
 }) => {
-  const [totalCount, accessTokens] = await Promise.all([
+  const [totalRecords, accessTokens] = await Promise.all([
     AccessToken.countDocuments({
       company: companyId,
       status: ACCESS_TOKEN_STATUS.ACTIVE,
@@ -64,7 +64,7 @@ const readPaginatedAccessTokens = async ({
   ]);
 
   return {
-    totalCount,
+    totalRecords,
     accessTokens,
   };
 };

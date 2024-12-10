@@ -90,7 +90,7 @@ const readPaginatedCompanyUsers = async ({
   pageNumber = 1,
   pageSize = 10,
 }) => {
-  const [totalCount, companyUsers] = await Promise.all([
+  const [totalRecords, companyUsers] = await Promise.all([
     CompanyUser.countDocuments({ company: companyId }),
     CompanyUser.find({ company: companyId })
       .skip((parseInt(pageNumber) - 1) * pageSize)
@@ -98,7 +98,7 @@ const readPaginatedCompanyUsers = async ({
   ]);
 
   return {
-    totalCount,
+    totalRecords,
     companyUsers,
   };
 };

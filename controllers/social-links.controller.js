@@ -39,7 +39,7 @@ const readSocialLink = async ({ socialLinkId }) => {
 };
 
 const readPaginatedSocialLinks = async ({ pageNumber, pageSize }) => {
-  const [totalCount, socialLinks] = await Promise.all([
+  const [totalRecords, socialLinks] = await Promise.all([
     SocialLink.countDocuments(),
     SocialLink.find()
       .skip((parseInt(pageNumber) - 1) * pageSize)
@@ -47,7 +47,7 @@ const readPaginatedSocialLinks = async ({ pageNumber, pageSize }) => {
   ]);
 
   return {
-    totalCount,
+    totalRecords,
     socialLinks,
   };
 };
