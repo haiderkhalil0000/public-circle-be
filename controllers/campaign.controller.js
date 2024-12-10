@@ -491,14 +491,19 @@ const readPaginatedCampaignLogs = async ({
   pageNumber,
   pageSize,
 }) => {
-  const campaignDocs = await Campaign.find({
+  const query = {
     company: companyId,
     processedCount: { $gte: 1 },
-  })
-    .skip((parseInt(pageNumber) - 1) * pageSize)
-    .limit(pageSize)
-    .populate("segments")
-    .lean();
+  };
+
+  const [totalRecords, campaignDocs] = await Promise.all([
+    Campaign.countDocuments(query),
+    Campaign.find(query)
+      .skip((parseInt(pageNumber) - 1) * pageSize)
+      .limit(pageSize)
+      .populate("segments")
+      .lean(),
+  ]);
 
   const promises = [];
 
@@ -539,7 +544,7 @@ const readPaginatedCampaignLogs = async ({
     })
   );
 
-  return campaignDocs;
+  return { totalRecords, campaignDocs };
 };
 
 const readAllCampaignLogs = ({ pageNumber, pageSize, companyId }) =>
