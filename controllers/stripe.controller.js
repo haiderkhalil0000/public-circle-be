@@ -98,7 +98,11 @@ const getPlans = async ({ pageSize }) => {
   return plans.data;
 };
 
-const createSubscription = async ({ stripeCustomerId, items, couponId }) => {
+const createSubscription = async ({
+  stripeCustomerId,
+  items,
+  couponId = "EQSVjObS",
+}) => {
   // await stripe.subscriptions.create({
   //   customer: stripeCustomerId,
   //   items,
