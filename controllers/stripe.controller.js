@@ -106,6 +106,7 @@ const createSubscription = async ({ stripeCustomerId, items, couponId }) => {
 
   const now = Math.floor(Date.now() / 1000); // Current time in seconds
   const fiveMinutesLater = now + 300; // 5 minutes from now
+  const tenMinutesLater = fiveMinutesLater + 300; // 5 minutes from now
 
   const schedule = await stripe.subscriptionSchedules.create({
     customer: stripeCustomerId,
@@ -120,7 +121,7 @@ const createSubscription = async ({ stripeCustomerId, items, couponId }) => {
       {
         items, // Discounted phase
         coupon: couponId, // Apply the coupon
-        end_date: fiveMinutesLater, // Discount lasts 1 hour
+        end_date: tenMinutesLater, // Discount lasts 1 hour
       },
       {
         items, // Full price phase
