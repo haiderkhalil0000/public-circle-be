@@ -15,16 +15,20 @@ router.post(
   authenticate.verifyToken,
   validate({
     body: Joi.object({
-      amount: Joi.number().required(),
+      items: Joi.array()
+        .items(
+          Joi.object({
+            priceId: Joi.string().required(),
+          })
+        )
+        .required(),
     }),
   }),
   async (req, res, next) => {
-    const { amount } = req.body;
-
     try {
       const paymentIntent = await stripeController.createPaymentIntent({
         customerId: req.user.company.stripe.id,
-        amount,
+        ...req.body,
       });
 
       res.status(200).json({

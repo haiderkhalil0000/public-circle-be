@@ -16,13 +16,22 @@ const createStripeCustomer = async ({ companyName, companyId }) =>
     },
   });
 
-const createPaymentIntent = ({ customerId, amount }) =>
-  stripe.paymentIntents.create({
-    amount,
+const createPaymentIntent = async ({ customerId, items }) => {
+  const allPrices = await Promise.all(
+    items.map((item) => stripe.prices.retrieve(item.priceId))
+  );
+
+  const totalPrice = allPrices
+    .map((price) => price.unit_amount || 0)
+    .reduce((total, amount) => total + amount, 0);
+
+  return stripe.paymentIntents.create({
+    amount: totalPrice,
     currency: "usd",
     customer: customerId,
     payment_method_types: ["card"],
   });
+};
 
 const getSubscriptions = async ({ pageSize }) => {
   const { data } = await stripe.subscriptions.list({
