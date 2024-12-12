@@ -98,12 +98,109 @@ const getPlans = async ({ pageSize }) => {
   return plans.data;
 };
 
-const createSubscription = async ({ stripeCustomerId, items }) => {
-  await stripe.subscriptions.create({
+const createSubscription = async ({ stripeCustomerId, items, couponId }) => {
+  // await stripe.subscriptions.create({
+  //   customer: stripeCustomerId,
+  //   items,
+  // });
+
+  const now = Math.floor(Date.now() / 1000); // Current time in seconds
+  const fiveMinutesLater = now + 300; // 5 minutes from now
+
+  const schedule = await stripe.subscriptionSchedules.create({
     customer: stripeCustomerId,
-    items,
+    start_date: now, // Start immediately
+    end_behavior: "release", // Continue the subscription after the schedule ends
+    phases: [
+      {
+        items, // Discounted phase
+        coupon: couponId, // Apply the coupon
+        end_date: fiveMinutesLater, // Discount lasts 1 hour
+      },
+      {
+        items, // Discounted phase
+        coupon: couponId, // Apply the coupon
+        end_date: fiveMinutesLater, // Discount lasts 1 hour
+      },
+      {
+        items, // Full price phase
+        // No coupon in this phase
+      },
+    ],
   });
+
+  console.log("Test Subscription Schedule Created:", schedule.id);
 };
+
+const createTestSubscriptionSchedule = async (customerId, items, couponId) => {
+  const now = Math.floor(Date.now() / 1000); // Current time in seconds
+  const fiveMinutesLater = now + 300; // 5 minutes from now
+
+  const schedule = await stripe.subscriptionSchedules.create({
+    customer: customerId,
+    start_date: now, // Start immediately
+    end_behavior: "release", // Continue the subscription after the schedule ends
+    phases: [
+      {
+        items, // Discounted phase
+        coupon: couponId, // Apply the coupon
+        end_date: fiveMinutesLater, // Discount lasts 1 hour
+      },
+      {
+        items, // Full price phase
+        // No coupon in this phase
+      },
+    ],
+  });
+
+  console.log("Test Subscription Schedule Created:", schedule.id);
+};
+
+// createTestSubscriptionSchedule(
+//   "cus_RLK1cwUH08PGLu", //saad.rehman@venndii.com
+//   [
+//     {
+//       price: "price_1QIWsMLSDdZq0edJUYPZvPcr",
+//     },
+//     {
+//       price: "price_1QIWsALSDdZq0edJFpcwfBAB",
+//     },
+//     {
+//       price: "price_1QIWgcLSDdZq0edJTzMJ7zK2",
+//     },
+//     {
+//       price: "price_1QIWgJLSDdZq0edJG0rlbZbv",
+//     },
+//     {
+//       price: "price_1QIWfwLSDdZq0edJDxIKDww5",
+//     },
+//   ],
+//   "EQSVjObS"
+// );
+
+// const getAllCoupons = async () => {
+//   try {
+//     const coupons = await stripe.coupons.list({
+//       limit: 10, // Optional: Number of coupons to fetch
+//     });
+
+//     console.log("Coupons:", coupons.data);
+//     return coupons.data; // Returns an array of coupon objects
+//   } catch (error) {
+//     console.error("Error fetching coupons:", error.message);
+//   }
+// };
+
+// // Example usage
+// (async () => {
+//   const coupons = await getAllCoupons();
+//   if (coupons.length > 0) {
+//     console.log(
+//       "Coupon IDs:",
+//       coupons.map((coupon) => coupon.id)
+//     );
+//   }
+// })();
 
 const attachPaymentMethod = async ({ stripeCustomerId, paymentMethodId }) => {
   const paymentMethod = await stripe.paymentMethods.attach(paymentMethodId, {
