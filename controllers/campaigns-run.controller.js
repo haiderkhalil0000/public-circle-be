@@ -71,16 +71,30 @@ const readPaginatedCampaignsRun = async ({
       .lean(),
   ]);
 
-  const promises = [];
+  const promises = campaignRuns.map((item) =>
+    Promise.all([
+      EmailSent.countDocuments({
+        campaignRun: item._id,
+        "emailEvents.Send": { $exists: true },
+      }),
+      EmailSent.countDocuments({
+        campaignRun: item._id,
+        "emailEvents.Delivery": { $exists: true },
+      }),
+      EmailSent.countDocuments({
+        campaignRun: item._id,
+        "emailEvents.Open": { $exists: true },
+      }),
+    ])
+  );
 
-  campaignRuns.forEach((item) => {
-    promises.push(EmailSent.countDocuments({ campaignRun: item._id }));
-  });
-
-  const emailCountsInCampaignRun = await Promise.all(promises);
+  const counts = await Promise.all(promises);
 
   campaignRuns.forEach((item, index) => {
-    item.emailsSentCount = emailCountsInCampaignRun[index];
+    const [emailsSentCount, deliveredCount, openedCount] = counts[index];
+    item.emailsSentCount = emailsSentCount;
+    item.emailsDeliveredCount = deliveredCount;
+    item.emailsOpenedCount = openedCount;
   });
 
   return {
