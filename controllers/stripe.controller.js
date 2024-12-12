@@ -30,6 +30,7 @@ const createPaymentIntent = async ({ customerId, items }) => {
     currency: "usd",
     customer: customerId,
     payment_method_types: ["card"],
+    setup_future_usage: "off_session",
   });
 };
 
