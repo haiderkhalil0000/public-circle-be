@@ -117,6 +117,7 @@ const createSubscription = async ({
     customer: stripeCustomerId,
     start_date: now, // Start immediately
     end_behavior: "release", // Continue the subscription after the schedule ends
+    payment_behavior: "immediate_payment",
     phases: [
       {
         items, // Discounted phase
