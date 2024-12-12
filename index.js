@@ -13,7 +13,20 @@ const app = express();
 app.use(helmet());
 app.use(cookieParser());
 app.use(cors());
-app.use(express.json({ type: ["application/json", "text/plain"] }));
+
+// Increase payload size limit for JSON and URL-encoded data
+app.use(
+  express.json({
+    limit: "50mb", // Adjust this value as needed
+    type: ["application/json", "text/plain"],
+  })
+);
+app.use(
+  express.urlencoded({
+    limit: "50mb", // Adjust this value as needed
+    extended: true,
+  })
+);
 
 const server = http.createServer(app);
 
