@@ -109,9 +109,13 @@ const createSubscription = async ({
     referralCodeConsumed: 1,
   }).populate("referralCodeConsumed");
 
+  console.log("referralCodeConsumed : ", referralCodeConsumed);
+
   const { reward } = await ReferralCode.findById(referralCodeConsumed, {
     reward: 1,
   }).populate("reward");
+
+  console.log("reward : ", reward);
 
   const now = Math.floor(Date.now() / 1000); // Current time in seconds
 
