@@ -1,5 +1,6 @@
 const createHttpError = require("http-errors");
 
+const { ReferralCode } = require("../models");
 const {
   constants: { RESPONSE_MESSAGES },
 } = require("../utils");
@@ -100,114 +101,39 @@ const getPlans = async ({ pageSize }) => {
 };
 
 const createSubscription = async ({
+  currentUserId,
   stripeCustomerId,
   items,
-  couponId = "EQSVjObS",
 }) => {
-  // await stripe.subscriptions.create({
-  //   customer: stripeCustomerId,
-  //   items,
-  // });
+  const { referralCodeConsumed } = await User.findById(currentUserId, {
+    referralCodeConsumed: 1,
+  }).populate("referralCodeConsumed");
+
+  const { reward } = await ReferralCode.findById(referralCodeConsumed, {
+    reward: 1,
+  }).populate("reward");
 
   const now = Math.floor(Date.now() / 1000); // Current time in seconds
-  const fiveMinutesLater = now + 300; // 5 minutes from now
-  const tenMinutesLater = fiveMinutesLater + 300; // 5 minutes from now
 
-  const schedule = await stripe.subscriptionSchedules.create({
+  await stripe.subscriptionSchedules.create({
     customer: stripeCustomerId,
     start_date: now, // Start immediately
     end_behavior: "release", // Continue the subscription after the schedule ends
-    payment_behavior: "immediate_payment",
+    // payment_behavior: "immediate_payment",
     phases: [
       {
-        items, // Discounted phase
-        coupon: couponId, // Apply the coupon
-        end_date: fiveMinutesLater, // Discount lasts 1 hour
+        items,
+        coupon: reward._id, // Apply the coupon
+        iterations: 1, // One billing cycle (1 month)
       },
       {
-        items, // Discounted phase
-        coupon: couponId, // Apply the coupon
-        end_date: tenMinutesLater, // Discount lasts 1 hour
-      },
-      {
-        items, // Full price phase
-        // No coupon in this phase
+        items,
       },
     ],
   });
 
-  console.log("Test Subscription Schedule Created:", schedule.id);
+  console.log("Subscription created");
 };
-
-const createTestSubscriptionSchedule = async (customerId, items, couponId) => {
-  const now = Math.floor(Date.now() / 1000); // Current time in seconds
-  const fiveMinutesLater = now + 300; // 5 minutes from now
-
-  const schedule = await stripe.subscriptionSchedules.create({
-    customer: customerId,
-    start_date: now, // Start immediately
-    end_behavior: "release", // Continue the subscription after the schedule ends
-    phases: [
-      {
-        items, // Discounted phase
-        coupon: couponId, // Apply the coupon
-        end_date: fiveMinutesLater, // Discount lasts 1 hour
-      },
-      {
-        items, // Full price phase
-        // No coupon in this phase
-      },
-    ],
-  });
-
-  console.log("Test Subscription Schedule Created:", schedule.id);
-};
-
-// createTestSubscriptionSchedule(
-//   "cus_RLK1cwUH08PGLu", //saad.rehman@venndii.com
-//   [
-//     {
-//       price: "price_1QIWsMLSDdZq0edJUYPZvPcr",
-//     },
-//     {
-//       price: "price_1QIWsALSDdZq0edJFpcwfBAB",
-//     },
-//     {
-//       price: "price_1QIWgcLSDdZq0edJTzMJ7zK2",
-//     },
-//     {
-//       price: "price_1QIWgJLSDdZq0edJG0rlbZbv",
-//     },
-//     {
-//       price: "price_1QIWfwLSDdZq0edJDxIKDww5",
-//     },
-//   ],
-//   "EQSVjObS"
-// );
-
-// const getAllCoupons = async () => {
-//   try {
-//     const coupons = await stripe.coupons.list({
-//       limit: 10, // Optional: Number of coupons to fetch
-//     });
-
-//     console.log("Coupons:", coupons.data);
-//     return coupons.data; // Returns an array of coupon objects
-//   } catch (error) {
-//     console.error("Error fetching coupons:", error.message);
-//   }
-// };
-
-// // Example usage
-// (async () => {
-//   const coupons = await getAllCoupons();
-//   if (coupons.length > 0) {
-//     console.log(
-//       "Coupon IDs:",
-//       coupons.map((coupon) => coupon.id)
-//     );
-//   }
-// })();
 
 const attachPaymentMethod = async ({ stripeCustomerId, paymentMethodId }) => {
   const paymentMethod = await stripe.paymentMethods.attach(paymentMethodId, {
@@ -223,6 +149,24 @@ const attachPaymentMethod = async ({ stripeCustomerId, paymentMethodId }) => {
   console.log("Payment method attached and set as default:", customer);
 };
 
+const createCoupon = async ({ id, name, amountOff, percentageOff }) => {
+  const query = {
+    id,
+    name,
+    duration: "forever",
+  };
+
+  if (amountOff) {
+    query.amount_off = amountOff;
+  } else {
+    query.percent_off = percentageOff;
+  }
+
+  await stripe.coupons.create(query);
+
+  console.log("Coupon created successfully");
+};
+
 module.exports = {
   createStripeCustomer,
   createPaymentIntent,
@@ -231,4 +175,5 @@ module.exports = {
   getPlans,
   createSubscription,
   attachPaymentMethod,
+  createCoupon,
 };

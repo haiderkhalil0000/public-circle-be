@@ -57,6 +57,7 @@ router.post(
   async (req, res, next) => {
     try {
       await stripeController.createSubscription({
+        currentUserId: req.user._id,
         stripeCustomerId: req.user.company.stripe.id,
         ...req.body,
       });

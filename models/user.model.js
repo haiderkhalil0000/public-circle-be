@@ -3,7 +3,7 @@ const moment = require("moment");
 
 const {
   constants: {
-    MODELS: { USER, COMPANY, ROLE },
+    MODELS: { USER, COMPANY, ROLE, REFERRAL_CODE },
     USER_STATUS,
     USER_KIND,
   },
@@ -35,10 +35,9 @@ const schema = new mongoose.Schema(
     isResetPasswordRequested: { type: Boolean, default: false },
     signUpStepsCompleted: { type: Number, min: 0, max: 8, default: 0 },
     watchTutorialStepsCompleted: { type: Number, min: 0, max: 5, default: 0 },
-    referralCode: { type: String },
+    referralCode: { type: ObjectId, ref: REFERRAL_CODE },
+    referralCodeConsumed: { type: ObjectId, ref: REFERRAL_CODE },
     invalidReferralCodeAttempts: { type: Number, min: 0, default: 0 },
-    referrer: { type: ObjectId, ref: USER },
-    referree: { type: ObjectId, ref: USER },
     kind: {
       type: String,
       required: true,

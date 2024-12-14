@@ -17,6 +17,8 @@ module.exports = {
     ROLE: "role",
     SOCIAL_LINK: "social-link",
     ASSET: "asset",
+    REFERRAL_CODE: "referral-code",
+    REWARD: "reward",
   },
 
   RESPONSE_MESSAGES: {
@@ -185,6 +187,7 @@ module.exports = {
     ADMIN_ROLE_NOT_ALLOWED: "Role 'Admin' can't be assigned!",
     REFERRAL_CODE_INPUT_LOCKED:
       "Too many invalid attempts, referral code input locked!",
+    REWARD_CREATED: "Reward created successfully.",
   },
 
   INTERACTION_CHANNELS: {
@@ -341,5 +344,11 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
   USER_KIND: {
     PRIMARY: "PRIMARY",
     SECONDARY: "SECONDARY",
+  },
+
+  REWARD_KIND: {
+    TRIAL: "TRIAL",
+    FIXED_DISCOUNT: "FIXED_DISCOUNT",
+    PERCENTAGE_DISCOUNT: "PERCENTAGE_DISCOUNT",
   },
 };

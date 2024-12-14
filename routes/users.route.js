@@ -84,7 +84,7 @@ router.patch(
       await usersController.updateUser({
         ...req.body,
         profilePicture: req.file,
-        currentUserId: req.user._id,
+        currentUser: req.user,
       });
 
       res.status(200).json({

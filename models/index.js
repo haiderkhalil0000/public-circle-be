@@ -14,4 +14,6 @@ module.exports = {
   SocialLink: require("./social-link.model"),
   Asset: require("./assets.model"),
   EmailSent: require("./emails-sent.model"),
+  ReferralCode: require("./referral-code.model"),
+  Reward: require("./reward.model"),
 };

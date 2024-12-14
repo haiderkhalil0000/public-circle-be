@@ -7,6 +7,7 @@ const {
   CompanyUser,
   Campaign,
   EmailSent,
+  ReferralCode,
 } = require("../models");
 const {
   basicUtil,
@@ -32,9 +33,9 @@ const updateUser = async ({
   province,
   country,
   role,
-  currentUserId,
   signUpStepsCompleted,
   watchTutorialStepsCompleted,
+  currentUser,
 }) => {
   let companyDoc;
   const promises = [];
@@ -45,7 +46,7 @@ const updateUser = async ({
     profilePicture:
       profilePicture &&
       (await s3Util.uploadImageToS3({
-        s3Path: `user-profile-pictures/${currentUserId}/${profilePicture.fieldname}.png`,
+        s3Path: `user-profile-pictures/${currentUser._id}/${profilePicture.fieldname}.png`,
         buffer: profilePicture.buffer,
       })),
     firstName,
@@ -55,13 +56,19 @@ const updateUser = async ({
     role,
     signUpStepsCompleted,
     watchTutorialStepsCompleted,
-    referralCode: firstName
-      ? `urc_${firstName.replace(/ /g, "")}_${randomString.generate({
-          length: 4,
-          charset: "numeric",
-        })}`
-      : undefined,
   };
+
+  if (firstName && !currentUser.referralCode) {
+    const referralCodeDoc = await ReferralCode.create({
+      code: `urc_${firstName.replace(/ /g, "")}_${randomString.generate({
+        length: 4,
+        charset: "numeric",
+      })}`,
+      user: currentUser._id,
+    });
+
+    userUpdates.referralCode = referralCodeDoc._id;
+  }
 
   if (role) {
     basicUtil.validateObjectId({ inputString: role });
@@ -69,7 +76,7 @@ const updateUser = async ({
 
   if (companyName) {
     companyDoc = await Company.findOne({
-      user: currentUserId,
+      user: currentUser._id,
     });
 
     if (companyDoc) {
@@ -81,7 +88,7 @@ const updateUser = async ({
 
       companyDoc = await Company.create({
         name: companyName,
-        user: currentUserId,
+        user: currentUser._id,
       });
 
       companyDoc.stripe = await stripeController.createStripeCustomer({
@@ -98,13 +105,13 @@ const updateUser = async ({
   if (companySize || address || postalCode || city || province || country) {
     promises.push(
       Company.updateOne(
-        { user: currentUserId },
+        { user: currentUser._id },
         { companySize, address, postalCode, city, province, country }
       )
     );
   }
 
-  promises.push(User.updateOne({ _id: currentUserId }, userUpdates));
+  promises.push(User.updateOne({ _id: currentUser._id }, userUpdates));
 
   await Promise.all(promises);
 };
@@ -266,9 +273,9 @@ const readDashboardData = async ({ companyId, graphScope }) => {
 };
 
 const verifyReferralCode = async ({ referralCode, currentUserId }) => {
-  const [userDoc, currentUserDoc] = await Promise.all([
-    User.findOne({
-      referralCode,
+  const [referralCodeDoc, currentUserDoc] = await Promise.all([
+    ReferralCode.findOne({
+      code: referralCode,
     }),
     User.findById(currentUserId),
   ]);
@@ -279,7 +286,7 @@ const verifyReferralCode = async ({ referralCode, currentUserId }) => {
     });
   }
 
-  if (!userDoc) {
+  if (!referralCodeDoc) {
     currentUserDoc.invalidReferralCodeAttempts =
       currentUserDoc.invalidReferralCodeAttempts + 1;
 
@@ -290,11 +297,10 @@ const verifyReferralCode = async ({ referralCode, currentUserId }) => {
     });
   }
 
-  userDoc.referree = currentUserDoc._id;
-  currentUserDoc.referrer = userDoc._id;
+  currentUserDoc.referralCodeConsumed = referralCodeDoc._id;
   currentUserDoc.invalidReferralCodeAttempts = 0;
 
-  await Promise.all([userDoc.save(), currentUserDoc.save()]);
+  await currentUserDoc.save();
 };
 
 module.exports = {

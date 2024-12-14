@@ -13,6 +13,7 @@ module.exports = {
   rolesController: require("./roles.controller"),
   stripeController: require("./stripe.controller"),
   socialLinksController: require("./social-links.controller"),
-  assetsController: require("./assetsController"),
+  assetsController: require("./assets.controller"),
   emailsSentController: require("./emails-sent-controller"),
+  rewardsController: require("./rewards.controller"),
 };
