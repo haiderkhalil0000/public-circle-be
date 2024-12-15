@@ -112,9 +112,10 @@ const createSubscription = async ({
 
   console.log("referralCodeConsumed : ", referralCodeConsumed);
 
-  let { reward } = await ReferralCode.findById(referralCodeConsumed, {
-    reward: 1,
-  }).populate("reward");
+  let { reward } =
+    (await ReferralCode.findById(referralCodeConsumed, {
+      reward: 1,
+    }).populate("reward")) ?? {};
 
   if (!reward) {
     reward = await Reward.findOne({ isGeneric: true });
