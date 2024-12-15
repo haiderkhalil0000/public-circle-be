@@ -151,8 +151,8 @@ const createSubscription = async ({
       {
         items,
         coupon: reward.id,
-        phaseStartDate,
-        phaseEndDate,
+        start_date: phaseStartDate,
+        end_date: phaseEndDate,
       },
       {
         items,
