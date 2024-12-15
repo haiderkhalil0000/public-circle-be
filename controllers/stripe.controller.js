@@ -119,7 +119,9 @@ const createSubscription = async ({
 
   const startDateForDiscount = Math.floor(Date.now() / 1000); // Current timestamp
   const endDateForDiscount =
-    startDateForDiscount + reward.discountInDays * 24 * 60 * 60; // 45 days from now in seconds
+    startDateForDiscount + reward.discountInDays ?? 0 * 24 * 60 * 60; // 45 days from now in seconds
+
+  console.log("End date for discount : ", endDateForDiscount);
 
   await stripe.subscriptionSchedules.create({
     customer: stripeCustomerId,
