@@ -130,7 +130,7 @@ const createSubscription = async ({
   let reward = {};
 
   if (referralCodeDoc.reward) {
-    reward = referralCode.reward;
+    reward = referralCodeDoc.reward;
   } else {
     reward = await Reward.findOne({ isGeneric: true });
   }
