@@ -105,9 +105,10 @@ const createSubscription = async ({
   stripeCustomerId,
   items,
 }) => {
-  const { referralCodeConsumed } = await User.findById(currentUserId, {
-    referralCodeConsumed: 1,
-  }).populate("referralCodeConsumed");
+  const { referralCodeConsumed } =
+    (await User.findById(currentUserId, {
+      referralCodeConsumed: 1,
+    }).populate("referralCodeConsumed")) ?? {};
 
   console.log("referralCodeConsumed : ", referralCodeConsumed);
 
