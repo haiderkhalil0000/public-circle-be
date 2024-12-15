@@ -154,7 +154,7 @@ const attachPaymentMethod = async ({ stripeCustomerId, paymentMethodId }) => {
     },
   });
 
-  console.log("Payment method attached and set as default:", customer);
+  console.log("Payment method attached and set as default");
 };
 
 const createCoupon = async ({ id, name, amountOff, percentageOff }) => {
