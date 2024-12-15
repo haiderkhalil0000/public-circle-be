@@ -105,61 +105,50 @@ const createSubscription = async ({
   stripeCustomerId,
   items,
 }) => {
-  const { referralCodeConsumed } =
-    (await User.findById(currentUserId, {
-      referralCodeConsumed: 1,
-    }).populate("referralCodeConsumed")) ?? {};
+  const currentUserDoc = await User.findById(currentUserId, {
+    referralCodeConsumed: 1,
+  }).populate("referralCodeConsumed");
+
+  if (!currentUserDoc.referralCodeConsumed) {
+    return await stripe.subscriptions.create({
+      items,
+      // trial_period_days: trialDays, // Optional: Set the trial period (in days)
+      // expand: ["latest_invoice.payment_intent"], // Expand the invoice and payment intent for further processing
+    });
+  }
 
   console.log("referralCodeConsumed : ", referralCodeConsumed);
 
-  let { reward } =
-    (await ReferralCode.findById(referralCodeConsumed, {
-      reward: 1,
-    }).populate("reward")) ?? {};
+  let referralCodeDoc = await ReferralCode.findById(referralCodeConsumed, {
+    reward: 1,
+  }).populate("reward");
 
-  if (!reward) {
+  let reward = {};
+
+  if (referralCodeDoc.reward) {
+    reward = referralCode.reward;
+  } else {
     reward = await Reward.findOne({ isGeneric: true });
   }
 
   console.log("reward : ", reward);
 
-  const startDateForDiscount = Math.floor(Date.now() / 1000); // Current timestamp
-  const endDateForDiscount =
-    startDateForDiscount + (reward ? reward.discountInDays * 24 * 60 * 60 : 0);
-
-  console.log("End date for discount : ", endDateForDiscount);
-
-  console.log("Subscription schedule input : ", {
-    customer: stripeCustomerId,
-    start_date: startDateForDiscount, // Start immediately
-    end_behavior: "release", // Continue the subscription after the schedule ends
-    // payment_behavior: "immediate_payment",
-    phases: [
-      {
-        items,
-        coupon: reward.id, // Apply the coupon
-        [reward.discountInDays ? "end_date" : "iterations"]:
-          reward.discountInDays ? endDateForDiscount : 1,
-        trial_period_days: reward.trialInDays,
-      },
-      {
-        items,
-      },
-    ],
-  });
+  const phaseStartDate = Math.floor(Date.now() / 1000);
+  const phaseEndDate =
+    phaseStartDate +
+    (reward.trialInDays || reward.discountInDays) * 24 * 60 * 60;
 
   await stripe.subscriptionSchedules.create({
     customer: stripeCustomerId,
-    start_date: startDateForDiscount, // Start immediately
+    start_date: Math.floor(Date.now() / 1000), // Start immediately
     end_behavior: "release", // Continue the subscription after the schedule ends
     // payment_behavior: "immediate_payment",
     phases: [
       {
         items,
-        coupon: reward.id, // Apply the coupon
-        [reward.discountInDays ? "end_date" : "iterations"]:
-          reward.discountInDays ? endDateForDiscount : 1,
-        trial_period_days: reward.trialInDays,
+        coupon: reward.id,
+        phaseStartDate,
+        phaseEndDate,
       },
       {
         items,
