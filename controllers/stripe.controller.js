@@ -111,6 +111,7 @@ const createSubscription = async ({
 
   if (!currentUserDoc.referralCodeConsumed) {
     return await stripe.subscriptions.create({
+      customer: stripeCustomerId,
       items,
       // trial_period_days: trialDays, // Optional: Set the trial period (in days)
       // expand: ["latest_invoice.payment_intent"], // Expand the invoice and payment intent for further processing
