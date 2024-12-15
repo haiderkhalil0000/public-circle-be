@@ -132,8 +132,8 @@ const createSubscription = async ({
       {
         items,
         coupon: reward ? reward.id : undefined, // Apply the coupon
-        [reward.discountInDays ? "end_date" : "iterations"]:
-          reward.discountInDays ? endDateForDiscount : 1,
+        [reward && reward.discountInDays ? "end_date" : "iterations"]:
+          reward && reward.discountInDays ? endDateForDiscount : 1,
       },
       {
         items,
