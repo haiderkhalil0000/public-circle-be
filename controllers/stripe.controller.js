@@ -131,7 +131,7 @@ const createSubscription = async ({
     phases: [
       {
         items,
-        coupon: reward.id ?? undefined, // Apply the coupon
+        coupon: reward ? reward.id : undefined, // Apply the coupon
         [reward.discountInDays ? "end_date" : "iterations"]:
           reward.discountInDays ? endDateForDiscount : 1,
       },
@@ -149,7 +149,7 @@ const attachPaymentMethod = async ({ stripeCustomerId, paymentMethodId }) => {
     customer: stripeCustomerId,
   });
 
-  const customer = await stripe.customers.update(stripeCustomerId, {
+  await stripe.customers.update(stripeCustomerId, {
     invoice_settings: {
       default_payment_method: paymentMethod.id,
     },
