@@ -22,6 +22,7 @@ const schema = new mongoose.Schema(
       fixedDiscount: { type: Number, default: 0 },
       percentageDiscount: { type: Number, default: 0 },
     },
+    isGeneric: { type: Boolean, defaut: false },
   },
   { timestamps: true }
 );

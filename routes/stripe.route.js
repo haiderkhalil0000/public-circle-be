@@ -10,6 +10,33 @@ const {
 
 const router = express.Router();
 
+router.get(
+  "/plans",
+  authenticate.verifyToken,
+  validate({
+    query: Joi.object({
+      pageSize: Joi.number().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const products = await stripeController.getPlans(req.query);
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.PRODUCTS_FETCHED,
+        data: products,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      stripeDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 router.post(
   "/create-payment-intent",
   authenticate.verifyToken,
@@ -34,6 +61,36 @@ router.post(
       res.status(200).json({
         message: RESPONSE_MESSAGES.PAYMENT_INTENT_CREATED,
         data: { clientSecret: paymentIntent.client_secret },
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      stripeDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.post(
+  "/attach-payment-method",
+  authenticate.verifyToken,
+  validate({
+    body: Joi.object({
+      paymentMethodId: Joi.string().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      await stripeController.attachPaymentMethod({
+        stripeCustomerId: req.user.company.stripe.id,
+        ...req.body,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.PAYMENT_METHOD_ATTACHED,
+        data: {},
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
@@ -129,50 +186,29 @@ router.get(
   }
 );
 
-router.get(
-  "/plans",
-  authenticate.verifyToken,
-  validate({
-    query: Joi.object({
-      pageSize: Joi.number().required(),
-    }),
-  }),
-  async (req, res, next) => {
-    try {
-      const products = await stripeController.getPlans(req.query);
-
-      res.status(200).json({
-        message: RESPONSE_MESSAGES.PRODUCTS_FETCHED,
-        data: products,
-      });
-    } catch (err) {
-      // sendErrorReportToSentry(error);
-      console.log(err);
-
-      stripeDebugger(err);
-
-      next(err);
-    }
-  }
-);
-
-router.post(
-  "/attach-payment-method",
+router.patch(
+  "/subscription",
   authenticate.verifyToken,
   validate({
     body: Joi.object({
-      paymentMethodId: Joi.string().required(),
+      items: Joi.array()
+        .items(
+          Joi.object({
+            price: Joi.string().required(),
+          })
+        )
+        .required(),
     }),
   }),
   async (req, res, next) => {
     try {
-      await stripeController.attachPaymentMethod({
-        stripeCustomerId: req.user.company.stripe.id,
+      await stripeController.upgradeOrDowngradeSubscription({
+        customerId: req.user.company.stripe.id,
         ...req.body,
       });
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.PAYMENT_METHOD_ATTACHED,
+        message: RESPONSE_MESSAGES.SUBSCRIPTION_UPDATED,
         data: {},
       });
     } catch (err) {

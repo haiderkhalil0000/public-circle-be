@@ -1,6 +1,6 @@
 const createHttpError = require("http-errors");
 
-const { ReferralCode, User } = require("../models");
+const { ReferralCode, User, Reward } = require("../models");
 const {
   constants: { RESPONSE_MESSAGES },
 } = require("../utils");
@@ -111,9 +111,13 @@ const createSubscription = async ({
 
   console.log("referralCodeConsumed : ", referralCodeConsumed);
 
-  const { reward } = await ReferralCode.findById(referralCodeConsumed, {
+  let { reward } = await ReferralCode.findById(referralCodeConsumed, {
     reward: 1,
   }).populate("reward");
+
+  if (!reward) {
+    reward = await Reward.findOne({ isGeneric: true });
+  }
 
   console.log("reward : ", reward);
 
@@ -123,6 +127,25 @@ const createSubscription = async ({
 
   console.log("End date for discount : ", endDateForDiscount);
 
+  console.log("Subscription schedule input : ", {
+    customer: stripeCustomerId,
+    start_date: startDateForDiscount, // Start immediately
+    end_behavior: "release", // Continue the subscription after the schedule ends
+    // payment_behavior: "immediate_payment",
+    phases: [
+      {
+        items,
+        coupon: reward.id, // Apply the coupon
+        [reward.discountInDays ? "end_date" : "iterations"]:
+          reward.discountInDays ? endDateForDiscount : 1,
+        trial_period_days: reward.trialInDays,
+      },
+      {
+        items,
+      },
+    ],
+  });
+
   await stripe.subscriptionSchedules.create({
     customer: stripeCustomerId,
     start_date: startDateForDiscount, // Start immediately
@@ -131,9 +154,10 @@ const createSubscription = async ({
     phases: [
       {
         items,
-        coupon: reward ? reward.id : undefined, // Apply the coupon
-        [reward && reward.discountInDays ? "end_date" : "iterations"]:
-          reward && reward.discountInDays ? endDateForDiscount : 1,
+        coupon: reward.id, // Apply the coupon
+        [reward.discountInDays ? "end_date" : "iterations"]:
+          reward.discountInDays ? endDateForDiscount : 1,
+        trial_period_days: reward.trialInDays,
       },
       {
         items,
@@ -176,6 +200,19 @@ const createCoupon = async ({ id, name, amountOff, percentageOff }) => {
   console.log("Coupon created successfully");
 };
 
+const upgradeOrDowngradeSubscription = async ({ customerId, items }) => {
+  const activeSubscription = await stripe.subscriptions.list({
+    customer: customerId,
+    status: "active",
+  });
+
+  const subscriptionId = activeSubscription.data[0].id;
+
+  await stripe.subscriptions.update(subscriptionId, {
+    items,
+  });
+};
+
 module.exports = {
   createStripeCustomer,
   createPaymentIntent,
@@ -185,4 +222,5 @@ module.exports = {
   createSubscription,
   attachPaymentMethod,
   createCoupon,
+  upgradeOrDowngradeSubscription,
 };
