@@ -117,7 +117,7 @@ const createSubscription = async ({
       reward: 1,
     }).populate("reward")) ?? {};
 
-  if (!Object.keys(reward)) {
+  if (!reward) {
     reward = await Reward.findOne({ isGeneric: true });
   }
 
