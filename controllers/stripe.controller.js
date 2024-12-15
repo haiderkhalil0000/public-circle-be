@@ -118,11 +118,14 @@ const createSubscription = async ({
     });
   }
 
-  console.log("referralCodeConsumed : ", referralCodeConsumed);
+  console.log("referralCodeConsumed : ", currentUserDoc.referralCodeConsumed);
 
-  let referralCodeDoc = await ReferralCode.findById(referralCodeConsumed, {
-    reward: 1,
-  }).populate("reward");
+  let referralCodeDoc = await ReferralCode.findById(
+    currentUserDoc.referralCodeConsumed,
+    {
+      reward: 1,
+    }
+  ).populate("reward");
 
   let reward = {};
 
