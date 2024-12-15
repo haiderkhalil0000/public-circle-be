@@ -117,18 +117,22 @@ const createSubscription = async ({
 
   console.log("reward : ", reward);
 
-  const now = Math.floor(Date.now() / 1000); // Current time in seconds
+  const startDateForDiscount = Math.floor(Date.now() / 1000); // Current timestamp
+  const endDateForDiscount =
+    startDateForDiscount + reward.discountInDays * 24 * 60 * 60; // 45 days from now in seconds
 
   await stripe.subscriptionSchedules.create({
     customer: stripeCustomerId,
-    start_date: now, // Start immediately
+    start_date: startDateForDiscount, // Start immediately
     end_behavior: "release", // Continue the subscription after the schedule ends
     // payment_behavior: "immediate_payment",
     phases: [
       {
         items,
         coupon: reward._id, // Apply the coupon
-        iterations: 1, // One billing cycle (1 month)
+        [reward.discount ? "end_date" : "iterations"]: reward.discount
+          ? endDateForDiscount
+          : 1,
       },
       {
         items,
