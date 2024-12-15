@@ -1,6 +1,6 @@
 const createHttpError = require("http-errors");
 
-const { ReferralCode } = require("../models");
+const { ReferralCode, User } = require("../models");
 const {
   constants: { RESPONSE_MESSAGES },
 } = require("../utils");
