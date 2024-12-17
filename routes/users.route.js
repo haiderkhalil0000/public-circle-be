@@ -284,14 +284,14 @@ router.post(
   }),
   async (req, res, next) => {
     try {
-      await usersController.verifyReferralCode({
+      const reward = await usersController.verifyReferralCode({
         ...req.body,
         currentUserId: req.user._id,
       });
 
       res.status(200).json({
         message: RESPONSE_MESSAGES.REFERRAL_CODE_ACCEPTED,
-        data: {},
+        data: reward,
       });
     } catch (err) {
       // sendErrorReportToSentry(error);

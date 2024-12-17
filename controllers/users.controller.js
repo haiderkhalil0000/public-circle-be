@@ -276,7 +276,7 @@ const verifyReferralCode = async ({ referralCode, currentUserId }) => {
   const [referralCodeDoc, currentUserDoc] = await Promise.all([
     ReferralCode.findOne({
       code: referralCode,
-    }),
+    }).populate("reward"),
     User.findById(currentUserId),
   ]);
 
@@ -301,6 +301,22 @@ const verifyReferralCode = async ({ referralCode, currentUserId }) => {
   currentUserDoc.invalidReferralCodeAttempts = 0;
 
   await currentUserDoc.save();
+
+  if (referralCodeDoc.reward) {
+    const { reward } = referralCodeDoc.reward;
+
+    if (Object.keys(reward.discounts)) {
+      const { fixedDiscount, percentageDiscount } = reward.discounts;
+
+      return `${
+        fixedDiscount
+          ? `You are awarded ${fixedDiscount}${reward.currencySymbol} fixed discount`
+          : `You are awarded ${percentageDiscount}% discount`
+      } for ${reward.discountInDays} days`;
+    } else {
+      return `You are awarded free trial for ${reward.trialInDays} days`;
+    }
+  }
 };
 
 module.exports = {
