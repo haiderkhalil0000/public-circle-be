@@ -189,6 +189,8 @@ module.exports = {
       "Too many invalid attempts, referral code input locked!",
     REWARD_CREATED: "Reward created successfully.",
     SUBSCRIPTION_UPDATED: "Subscription updated successfully.",
+    TOP_UP_SUCCESSFULL: "Topped up successfully.",
+    CUSTOMER_BALANCE_FETCHED: "Customer balance fetched successfully.",
   },
 
   INTERACTION_CHANNELS: {

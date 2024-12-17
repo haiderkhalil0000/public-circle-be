@@ -100,18 +100,14 @@ const getPlans = async ({ pageSize }) => {
   return plans.data;
 };
 
-const createSubscription = async ({
-  currentUserId,
-  stripeCustomerId,
-  items,
-}) => {
+const createSubscription = async ({ currentUserId, customerId, items }) => {
   const currentUserDoc = await User.findById(currentUserId, {
     referralCodeConsumed: 1,
   }).populate("referralCodeConsumed");
 
   if (!currentUserDoc.referralCodeConsumed) {
     return await stripe.subscriptions.create({
-      customer: stripeCustomerId,
+      customer: customerId,
       items,
       // trial_period_days: trialDays, // Optional: Set the trial period (in days)
       // expand: ["latest_invoice.payment_intent"], // Expand the invoice and payment intent for further processing
@@ -143,7 +139,7 @@ const createSubscription = async ({
     (reward.trialInDays || reward.discountInDays) * 24 * 60 * 60;
 
   await stripe.subscriptionSchedules.create({
-    customer: stripeCustomerId,
+    customer: customerId,
     start_date: Math.floor(Date.now() / 1000), // Start immediately
     end_behavior: "release", // Continue the subscription after the schedule ends
     // payment_behavior: "immediate_payment",
@@ -162,12 +158,12 @@ const createSubscription = async ({
   console.log("Subscription created");
 };
 
-const attachPaymentMethod = async ({ stripeCustomerId, paymentMethodId }) => {
+const attachPaymentMethod = async ({ customerId, paymentMethodId }) => {
   const paymentMethod = await stripe.paymentMethods.attach(paymentMethodId, {
-    customer: stripeCustomerId,
+    customer: customerId,
   });
 
-  await stripe.customers.update(stripeCustomerId, {
+  await stripe.customers.update(customerId, {
     invoice_settings: {
       default_payment_method: paymentMethod.id,
     },
@@ -194,6 +190,63 @@ const createCoupon = async ({ id, name, amountOff, percentageOff }) => {
   console.log("Coupon created successfully");
 };
 
+const calculateProratedAmount = async ({
+  customerId,
+  subscriptionId,
+  items,
+}) => {
+  const upcomingInvoice = await stripe.invoices.retrieveUpcoming({
+    customer: customerId,
+    subscription: subscriptionId,
+    subscription_items: items,
+  });
+
+  // Check if the upcoming invoice has line items (if present without expand)
+  const lineItems = upcomingInvoice.lines?.data || [];
+
+  let proratedAmount = 0;
+
+  for (const lineItem of lineItems) {
+    if (lineItem.amount < 0 && lineItem.type === "subscription") {
+      proratedAmount += Math.abs(lineItem.amount); // Sum up all negative amounts
+    }
+  }
+
+  return proratedAmount;
+};
+
+const chargeForUpgrade = async ({ customerId, subscriptionId }) => {
+  // Step 1: Create an invoice
+  const invoice = await stripe.invoices.create({
+    customer: customerId,
+    subscription: subscriptionId,
+    auto_advance: true, // Automatically finalize the invoice
+  });
+
+  // Step 2: Finalize the invoice (if not auto-finalized)
+  const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
+
+  console.log("Finalized Invoice:", finalizedInvoice.id);
+
+  return finalizedInvoice;
+};
+
+const getLatestInvoiceForSubscription = async ({ subscriptionId }) => {
+  const invoices = await stripe.invoices.list({
+    subscription: subscriptionId,
+    limit: 1, // Get the most recent invoice
+  });
+
+  if (invoices.data.length > 0) {
+    const latestInvoice = invoices.data[0];
+    console.log("Latest invoice ID:", latestInvoice.id);
+    return latestInvoice.id;
+  } else {
+    console.log("No invoices found for subscription.");
+    return null;
+  }
+};
+
 const upgradeOrDowngradeSubscription = async ({ customerId, items }) => {
   const activeSubscription = await stripe.subscriptions.list({
     customer: customerId,
@@ -202,9 +255,57 @@ const upgradeOrDowngradeSubscription = async ({ customerId, items }) => {
 
   const subscriptionId = activeSubscription.data[0].id;
 
+  const prorotatedAmountInCents = await calculateProratedAmount({
+    customerId,
+    subscriptionId,
+    items,
+  });
+
   await stripe.subscriptions.update(subscriptionId, {
     items,
   });
+
+  const invoiceId = await getLatestInvoiceForSubscription({ subscriptionId });
+
+  if (prorotatedAmountInCents < 0) {
+    // if the amount is negative then its a downgrade in subscription
+    await stripe.creditNotes.create({
+      invoice: invoiceId, // Invoice that charged the original subscription fee
+      amount: prorotatedAmountInCents, // The prorated credit amount
+      reason: "Subscription downgraded",
+    });
+  } else if (prorotatedAmountInCents > 0) {
+    // if the amount is negative then its an upgrade in subscription
+    await chargeForUpgrade({ customerId, subscriptionId });
+  }
+};
+
+const createATopUpInCustomerBalance = async ({ customerId, amount }) => {
+  const customer = await stripe.customers.retrieve(customerId);
+
+  const defaultPaymentMethodId =
+    customer.invoice_settings.default_payment_method;
+
+  await stripe.paymentIntents.create({
+    amount: parseInt(amount), // Amount in cents, e.g., 1000 for $10
+    currency: "CAD",
+    customer: customerId, // The Stripe customer to charge
+    payment_method: defaultPaymentMethodId,
+    payment_method_types: ["card"], // Assuming the default payment method is a card
+    confirm: true, // Automatically confirm the PaymentIntent
+  });
+
+  await stripe.customers.createBalanceTransaction(customerId, {
+    amount: amount, // Positive value adds to the balance
+    currency: "CAD",
+    description: "Top-Up",
+  });
+};
+
+const readCustomerBalance = async ({ customerId }) => {
+  const customer = await stripe.customers.retrieve(customerId);
+
+  return `${customer.balance / 100}$`;
 };
 
 module.exports = {
@@ -217,4 +318,6 @@ module.exports = {
   attachPaymentMethod,
   createCoupon,
   upgradeOrDowngradeSubscription,
+  createATopUpInCustomerBalance,
+  readCustomerBalance,
 };

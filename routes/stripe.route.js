@@ -84,7 +84,7 @@ router.post(
   async (req, res, next) => {
     try {
       await stripeController.attachPaymentMethod({
-        stripeCustomerId: req.user.company.stripe.id,
+        customerId: req.user.company.stripe.id,
         ...req.body,
       });
 
@@ -115,7 +115,7 @@ router.post(
     try {
       await stripeController.createSubscription({
         currentUserId: req.user._id,
-        stripeCustomerId: req.user.company.stripe.id,
+        customerId: req.user.company.stripe.id,
         ...req.body,
       });
 
@@ -210,6 +210,60 @@ router.patch(
       res.status(200).json({
         message: RESPONSE_MESSAGES.SUBSCRIPTION_UPDATED,
         data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      stripeDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.post(
+  "/top-up",
+  authenticate.verifyToken,
+  validate({
+    body: Joi.object({
+      amount: Joi.number().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      await stripeController.createATopUpInCustomerBalance({
+        customerId: req.user.company.stripe.id,
+        ...req.body,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.TOP_UP_SUCCESSFULL,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      stripeDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.get(
+  "/customer-balance",
+  authenticate.verifyToken,
+  async (req, res, next) => {
+    try {
+      const customerBalance = await stripeController.readCustomerBalance({
+        customerId: req.user.company.stripe.id,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.CUSTOMER_BALANCE_FETCHED,
+        data: customerBalance,
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
