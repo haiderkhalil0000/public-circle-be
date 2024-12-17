@@ -303,7 +303,7 @@ const verifyReferralCode = async ({ referralCode, currentUserId }) => {
   await currentUserDoc.save();
 
   if (referralCodeDoc.reward) {
-    const { reward } = referralCodeDoc.reward;
+    const { reward } = referralCodeDoc;
 
     if (Object.keys(reward.discounts)) {
       const { fixedDiscount, percentageDiscount } = reward.discounts;
