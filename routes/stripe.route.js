@@ -37,29 +37,17 @@ router.get(
   }
 );
 
-router.post(
-  "/create-setup-intent",
+router.get(
+  "/setup-intent",
   authenticate.verifyToken,
-  validate({
-    body: Joi.object({
-      items: Joi.array()
-        .items(
-          Joi.object({
-            priceId: Joi.string().required(),
-          })
-        )
-        .required(),
-    }),
-  }),
   async (req, res, next) => {
     try {
-      const setupIntent = await stripeController.createSetupIntent({
+      const setupIntent = await stripeController.readSetupIntent({
         customerId: req.user.company.stripe.id,
-        ...req.body,
       });
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.SETUP_INTENT_CREATED,
+        message: RESPONSE_MESSAGES.SETUP_INTENT_FETCHED,
         data: setupIntent,
       });
     } catch (err) {

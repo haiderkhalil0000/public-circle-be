@@ -18,10 +18,10 @@ const createStripeCustomer = async ({ companyName, companyId }) =>
     },
   });
 
-const createSetupIntent = async ({ customerId }) =>
+const readSetupIntent = async ({ customerId }) =>
   stripe.setupIntents.create({
-    customer: customerId, // Replace with the Stripe customer ID
-    payment_method_types: ["card"], // Add other types if needed
+    customer: customerId,
+    payment_method_types: ["card"],
   });
 
 const getSubscriptions = async ({ pageSize }) => {
@@ -338,7 +338,7 @@ const generateImmediateChargeInvoice = async ({
 
 module.exports = {
   createStripeCustomer,
-  createSetupIntent,
+  readSetupIntent,
   getSubscriptions,
   getActiveSubscriptionsOfACustomer,
   getPlans,
