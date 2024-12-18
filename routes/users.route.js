@@ -42,9 +42,13 @@ router.post(
 
 router.get("/me", authenticate.verifyToken, async (req, res, next) => {
   try {
+    const currentUser = await usersController.readCurrentUser({
+      currentUserId: req.user._id,
+    });
+
     res.status(200).json({
       message: RESPONSE_MESSAGES.FETCHED_CURRENT_USER,
-      data: req.user,
+      data: currentUser,
     });
   } catch (err) {
     // sendErrorReportToSentry(error);

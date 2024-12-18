@@ -307,6 +307,9 @@ const verifyReferralCode = async ({ referralCode, currentUserId }) => {
   }
 };
 
+const readCurrentUser = ({ currentUserId }) =>
+  User.findById(currentUserId).populate("referralCode", "code");
+
 module.exports = {
   updateUser,
   createUserUnderACompany,
@@ -317,4 +320,5 @@ module.exports = {
   deleteUserUnderACompany,
   readDashboardData,
   verifyReferralCode,
+  readCurrentUser,
 };
