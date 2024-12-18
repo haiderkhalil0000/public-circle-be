@@ -41,7 +41,7 @@ new CronJob(
             status: CAMPAIGN_STATUS.ACTIVE,
           },
         ],
-      });
+      }).populate("segments");
 
       for (const campaign of pendingCampaigns) {
         if (
@@ -50,6 +50,8 @@ new CronJob(
           moment().isSameOrAfter(moment(campaign.runSchedule).startOf("minute"))
         ) {
           recordsUpdated++;
+
+          await campaignsController.validateCampaign({ campaign });
 
           campaignsController.runCampaign({ campaign });
         } else if (campaign.isRecurring) {
@@ -66,6 +68,8 @@ new CronJob(
 
           if (moment().isSameOrAfter(lastProcessedTime.add(recurringPeriod))) {
             recordsUpdated++;
+
+            await campaignsController.validateCampaign({ campaign });
 
             campaignsController.runCampaign({ campaign });
           }

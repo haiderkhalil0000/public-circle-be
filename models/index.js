@@ -16,4 +16,5 @@ module.exports = {
   EmailSent: require("./emails-sent.model"),
   ReferralCode: require("./referral-code.model"),
   Reward: require("./reward.model"),
+  Plan: require("./plan.model"),
 };

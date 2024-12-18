@@ -326,6 +326,28 @@ const readCustomerBalance = async ({ customerId }) => {
   return `${customer.balance / 100}$`;
 };
 
+const generateImmediateChargeInvoice = async ({
+  customerId,
+  amountInCents,
+}) => {
+  await stripe.invoiceItems.create({
+    customer: customerId,
+    amount: amountInCents, // Amount in cents (e.g., $1 = 100)
+    currency: "CAD",
+    description: "Extra email quota charges",
+  });
+
+  // Step 2: Create the invoice
+  const invoice = await stripe.invoices.create({
+    customer: customerId,
+    auto_advance: true, // Automatically finalize and attempt payment
+    collection_method: "charge_automatically",
+  });
+
+  // Step 3: Finalize and charge the invoice
+  await stripe.invoices.finalizeInvoice(invoice.id);
+};
+
 module.exports = {
   createStripeCustomer,
   createPaymentIntent,
@@ -338,4 +360,5 @@ module.exports = {
   upgradeOrDowngradeSubscription,
   createATopUpInCustomerBalance,
   readCustomerBalance,
+  generateImmediateChargeInvoice,
 };

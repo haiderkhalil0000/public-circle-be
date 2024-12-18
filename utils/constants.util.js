@@ -19,6 +19,7 @@ module.exports = {
     ASSET: "asset",
     REFERRAL_CODE: "referral-code",
     REWARD: "reward",
+    PLAN: "plan",
   },
 
   RESPONSE_MESSAGES: {
@@ -191,6 +192,8 @@ module.exports = {
     SUBSCRIPTION_UPDATED: "Subscription updated successfully.",
     TOP_UP_SUCCESSFULL: "Topped up successfully.",
     CUSTOMER_BALANCE_FETCHED: "Customer balance fetched successfully.",
+    EMAIL_LIMIT_REACHED:
+      "Email sending limit reached for your current subscription!",
   },
 
   INTERACTION_CHANNELS: {

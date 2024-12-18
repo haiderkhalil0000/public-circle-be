@@ -9,6 +9,7 @@ const {
   Configuration,
   EmailSent,
   CampaignRun,
+  Company,
 } = require("../models");
 const {
   basicUtil,
@@ -92,6 +93,7 @@ const createCampaign = async ({
   });
 
   if (runMode === RUN_MODE.INSTANT) {
+    await validateCampaign({ campaign });
     await runCampaign({ campaign });
   }
 };
@@ -181,7 +183,7 @@ const readAllCampaigns = async ({ companyId }) => {
   const usersCountMap = new Map();
 
   for (const campaign of allCampaigns) {
-    usersCountMap.set(campaign._id.toString(), 0); // Initialize `usersCount` for each campaign
+    usersCountMap.set(campaign._id.toString(), 0);
     for (const segment of campaign.segments) {
       promises.push(
         companyUsersController
@@ -250,6 +252,7 @@ const updateCampaign = async ({ campaignId, campaignData }) => {
   await campaign.save();
 
   if (campaignData.runMode === RUN_MODE.INSTANT) {
+    await validateCampaign({ campaign });
     await runCampaign({ campaign });
   }
 };
@@ -554,6 +557,113 @@ const readAllCampaignLogs = ({ pageNumber, pageSize, companyId }) =>
     .populate("company")
     .populate(CAMPAIGN);
 
+const readCampaignRecipientsCount = async ({ campaign }) => {
+  const promises = [];
+  const usersCountMap = new Map();
+
+  const companyUsersController = require("./company-users.controller");
+
+  usersCountMap.set(campaign._id.toString(), 0);
+  for (const segment of campaign.segments) {
+    promises.push(
+      companyUsersController
+        .getFiltersCount({
+          filters: segment.filters,
+          companyId: campaign.company,
+        })
+        .then((item) => ({
+          campaignId: campaign._id.toString(),
+          usersCount: item[0].filterCount,
+        }))
+    );
+  }
+
+  const segmentUsersCount = await Promise.all(promises);
+
+  segmentUsersCount.forEach((item) => {
+    usersCountMap.set(
+      item.campaignId,
+      usersCountMap.get(item.campaignId) + item.usersCount
+    );
+  });
+
+  return (campaign.usersCount = usersCountMap.get(campaign._id.toString()));
+};
+
+const calculateCharge = ({
+  campaignRecipientsCount,
+  EXTRA_EMAIL_QUOTA,
+  EXTRA_EMAIL_CHARGE,
+}) => {
+  // Calculate how many times the quota is exceeded
+  const timesExceeded = Math.ceil(campaignRecipientsCount / EXTRA_EMAIL_QUOTA);
+
+  // Calculate total charge
+  const totalCharge = timesExceeded * EXTRA_EMAIL_CHARGE;
+
+  return totalCharge;
+};
+
+const validateCampaign = async ({ campaign }) => {
+  const { EXTRA_EMAIL_QUOTA, EXTRA_EMAIL_CHARGE } = process.env;
+
+  const campaignRecipientsCount = await readCampaignRecipientsCount({
+    campaign,
+  });
+
+  let [totalEmailsSentByCompany, company] = await Promise.all([
+    EmailSent.countDocuments({
+      company: campaign.company,
+    }),
+    Company.findOne({
+      _id: campaign.company,
+    })
+      .populate("stripe")
+      .populate("plan"),
+  ]);
+
+  totalEmailsSentByCompany = 1000;
+
+  if (
+    company.plan &&
+    company.plan.quota.email <
+      campaignRecipientsCount + totalEmailsSentByCompany
+  ) {
+    const stripeController = require("./stripe.controller");
+
+    const companyBalance = await stripeController.readCustomerBalance({
+      customerId: company.stripe.id,
+    });
+
+    if (parseInt(companyBalance.split("$")[0]) < parseInt(EXTRA_EMAIL_CHARGE)) {
+      campaign.status = CAMPAIGN_STATUS.DISABLED;
+
+      campaign.save();
+
+      throw createHttpError(400, {
+        errorMessage: RESPONSE_MESSAGES.EMAIL_LIMIT_REACHED,
+      });
+    }
+
+    const totalCharge = calculateCharge({
+      campaignRecipientsCount,
+      EXTRA_EMAIL_QUOTA,
+      EXTRA_EMAIL_CHARGE,
+    });
+
+    if (parseInt(companyBalance.split("$")[0]) < totalCharge) {
+      throw createHttpError(400, {
+        errorMessage: RESPONSE_MESSAGES.EMAIL_LIMIT_REACHED,
+      });
+    }
+
+    await stripeController.generateImmediateChargeInvoice({
+      customerId: company.stripe.id,
+      amountInCents: totalCharge * 100,
+    });
+  }
+};
+
 module.exports = {
   createCampaign,
   readCampaign,
@@ -565,4 +675,6 @@ module.exports = {
   runCampaign,
   readPaginatedCampaignLogs,
   readAllCampaignLogs,
+  readCampaignRecipientsCount,
+  validateCampaign,
 };
