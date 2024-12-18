@@ -303,19 +303,7 @@ const verifyReferralCode = async ({ referralCode, currentUserId }) => {
   await currentUserDoc.save();
 
   if (referralCodeDoc.reward) {
-    const { reward } = referralCodeDoc;
-
-    if (Object.keys(reward.discounts)) {
-      const { fixedDiscount, percentageDiscount } = reward.discounts;
-
-      return `${
-        fixedDiscount
-          ? `You are awarded ${fixedDiscount}${reward.currencySymbol} fixed discount`
-          : `You are awarded ${percentageDiscount}% discount`
-      } for ${reward.discountInDays} days`;
-    } else {
-      return `You are awarded free trial for ${reward.trialInDays} days`;
-    }
+    return referralCodeDoc.reward;
   }
 };
 
