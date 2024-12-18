@@ -1,4 +1,5 @@
 const createHttpError = require("http-errors");
+const _ = require("lodash");
 
 const { ReferralCode, User, Reward } = require("../models");
 const {
@@ -114,8 +115,6 @@ const createSubscription = async ({ currentUserId, customerId, items }) => {
     });
   }
 
-  console.log("referralCodeConsumed : ", currentUserDoc.referralCodeConsumed);
-
   let referralCodeDoc = await ReferralCode.findById(
     currentUserDoc.referralCodeConsumed,
     {
@@ -154,8 +153,6 @@ const createSubscription = async ({ currentUserId, customerId, items }) => {
       },
     ],
   });
-
-  console.log("Subscription created");
 };
 
 const attachPaymentMethod = async ({ customerId, paymentMethodId }) => {
@@ -168,8 +165,6 @@ const attachPaymentMethod = async ({ customerId, paymentMethodId }) => {
       default_payment_method: paymentMethod.id,
     },
   });
-
-  console.log("Payment method attached and set as default");
 };
 
 const createCoupon = async ({ id, name, amountOff, percentageOff }) => {
@@ -186,8 +181,6 @@ const createCoupon = async ({ id, name, amountOff, percentageOff }) => {
   }
 
   await stripe.coupons.create(query);
-
-  console.log("Coupon created successfully");
 };
 
 const calculateProratedAmount = async ({
@@ -201,18 +194,27 @@ const calculateProratedAmount = async ({
     subscription_items: items,
   });
 
-  // Check if the upcoming invoice has line items (if present without expand)
+  // Extract line items, defaulting to an empty array if undefined
   const lineItems = upcomingInvoice.lines?.data || [];
 
-  let proratedAmount = 0;
+  // Initialize variables for prorated amounts
+  let proratedCredit = 0;
+  let proratedCharge = 0;
 
+  // Iterate over the line items to calculate charges and credits
   for (const lineItem of lineItems) {
-    if (lineItem.amount < 0 && lineItem.type === "subscription") {
-      proratedAmount += Math.abs(lineItem.amount); // Sum up all negative amounts
+    if (lineItem.amount < 0) {
+      proratedCredit += Math.abs(lineItem.amount); // Sum up all negative amounts (credits)
+    } else {
+      proratedCharge += lineItem.amount; // Sum up all positive amounts (charges)
     }
   }
 
-  return proratedAmount;
+  // Return both prorated credit and charge amounts
+  return {
+    proratedCredit,
+    proratedCharge,
+  };
 };
 
 const chargeForUpgrade = async ({ customerId, subscriptionId }) => {
@@ -226,8 +228,6 @@ const chargeForUpgrade = async ({ customerId, subscriptionId }) => {
   // Step 2: Finalize the invoice (if not auto-finalized)
   const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
 
-  console.log("Finalized Invoice:", finalizedInvoice.id);
-
   return finalizedInvoice;
 };
 
@@ -239,8 +239,11 @@ const getLatestInvoiceForSubscription = async ({ subscriptionId }) => {
 
   if (invoices.data.length > 0) {
     const latestInvoice = invoices.data[0];
-    console.log("Latest invoice ID:", latestInvoice.id);
-    return latestInvoice.id;
+
+    return {
+      invoiceId: latestInvoice.id,
+      invoiceAmount: invoices.data[0].lines.data[0].amount,
+    };
   } else {
     console.log("No invoices found for subscription.");
     return null;
@@ -254,30 +257,45 @@ const upgradeOrDowngradeSubscription = async ({ customerId, items }) => {
   });
 
   const subscriptionId = activeSubscription.data[0].id;
+  const activeSubscriptionItems = activeSubscription.data[0].items.data.map(
+    (item) => ({
+      id: item.id,
+      price: item.price.id,
+    })
+  );
 
-  const prorotatedAmountInCents = await calculateProratedAmount({
-    customerId,
-    subscriptionId,
-    items,
+  activeSubscriptionItems.forEach((item) => {
+    item.deleted = true;
   });
+
+  items = [...new Set([...activeSubscriptionItems, ...items])];
+
+  // const { proratedCredit, proratedCharge } = await calculateProratedAmount({
+  //   customerId,
+  //   subscriptionId,
+  //   items,
+  // });
 
   await stripe.subscriptions.update(subscriptionId, {
     items,
+    proration_behavior: "create_prorations",
   });
 
-  const invoiceId = await getLatestInvoiceForSubscription({ subscriptionId });
+  // const { invoiceId, invoiceAmount } = await getLatestInvoiceForSubscription({
+  //   subscriptionId,
+  // });
 
-  if (prorotatedAmountInCents < 0) {
-    // if the amount is negative then its a downgrade in subscription
-    await stripe.creditNotes.create({
-      invoice: invoiceId, // Invoice that charged the original subscription fee
-      amount: prorotatedAmountInCents, // The prorated credit amount
-      reason: "Subscription downgraded",
-    });
-  } else if (prorotatedAmountInCents > 0) {
-    // if the amount is negative then its an upgrade in subscription
-    await chargeForUpgrade({ customerId, subscriptionId });
-  }
+  // if (proratedCredit) {
+  //   await stripe.creditNotes.create({
+  //     invoice: invoiceId, // Invoice that charged the original subscription fee
+  //     amount: proratedCredit, // The prorated credit amount
+  //     reason: "order_change",
+  //     out_of_band_amount: Math.max(0, invoiceAmount - proratedCredit),
+  //   });
+  // }
+  // if (proratedCharge) {
+  //   await chargeForUpgrade({ customerId, subscriptionId });
+  // }
 };
 
 const createATopUpInCustomerBalance = async ({ customerId, amount }) => {
