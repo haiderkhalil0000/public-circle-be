@@ -38,7 +38,7 @@ router.get(
 );
 
 router.post(
-  "/create-payment-intent",
+  "/create-setup-intent",
   authenticate.verifyToken,
   validate({
     body: Joi.object({
@@ -53,14 +53,14 @@ router.post(
   }),
   async (req, res, next) => {
     try {
-      const paymentIntent = await stripeController.createPaymentIntent({
+      const setupIntent = await stripeController.createSetupIntent({
         customerId: req.user.company.stripe.id,
         ...req.body,
       });
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.PAYMENT_INTENT_CREATED,
-        data: { clientSecret: paymentIntent.client_secret },
+        message: RESPONSE_MESSAGES.SETUP_INTENT_CREATED,
+        data: setupIntent,
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
