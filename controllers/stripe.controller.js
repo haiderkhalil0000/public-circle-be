@@ -19,21 +19,26 @@ const createStripeCustomer = async ({ companyName, companyId }) =>
   });
 
 const createPaymentIntent = async ({ customerId, items }) => {
-  const allPrices = await Promise.all(
-    items.map((item) => stripe.prices.retrieve(item.priceId))
-  );
+  // const allPrices = await Promise.all(
+  //   items.map((item) => stripe.prices.retrieve(item.priceId))
+  // );
 
-  const totalPrice = allPrices
-    .map((price) => price.unit_amount || 0)
-    .reduce((total, amount) => total + amount, 0);
+  // const totalPrice = allPrices
+  //   .map((price) => price.unit_amount || 0)
+  //   .reduce((total, amount) => total + amount, 0);
 
-  return stripe.paymentIntents.create({
-    amount: totalPrice,
-    currency: "usd",
-    customer: customerId,
-    payment_method_types: ["card"],
-    setup_future_usage: "off_session",
+  return await stripe.setupIntents.create({
+    customer: customerId, // Replace with the Stripe customer ID
+    payment_method_types: ["card"], // Add other types if needed
   });
+
+  // return stripe.paymentIntents.create({
+  //   amount: totalPrice,
+  //   currency: "usd",
+  //   customer: customerId,
+  //   payment_method_types: ["card"],
+  //   setup_future_usage: "off_session",
+  // });
 };
 
 const getSubscriptions = async ({ pageSize }) => {
