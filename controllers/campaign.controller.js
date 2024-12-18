@@ -611,7 +611,7 @@ const validateCampaign = async ({ campaign }) => {
     campaign,
   });
 
-  let [totalEmailsSentByCompany, company] = await Promise.all([
+  const [totalEmailsSentByCompany, company] = await Promise.all([
     EmailSent.countDocuments({
       company: campaign.company,
     }),
@@ -621,8 +621,6 @@ const validateCampaign = async ({ campaign }) => {
       .populate("stripe")
       .populate("plan"),
   ]);
-
-  totalEmailsSentByCompany = 1000;
 
   if (
     company.plan &&
