@@ -93,7 +93,7 @@ const createCampaign = async ({
   });
 
   if (runMode === RUN_MODE.INSTANT) {
-    await validateCampaign({ campaign });
+    // await validateCampaign({ campaign });
     await runCampaign({ campaign });
   }
 };
@@ -252,7 +252,7 @@ const updateCampaign = async ({ campaignId, campaignData }) => {
   await campaign.save();
 
   if (campaignData.runMode === RUN_MODE.INSTANT) {
-    await validateCampaign({ campaign });
+    // await validateCampaign({ campaign });
     await runCampaign({ campaign });
   }
 };
