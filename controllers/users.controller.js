@@ -76,7 +76,7 @@ const updateUser = async ({
 
   if (companyName) {
     companyDoc = await Company.findOne({
-      user: currentUser._id,
+      _id: currentUser.company,
     });
 
     if (companyDoc) {
@@ -88,7 +88,6 @@ const updateUser = async ({
 
       companyDoc = await Company.create({
         name: companyName,
-        user: currentUser._id,
       });
 
       companyDoc.stripe = await stripeController.createStripeCustomer({
@@ -105,7 +104,7 @@ const updateUser = async ({
   if (companySize || address || postalCode || city || province || country) {
     promises.push(
       Company.updateOne(
-        { _id: currentUser.company._id || userUpdates.company },
+        { _id: userUpdates.company || currentUser.company._id },
         { companySize, address, postalCode, city, province, country }
       )
     );
