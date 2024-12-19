@@ -299,13 +299,13 @@ const readVerifiedEmailAddresses = async ({ companyId }) => {
   const { emailConfigurations } = configuration ?? {};
   let verifiedEmailAddresses = [];
 
-  emailConfigurations.addresses.forEach((item) => {
+  emailConfigurations?.addresses.forEach((item) => {
     if (item.isVerified && item.status === DOCUMENT_STATUS.ACTIVE) {
       verifiedEmailAddresses.push(item.emailAddress);
     }
   });
 
-  emailConfigurations.domains.forEach((item) => {
+  emailConfigurations?.domains.forEach((item) => {
     item.addresses.forEach((item) => {
       if (item.status === DOCUMENT_STATUS.ACTIVE) {
         verifiedEmailAddresses.push(item.emailAddress);
