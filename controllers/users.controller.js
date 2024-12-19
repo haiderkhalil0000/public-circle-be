@@ -105,7 +105,7 @@ const updateUser = async ({
   if (companySize || address || postalCode || city || province || country) {
     promises.push(
       Company.updateOne(
-        { _id: currentUser.company._id },
+        { _id: currentUser.company._id || userUpdates.company },
         { companySize, address, postalCode, city, province, country }
       )
     );
