@@ -31,7 +31,7 @@ module.exports = function (app) {
   // }
 
   switch (ENVIRONMENT) {
-    case "PRODUCTION":
+    case "production":
       app.use(helmet());
       app.use(compression());
 
