@@ -296,7 +296,7 @@ const readVerifiedEmailAddresses = async ({ companyId }) => {
     companyId,
   }).lean();
 
-  const { emailConfigurations } = configuration;
+  const { emailConfigurations } = configuration ?? {};
   let verifiedEmailAddresses = [];
 
   emailConfigurations.addresses.forEach((item) => {
