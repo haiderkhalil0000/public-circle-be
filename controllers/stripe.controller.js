@@ -338,7 +338,7 @@ const createATopUpInCustomerBalance = async ({
 const readCustomerBalance = async ({ customerId }) => {
   const customer = await stripe.customers.retrieve(customerId);
 
-  return `${customer.balance / 100}$`;
+  return `${-customer.balance / 100}$`;
 };
 
 const generateImmediateChargeInvoice = async ({
