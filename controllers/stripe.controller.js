@@ -286,26 +286,53 @@ const upgradeOrDowngradeSubscription = async ({ customerId, items }) => {
   // }
 };
 
-const createATopUpInCustomerBalance = async ({ customerId, amount }) => {
+const chargeCustomerThroughPaymentIntent = ({
+  customerId,
+  amountInSmallestUnit,
+  currency,
+  paymentMethodId,
+  description,
+}) =>
+  stripe.paymentIntents.create({
+    customer: customerId,
+    amount: amountInSmallestUnit,
+    currency,
+    payment_method: paymentMethodId,
+    off_session: true,
+    confirm: true,
+    description,
+  });
+
+const addCustomerBalance = ({ customerId, amountInSmallestUnit, currency }) =>
+  stripe.customers.createBalanceTransaction(customerId, {
+    amount: -amountInSmallestUnit,
+    currency,
+  });
+
+const createATopUpInCustomerBalance = async ({
+  customerId,
+  amountInSmallestUnit,
+}) => {
   const customer = await stripe.customers.retrieve(customerId);
 
   const defaultPaymentMethodId =
     customer.invoice_settings.default_payment_method;
 
-  await stripe.paymentIntents.create({
-    amount: parseInt(amount), // Amount in cents, e.g., 1000 for $10
-    currency: "CAD",
-    customer: customerId, // The Stripe customer to charge
-    payment_method: defaultPaymentMethodId,
-    payment_method_types: ["card"], // Assuming the default payment method is a card
-    confirm: true, // Automatically confirm the PaymentIntent
+  const paymentIntent = await chargeCustomerThroughPaymentIntent({
+    customerId,
+    amountInSmallestUnit,
+    currency: "cad",
+    paymentMethodId: defaultPaymentMethodId,
+    description: "Top up",
   });
 
-  await stripe.customers.createBalanceTransaction(customerId, {
-    amount: amount, // Positive value adds to the balance
-    currency: "CAD",
-    description: "Top-Up",
-  });
+  if (paymentIntent.status === "succeeded") {
+    await addCustomerBalance({
+      customerId,
+      amountInSmallestUnit,
+      currency: "cad",
+    });
+  }
 };
 
 const readCustomerBalance = async ({ customerId }) => {
