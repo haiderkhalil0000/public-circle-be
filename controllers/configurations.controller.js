@@ -102,7 +102,7 @@ const verifyEmailAddress = async ({ emailAddress }) => {
 };
 
 const initiateDomainVerification = async ({ companyId, emailDomain }) => {
-  await addDataInCompanyConfigurations({ company: companyId, emailDomain });
+  await addDataInCompanyConfigurations({ companyId, emailDomain });
 
   const dnsInfo = await verifyDomain({ emailDomain });
 
