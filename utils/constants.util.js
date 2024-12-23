@@ -194,6 +194,7 @@ module.exports = {
     CUSTOMER_BALANCE_FETCHED: "Customer balance fetched successfully.",
     EMAIL_LIMIT_REACHED:
       "Email sending limit reached for your current subscription!",
+    INVOICES_FETCHED: "Invoices fetched successfully.",
   },
 
   INTERACTION_CHANNELS: {

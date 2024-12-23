@@ -370,6 +370,12 @@ const generateImmediateChargeInvoice = async ({
   await stripe.invoices.finalizeInvoice(invoice.id);
 };
 
+const readCustomerInvoices = ({ customerId, pageSize = 10 }) =>
+  stripe.invoices.list({
+    customer: customerId,
+    limit: pageSize,
+  });
+
 module.exports = {
   createStripeCustomer,
   readSetupIntent,
@@ -383,4 +389,5 @@ module.exports = {
   createATopUpInCustomerBalance,
   readCustomerBalance,
   generateImmediateChargeInvoice,
+  readCustomerInvoices,
 };
