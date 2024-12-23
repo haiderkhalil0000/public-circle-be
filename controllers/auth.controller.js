@@ -96,34 +96,34 @@ const sendVerificationEmail = async ({ emailAddress }) => {
     options: { expiresIn: ACCESS_TOKEN_EXPIRY },
   });
 
-  await Promise.all([
-    sesUtil.sendEmail({
-      fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
-      toEmailAddress: emailAddress,
-      subject: VERIFICATION_EMAIL_SUBJECT,
-      content: `Welcome to Public Circles,
+  const emailSent = await sesUtil.sendEmail({
+    fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
+    toEmailAddress: emailAddress,
+    subject: VERIFICATION_EMAIL_SUBJECT,
+    content: `Welcome to Public Circles,
 
 Please verify your email address by using the following link:
 ${PUBLIC_CIRCLES_WEB_URL}/auth/jwt/sign-up/?source=register&token=${token}
 
 Regards,
 Public Circles Team`,
-      contentType: TEMPLATE_CONTENT_TYPE.TEXT,
-    }),
-    EmailSent.create({
-      kind: EMAIL_KIND.VERIFICATION,
-      fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
-      toEmailAddress: emailAddress,
-      emailSubject: VERIFICATION_EMAIL_SUBJECT,
-      emailContent: `Welcome to Public Circles,
+    contentType: TEMPLATE_CONTENT_TYPE.TEXT,
+  });
+
+  EmailSent.create({
+    kind: EMAIL_KIND.VERIFICATION,
+    fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
+    toEmailAddress: emailAddress,
+    emailSubject: VERIFICATION_EMAIL_SUBJECT,
+    emailContent: `Welcome to Public Circles,
 
 Please verify your email address by using the following link:
 ${PUBLIC_CIRCLES_WEB_URL}/auth/jwt/sign-up/?source=register&token=${token}
 
 Regards,
 Public Circles Team`,
-    }),
-  ]);
+    sesMessageId: emailSent.MessageId,
+  });
 };
 
 const verifyJwtToken = async ({ token, source }) => {
