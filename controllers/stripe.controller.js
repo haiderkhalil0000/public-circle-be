@@ -238,52 +238,59 @@ const getLatestInvoiceForSubscription = async ({ subscriptionId }) => {
   }
 };
 
+// const upgradeOrDowngradeSubscription = async ({ customerId, items }) => {
+//   const activeSubscription = await stripe.subscriptions.list({
+//     customer: customerId,
+//     status: "active",
+//   });
+
+//   const subscriptionId = activeSubscription.data[0].id;
+//   const activeSubscriptionItems = activeSubscription.data[0].items.data.map(
+//     (item) => ({
+//       id: item.id,
+//       price: item.price.id,
+//     })
+//   );
+
+//   activeSubscriptionItems.forEach((item) => {
+//     item.deleted = true;
+//   });
+
+//   items = [...new Set([...activeSubscriptionItems, ...items])];
+
+//   await stripe.subscriptions.update(subscriptionId, {
+//     items,
+//     proration_behavior: "create_prorations",
+//   });
+// };
+
 const upgradeOrDowngradeSubscription = async ({ customerId, items }) => {
-  const activeSubscription = await stripe.subscriptions.list({
+  // Retrieve active subscriptions
+  const activeSubscriptions = await stripe.subscriptions.list({
     customer: customerId,
     status: "active",
   });
 
-  const subscriptionId = activeSubscription.data[0].id;
-  const activeSubscriptionItems = activeSubscription.data[0].items.data.map(
-    (item) => ({
-      id: item.id,
-      price: item.price.id,
-    })
-  );
+  const subscription = activeSubscriptions.data[0];
 
-  activeSubscriptionItems.forEach((item) => {
-    item.deleted = true;
+  // Map current subscription items to match Stripe's update format
+  const currentItems = subscription.items.data.map((item) => ({
+    id: item.id,
+    deleted: true,
+  }));
+
+  // Merge new items into the existing ones
+  const updatedItems = items.map((item) => ({
+    price: item.price,
+    quantity: item.quantity || 1,
+  }));
+
+  const combinedItems = [...currentItems, ...updatedItems];
+
+  await stripe.subscriptions.update(subscription.id, {
+    items: combinedItems,
+    proration_behavior: "always_invoice",
   });
-
-  items = [...new Set([...activeSubscriptionItems, ...items])];
-
-  // const { proratedCredit, proratedCharge } = await calculateProratedAmount({
-  //   customerId,
-  //   subscriptionId,
-  //   items,
-  // });
-
-  await stripe.subscriptions.update(subscriptionId, {
-    items,
-    proration_behavior: "create_prorations",
-  });
-
-  // const { invoiceId, invoiceAmount } = await getLatestInvoiceForSubscription({
-  //   subscriptionId,
-  // });
-
-  // if (proratedCredit) {
-  //   await stripe.creditNotes.create({
-  //     invoice: invoiceId, // Invoice that charged the original subscription fee
-  //     amount: proratedCredit, // The prorated credit amount
-  //     reason: "order_change",
-  //     out_of_band_amount: Math.max(0, invoiceAmount - proratedCredit),
-  //   });
-  // }
-  // if (proratedCharge) {
-  //   await chargeForUpgrade({ customerId, subscriptionId });
-  // }
 };
 
 const chargeCustomerThroughPaymentIntent = ({
