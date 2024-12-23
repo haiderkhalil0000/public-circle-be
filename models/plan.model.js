@@ -15,6 +15,11 @@ const schema = new mongoose.Schema(
         required: true,
         default: 0,
       },
+      templateSize: {
+        type: Number,
+        required: true,
+        default: 0,
+      },
     },
     price: {
       type: Number,
