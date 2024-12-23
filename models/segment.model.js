@@ -10,7 +10,7 @@ const { SEGMENT_STATUS } = require("../utils/constants.util");
 
 const schema = new mongoose.Schema(
   {
-    companyId: {
+    company: {
       type: ObjectId,
       required: true,
       index: true,

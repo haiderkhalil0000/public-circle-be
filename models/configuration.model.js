@@ -3,17 +3,18 @@ const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema.Types;
 const {
   constants: {
-    MODELS: { CONFIGURATION },
+    MODELS: { CONFIGURATION, COMPANY },
   },
 } = require("../utils");
 const { DOCUMENT_STATUS } = require("../utils/constants.util");
 
 const schema = new mongoose.Schema(
   {
-    companyId: {
+    company: {
       type: ObjectId,
       required: true,
       index: true,
+      ref: COMPANY,
     },
     emailConfigurations: {
       addresses: [

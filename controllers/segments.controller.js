@@ -11,7 +11,7 @@ const { basicUtil } = require("../utils");
 const createSegment = async ({ name, filters, companyId }) => {
   const existingSegment = await Segment.findOne({
     name,
-    companyId,
+    company: companyId,
     status: DOCUMENT_STATUS.ACTIVE,
   });
 
@@ -24,7 +24,7 @@ const createSegment = async ({ name, filters, companyId }) => {
   Segment.create({
     name,
     filters,
-    companyId,
+    company: companyId,
   });
 };
 
@@ -47,9 +47,12 @@ const readPaginatedSegments = async ({ companyId, pageNumber, pageSize }) => {
   const companyUsersController = require("./company-users.controller");
 
   let [totalRecords, segments] = await Promise.all([
-    Segment.countDocuments({ companyId, status: DOCUMENT_STATUS.ACTIVE }),
+    Segment.countDocuments({
+      company: companyId,
+      status: DOCUMENT_STATUS.ACTIVE,
+    }),
     Segment.find({
-      companyId,
+      company: companyId,
       status: DOCUMENT_STATUS.ACTIVE,
     })
       .skip((parseInt(pageNumber) - 1) * pageSize)
@@ -86,7 +89,7 @@ const readAllSegments = async ({ companyId }) => {
   const companyUsersController = require("./company-users.controller");
 
   const allSegments = await Segment.find({
-    companyId,
+    company: companyId,
     status: DOCUMENT_STATUS.ACTIVE,
   }).lean();
 

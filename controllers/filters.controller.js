@@ -10,7 +10,7 @@ const createFilter = async (
   { companyId }
 ) => {
   await Filter.create({
-    companyId,
+    company: companyId,
     filterLabel,
     filterType,
     filterKey,
@@ -32,12 +32,12 @@ const updateFilter = (
 const readFilter = ({ filterId }) => Filter.findById(filterId);
 
 const readAllFilters = ({ companyId }) =>
-  Filter.find({ companyId, status: FILTER_STATUS.ACTIVE });
+  Filter.find({ company: companyId, status: FILTER_STATUS.ACTIVE });
 
 const readPaginatedFilters = async ({ companyId, pageNumber, pageSize }) => {
   const [totalRecords, filters] = await Promise.all([
-    Filter.countDocuments({ companyId, status: FILTER_STATUS.ACTIVE }),
-    Filter.find({ companyId, status: FILTER_STATUS.ACTIVE })
+    Filter.countDocuments({ company: companyId, status: FILTER_STATUS.ACTIVE }),
+    Filter.find({ company: companyId, status: FILTER_STATUS.ACTIVE })
       .skip((parseInt(pageNumber) - 1) * pageSize)
       .limit(pageSize),
   ]);

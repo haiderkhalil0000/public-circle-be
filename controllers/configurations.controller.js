@@ -17,11 +17,11 @@ const addDataInCompanyConfigurations = async ({
   emailAddress,
   emailDomain,
 }) => {
-  const configuration = await Configuration.findOne({ companyId });
+  const configuration = await Configuration.findOne({ company: companyId });
 
   if (!configuration) {
     await Configuration.create({
-      companyId,
+      company: companyId,
       emailConfigurations: {
         [emailAddress ? "addresses" : "domains"]: [
           {
@@ -86,7 +86,7 @@ const addDataInCompanyConfigurations = async ({
 };
 
 const initiateEmailVerification = async ({ companyId, emailAddress }) => {
-  await addDataInCompanyConfigurations({ companyId, emailAddress });
+  await addDataInCompanyConfigurations({ company: companyId, emailAddress });
 
   sendVerificationEmail({ emailAddress });
 };
@@ -102,13 +102,13 @@ const verifyEmailAddress = async ({ emailAddress }) => {
 };
 
 const initiateDomainVerification = async ({ companyId, emailDomain }) => {
-  await addDataInCompanyConfigurations({ companyId, emailDomain });
+  await addDataInCompanyConfigurations({ company: companyId, emailDomain });
 
   const dnsInfo = await verifyDomain({ emailDomain });
 
   await Configuration.updateOne(
     {
-      companyId,
+      company: companyId,
       "emailConfigurations.domains.emailDomain": emailDomain,
     },
     {
@@ -123,7 +123,7 @@ const initiateDomainVerification = async ({ companyId, emailDomain }) => {
 
 const readConfigurations = async ({ companyId }) => {
   let [configuration, verifiedIdentities] = await Promise.all([
-    Configuration.findOne({ companyId }),
+    Configuration.findOne({ company: companyId }),
     listVerifiedIdentities(),
   ]);
 
@@ -175,7 +175,7 @@ const createConfiguration = async ({
   emailAddresses,
   emailDomains,
 }) => {
-  const configuration = await Configuration.findOne({ companyId });
+  const configuration = await Configuration.findOne({ company: companyId });
 
   if (configuration) {
     throw createHttpError(404, {
@@ -184,7 +184,7 @@ const createConfiguration = async ({
   }
 
   Configuration.create({
-    companyId,
+    company: companyId,
     emailConfigurations: {
       addresses: emailAddresses,
       domains: emailDomains,
@@ -197,7 +197,7 @@ const deleteIdentityFromSES = ({ emailAddress, emailDomain }) => {
 };
 
 const deleteEmailAddress = async ({ companyId, emailAddress }) => {
-  const configuration = await Configuration.findOne({ companyId });
+  const configuration = await Configuration.findOne({ company: companyId });
 
   let isUpdated = false;
 
@@ -234,7 +234,7 @@ const deleteEmailAddress = async ({ companyId, emailAddress }) => {
 const deleteEmailDomain = async ({ companyId, emailDomain }) => {
   const { modifiedCount } = await Configuration.updateOne(
     {
-      companyId,
+      company: companyId,
       "emailConfigurations.domains.emailDomain": emailDomain,
     },
     {
@@ -258,7 +258,7 @@ const attachEmailWithDomain = async ({
   emailDomain,
   emailAddress,
 }) => {
-  const configuration = await Configuration.findOne({ companyId });
+  const configuration = await Configuration.findOne({ company: companyId });
 
   let isUpdated = false;
 
@@ -293,7 +293,7 @@ const attachEmailWithDomain = async ({
 
 const readVerifiedEmailAddresses = async ({ companyId }) => {
   const configuration = await Configuration.findOne({
-    companyId,
+    company: companyId,
   }).lean();
 
   const { emailConfigurations } = configuration ?? {};
