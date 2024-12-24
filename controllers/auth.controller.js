@@ -1,6 +1,5 @@
 const createHttpError = require("http-errors");
 const moment = require("moment");
-const axios = require("axios");
 
 const { User, EmailSent } = require("../models");
 const {
@@ -20,8 +19,6 @@ const {
 } = require("../utils");
 
 const {
-  BEEFREE_CLIENT_ID,
-  BEEFREE_CLIENT_SECRET,
   PUBLIC_CIRCLES_WEB_URL,
   PUBLIC_CIRCLES_EMAIL_ADDRESS,
   ACCESS_TOKEN_EXPIRY,
@@ -170,18 +167,6 @@ const verifyJwtToken = async ({ token, source }) => {
   }
 };
 
-const getBeefreeAccessToken = async ({ currentUserId }) => {
-  const {
-    data: { access_token },
-  } = await axios.post("https://auth.getbee.io/loginV2", {
-    client_id: BEEFREE_CLIENT_ID,
-    client_secret: BEEFREE_CLIENT_SECRET,
-    uid: currentUserId,
-  });
-
-  return access_token;
-};
-
 const changePassword = async ({ currentUserId, oldPassword, newPassword }) => {
   const userDoc = await User.findById(currentUserId);
 
@@ -323,7 +308,6 @@ module.exports = {
   login,
   sendVerificationEmail,
   verifyJwtToken,
-  getBeefreeAccessToken,
   changePassword,
   forgotPassword,
   resetPassword,
