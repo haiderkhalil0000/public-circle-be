@@ -118,12 +118,15 @@ const createSubscription = async ({ currentUserId, customerId, items }) => {
     reward = await Reward.findOne({ isGeneric: true });
   }
 
-  console.log("reward : ", reward);
-
   const phaseStartDate = Math.floor(Date.now() / 1000);
   const phaseEndDate =
     phaseStartDate +
-    (reward.trialInDays || reward.discountInDays) * 24 * 60 * 60;
+    (reward.trialInDays ||
+      reward.discountInDays ||
+      Math.floor(Date.now() / 1000)) *
+      24 *
+      60 *
+      60;
 
   await stripe.subscriptionSchedules.create({
     customer: customerId,
