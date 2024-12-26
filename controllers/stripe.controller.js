@@ -356,8 +356,12 @@ const createATopUpInCustomerBalance = async ({
   const invoice = await stripe.invoices.create({
     customer: customerId,
     description: "Top up",
-    auto_advance: true, // Automatically finalize the invoice
+    collection_method: "send_invoice", // Ensure no automatic charge
+    auto_advance: false, // Do not finalize automatically
   });
+
+  // Finalize the invoice
+  await stripe.invoices.finalizeInvoice(invoice.id);
 
   // Mark the invoice as paid manually
   await stripe.invoices.pay(invoice.id, {
