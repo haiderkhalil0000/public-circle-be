@@ -343,6 +343,25 @@ const createATopUpInCustomerBalance = async ({
       currency: "cad",
     });
   }
+
+  // Add a top-up line item to the invoice
+  await stripe.invoiceItems.create({
+    customer: customerId,
+    amount: amountInSmallestUnit,
+    currency: "cad",
+    description: "Top up",
+  });
+
+  // Create an invoice and attach the PaymentIntent for manual reconciliation
+  const invoice = await stripe.invoices.create({
+    customer: customerId,
+    auto_advance: false, // Do not finalize automatically
+    description: "Top up",
+    payment_intent: paymentIntent.id, // Associate the PaymentIntent with the invoice
+  });
+
+  // Finalize the invoice without charging the customer again
+  await stripe.invoices.finalizeInvoice(invoice.id);
 };
 
 const readCustomerBalance = async ({ customerId }) => {
