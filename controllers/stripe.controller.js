@@ -10,9 +10,10 @@ const { STRIPE_KEY } = process.env;
 
 const stripe = require("stripe")(STRIPE_KEY);
 
-const createStripeCustomer = async ({ companyName, companyId }) =>
+const createStripeCustomer = async ({ companyId, companyName, emailAddress }) =>
   stripe.customers.create({
     name: companyName,
+    email: emailAddress,
     metadata: {
       companyId: companyId,
     },
