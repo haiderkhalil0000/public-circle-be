@@ -329,27 +329,29 @@ const createATopUpInCustomerBalance = async ({
   const defaultPaymentMethodId =
     customer.invoice_settings.default_payment_method;
 
-  const paymentIntent = await chargeCustomerThroughPaymentIntent({
-    customerId,
-    amountInSmallestUnit,
-    currency: "cad",
-    paymentMethodId: defaultPaymentMethodId,
-    description: "Top up",
-  });
+  // const paymentIntent = await chargeCustomerThroughPaymentIntent({
+  //   customerId,
+  //   amountInSmallestUnit,
+  //   currency: "cad",
+  //   paymentMethodId: defaultPaymentMethodId,
+  //   description: "Top up",
+  // });
 
-  if (paymentIntent.status === "succeeded") {
-    await addCustomerBalance({
-      customerId,
-      amountInSmallestUnit,
-      currency: "cad",
-    });
-  }
+  // if (paymentIntent.status === "succeeded") {
+  //   await addCustomerBalance({
+  //     customerId,
+  //     amountInSmallestUnit,
+  //     currency: "cad",
+  //   });
+  // }
 
   const invoice = await stripe.invoices.create({
     customer: customerId,
-    collection_method: "send_invoice",
-    days_until_due: 0,
+    collection_method: "charge_automatically",
     auto_advance: false,
+    payment_settings: {
+      payment_method_types: ["card"],
+    },
   });
 
   await stripe.invoiceItems.create({
@@ -362,9 +364,17 @@ const createATopUpInCustomerBalance = async ({
 
   const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
 
-  await stripe.invoices.pay(finalizedInvoice.id, {
-    paid_out_of_band: true,
-  });
+  if (finalizedInvoice) {
+    await addCustomerBalance({
+      customerId,
+      amountInSmallestUnit,
+      currency: "cad",
+    });
+  }
+
+  // await stripe.invoices.pay(finalizedInvoice.id, {
+  //   paid_out_of_band: true,
+  // });
 };
 
 const readCustomerBalance = async ({ customerId }) => {
