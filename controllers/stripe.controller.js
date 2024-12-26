@@ -358,6 +358,7 @@ const createATopUpInCustomerBalance = async ({
     description: "Top up",
     collection_method: "send_invoice", // Ensure no automatic charge
     auto_advance: false, // Do not finalize automatically
+    days_until_due: 1,
   });
 
   // Finalize the invoice
