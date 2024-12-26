@@ -304,11 +304,11 @@ const readCustomerReceipts = async ({ customerId }) => {
 
 const readDefaultPaymentMethod = async ({ customerId }) => {
   const customer = await stripe.customers.retrieve(customerId);
+  const defaultPaymentMethodId =
+    customer.invoice_settings.default_payment_method;
 
-  if (customer.default_payment_method) {
-    return await stripe.paymentMethods.retrieve(
-      customer.default_payment_method
-    );
+  if (defaultPaymentMethodId) {
+    return await stripe.paymentMethods.retrieve(defaultPaymentMethodId);
   } else {
     throw createHttpError(400, {
       errorMessage: RESPONSE_MESSAGES.DEFAULT_PAYMENT_METHOD_MISSING,
