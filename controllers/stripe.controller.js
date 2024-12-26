@@ -344,7 +344,7 @@ const createATopUpInCustomerBalance = async ({
     });
   }
 
-  // Add a top-up line item to the invoice
+  // Add a line item to the invoice
   await stripe.invoiceItems.create({
     customer: customerId,
     amount: amountInSmallestUnit,
@@ -352,16 +352,17 @@ const createATopUpInCustomerBalance = async ({
     description: "Top up",
   });
 
-  // Create an invoice and attach the PaymentIntent for manual reconciliation
+  // Create and finalize the invoice
   const invoice = await stripe.invoices.create({
     customer: customerId,
-    auto_advance: false, // Do not finalize automatically
     description: "Top up",
-    payment_intent: paymentIntent.id, // Associate the PaymentIntent with the invoice
+    auto_advance: true, // Automatically finalize the invoice
   });
 
-  // Finalize the invoice without charging the customer again
-  await stripe.invoices.finalizeInvoice(invoice.id);
+  // Mark the invoice as paid manually
+  await stripe.invoices.pay(invoice.id, {
+    paid_out_of_band: true, // Indicates the payment was made outside of Stripe
+  });
 };
 
 const readCustomerBalance = async ({ customerId }) => {
