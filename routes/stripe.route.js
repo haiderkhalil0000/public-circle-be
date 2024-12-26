@@ -294,4 +294,65 @@ router.get(
   }
 );
 
+router.get(
+  "/customer-invoices/upcoming",
+  authenticate.verifyToken,
+  validate({
+    query: Joi.object({
+      pageSize: Joi.number().positive().strict().optional(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const upcomingInvoice =
+        await stripeController.readCustomerUpcomingInvoices({
+          customerId: req.user.company.stripe.id,
+          ...req.query,
+        });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.INVOICES_FETCHED,
+        data: upcomingInvoice,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      stripeDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.get(
+  "/customer-receipts",
+  authenticate.verifyToken,
+  validate({
+    query: Joi.object({
+      pageSize: Joi.number().positive().strict().optional(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const customerReceipts = await stripeController.readCustomerReceipts({
+        customerId: req.user.company.stripe.id,
+        ...req.query,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.RECEIPTS_FETCHED,
+        data: customerReceipts,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      stripeDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 module.exports = router;

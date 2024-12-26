@@ -10,10 +10,9 @@ const { STRIPE_KEY } = process.env;
 
 const stripe = require("stripe")(STRIPE_KEY);
 
-const createStripeCustomer = async ({ companyId, companyName, emailAddress }) =>
+const createStripeCustomer = async ({ companyName, companyId }) =>
   stripe.customers.create({
     name: companyName,
-    email: emailAddress,
     metadata: {
       companyId: companyId,
     },
@@ -329,44 +328,15 @@ const createATopUpInCustomerBalance = async ({
   const defaultPaymentMethodId =
     customer.invoice_settings.default_payment_method;
 
-  // const paymentIntent = await chargeCustomerThroughPaymentIntent({
-  //   customerId,
-  //   amountInSmallestUnit,
-  //   currency: "cad",
-  //   paymentMethodId: defaultPaymentMethodId,
-  //   description: "Top up",
-  // });
-
-  // if (paymentIntent.status === "succeeded") {
-  //   await addCustomerBalance({
-  //     customerId,
-  //     amountInSmallestUnit,
-  //     currency: "cad",
-  //   });
-  // }
-
-  const invoice = await stripe.invoices.create({
-    customer: customerId,
-    collection_method: "send_invoice",
-    days_until_due: 0,
-    auto_advance: false,
-  });
-
-  await stripe.invoiceItems.create({
-    customer: customerId,
-    invoice: invoice.id,
-    amount: amountInSmallestUnit,
+  const paymentIntent = await chargeCustomerThroughPaymentIntent({
+    customerId,
+    amountInSmallestUnit,
     currency: "cad",
+    paymentMethodId: defaultPaymentMethodId,
     description: "Top up",
   });
 
-  const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
-
-  await stripe.invoices.pay(finalizedInvoice.id, {
-    paid_out_of_band: true,
-  });
-
-  if (finalizedInvoice) {
+  if (paymentIntent.status === "succeeded") {
     await addCustomerBalance({
       customerId,
       amountInSmallestUnit,
@@ -409,6 +379,22 @@ const readCustomerInvoices = ({ customerId, pageSize = 10 }) =>
     limit: pageSize,
   });
 
+const readCustomerUpcomingInvoices = ({ customerId }) =>
+  stripe.invoices.retrieveUpcoming({
+    customer: customerId,
+  });
+
+const readCustomerReceipts = async ({ customerId }) => {
+  const charges = await stripe.charges.list({
+    customer: customerId,
+    limit: 100,
+  });
+
+  const receipts = charges.data;
+
+  return receipts;
+};
+
 module.exports = {
   createStripeCustomer,
   readSetupIntent,
@@ -423,4 +409,6 @@ module.exports = {
   readCustomerBalance,
   generateImmediateChargeInvoice,
   readCustomerInvoices,
+  readCustomerUpcomingInvoices,
+  readCustomerReceipts,
 };
