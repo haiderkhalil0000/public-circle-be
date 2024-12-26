@@ -32,6 +32,15 @@ const schema = new mongoose.Schema(
       type: Object,
       required: true,
     },
+    size: {
+      type: Number,
+      required: true,
+    },
+    sizeUnit: {
+      type: String,
+      required: true,
+      default: "Bytes",
+    },
     thumbnailURL: {
       type: String,
       required: true,

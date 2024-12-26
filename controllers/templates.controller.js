@@ -58,6 +58,7 @@ const createTemplate = async ({ companyId, name, kind, body, json }) => {
     kind,
     body,
     json,
+    size: Buffer.byteLength(body, "utf-8"),
   };
 
   if (kind === TEMPLATE_KINDS.REGULAR) {
@@ -165,6 +166,7 @@ const updateTemplate = async ({ templateId, templateData, companyId }) => {
     });
 
     templateData.thumbnailURL = url;
+    templateData.size = Buffer.byteLength(body, "utf-8");
   }
 
   const result = await Template.updateOne(

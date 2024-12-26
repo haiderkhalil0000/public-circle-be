@@ -15,7 +15,7 @@ const schema = new mongoose.Schema(
         required: true,
         default: 0,
       },
-      templateSize: {
+      emailContent: {
         type: Number,
         required: true,
         default: 0,

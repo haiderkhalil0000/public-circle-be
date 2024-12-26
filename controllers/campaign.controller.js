@@ -25,11 +25,20 @@ const {
   },
 } = require("../utils");
 
+const {
+  EXTRA_EMAIL_QUOTA,
+  EXTRA_EMAIL_CHARGE,
+  EXTRA_EMAIL_CONTENT_QUOTA,
+  EXTRA_EMAIL_CONTENT_CHARGE,
+} = process.env;
+
 const validateSourceEmailAddress = async ({
   companyId,
   sourceEmailAddress,
 }) => {
-  const configurationDoc = await Configuration.findOne({ companyId }).lean();
+  const configurationDoc = await Configuration.findOne({
+    company: companyId,
+  }).lean();
 
   const verifiedEmailOrDomains = [];
 
@@ -470,6 +479,7 @@ const runCampaign = async ({ campaign }) => {
         toEmailAddress: emailAddresses[index],
         emailSubject: campaign.emailSubject,
         emailContent: mappedContentArray[index],
+        size: template.size,
         sesMessageId: item.MessageId,
       })
     );
@@ -558,108 +568,158 @@ const readAllCampaignLogs = ({ pageNumber, pageSize, companyId }) =>
     .populate(CAMPAIGN);
 
 const readCampaignRecipientsCount = async ({ campaign }) => {
-  const promises = [];
-  const usersCountMap = new Map();
-
   const companyUsersController = require("./company-users.controller");
 
-  usersCountMap.set(campaign._id.toString(), 0);
-  for (const segment of campaign.segments) {
+  const { segments } = await Campaign.findById(campaign._id).populate(
+    "segments",
+    "filters"
+  );
+
+  const filters = segments.map((item) => item.filters);
+
+  const promises = [];
+
+  filters.forEach((filter) => {
     promises.push(
-      companyUsersController
-        .getFiltersCount({
-          filters: segment.filters,
-          companyId: campaign.company,
-        })
-        .then((item) => ({
-          campaignId: campaign._id.toString(),
-          usersCount: item[0].filterCount,
-        }))
-    );
-  }
-
-  const segmentUsersCount = await Promise.all(promises);
-
-  segmentUsersCount.forEach((item) => {
-    usersCountMap.set(
-      item.campaignId,
-      usersCountMap.get(item.campaignId) + item.usersCount
+      companyUsersController.getFilterCount({
+        filter,
+        companyId: campaign.company,
+      })
     );
   });
 
-  return (campaign.usersCount = usersCountMap.get(campaign._id.toString()));
+  let filterCounts = await Promise.all(promises);
+
+  return filterCounts.reduce((total, current) => total + current);
 };
 
-const calculateCharge = ({
-  campaignRecipientsCount,
-  EXTRA_EMAIL_QUOTA,
-  EXTRA_EMAIL_CHARGE,
-}) => {
+const calculateEmailSendingCharge = ({ campaignRecipientsCount }) => {
   // Calculate how many times the quota is exceeded
   const timesExceeded = Math.ceil(campaignRecipientsCount / EXTRA_EMAIL_QUOTA);
 
-  // Calculate total charge
-  const totalCharge = timesExceeded * EXTRA_EMAIL_CHARGE;
+  return timesExceeded * EXTRA_EMAIL_CHARGE;
+};
 
-  return totalCharge;
+const calculateEmailContentCharge = ({ campaignEmailContentSize }) => {
+  // Calculate how many times the quota is exceeded
+  const timesExceeded = Math.ceil(
+    campaignEmailContentSize / EXTRA_EMAIL_CONTENT_QUOTA
+  );
+
+  return timesExceeded * EXTRA_EMAIL_CHARGE;
+};
+
+const disableCampaign = ({ campaignId }) => {
+  Campaign.findByIdAndUpdate(campaignId, { status: CAMPAIGN_STATUS.DISABLED });
 };
 
 const validateCampaign = async ({ campaign }) => {
-  const { EXTRA_EMAIL_QUOTA, EXTRA_EMAIL_CHARGE } = process.env;
+  const populatedCampaign = await Campaign.findById(campaign._id).populate(
+    "emailTemplate"
+  );
 
   const campaignRecipientsCount = await readCampaignRecipientsCount({
     campaign,
   });
 
-  const [totalEmailsSentByCompany, company] = await Promise.all([
-    EmailSent.countDocuments({
-      company: campaign.company,
-    }),
-    Company.findOne({
-      _id: campaign.company,
-    })
-      .populate("stripe")
-      .populate("plan"),
-  ]);
+  campaign = populatedCampaign;
+
+  const [totalEmailsSentByCompany, emailContentSizeDocs, company] =
+    await Promise.all([
+      EmailSent.countDocuments({
+        company: campaign.company,
+      }),
+      EmailSent.find(
+        {
+          company: campaign.company,
+        },
+        {
+          size: 1,
+        }
+      ),
+      Company.findOne({
+        _id: campaign.company,
+      })
+        .populate("stripe")
+        .populate("plan"),
+    ]);
+
+  let totalEmailContentSize = emailContentSizeDocs;
+
+  totalEmailContentSize = totalEmailContentSize
+    .map((item) => item.size)
+    .reduce((total, current) => total + current, 0);
+
+  const stripeController = require("./stripe.controller");
+
+  const companyBalance = await stripeController.readCustomerBalance({
+    customerId: company.stripe.id,
+  });
+
+  let emailSendingCharge = 0,
+    emailContentCharge = 0;
 
   if (
     company.plan &&
     company.plan.quota.email <
       campaignRecipientsCount + totalEmailsSentByCompany
   ) {
-    const stripeController = require("./stripe.controller");
-
-    const companyBalance = await stripeController.readCustomerBalance({
-      customerId: company.stripe.id,
-    });
-
     if (parseInt(companyBalance.split("$")[0]) < parseInt(EXTRA_EMAIL_CHARGE)) {
-      campaign.status = CAMPAIGN_STATUS.DISABLED;
-
-      campaign.save();
+      disableCampaign({ campaignId: campaign._id });
 
       throw createHttpError(400, {
         errorMessage: RESPONSE_MESSAGES.EMAIL_LIMIT_REACHED,
       });
     }
 
-    const totalCharge = calculateCharge({
+    emailSendingCharge = calculateEmailSendingCharge({
       campaignRecipientsCount,
-      EXTRA_EMAIL_QUOTA,
-      EXTRA_EMAIL_CHARGE,
     });
 
-    if (parseInt(companyBalance.split("$")[0]) < totalCharge) {
+    if (parseInt(companyBalance.split("$")[0]) < emailSendingCharge) {
+      disableCampaign({ campaignId: campaign._id });
+
       throw createHttpError(400, {
         errorMessage: RESPONSE_MESSAGES.EMAIL_LIMIT_REACHED,
       });
     }
-
-    await stripeController.generateImmediateChargeInvoice({
-      customerId: company.stripe.id,
-      amountInCents: totalCharge * 100,
-    });
   }
+
+  if (
+    company.plan &&
+    company.plan.quota.emailContent <
+      totalEmailContentSize + campaign.emailTemplate.size
+  ) {
+    if (
+      parseInt(companyBalance.split("$")[0]) <
+      parseInt(EXTRA_EMAIL_CONTENT_CHARGE)
+    ) {
+      disableCampaign({ campaignId: campaign._id });
+
+      throw createHttpError(400, {
+        errorMessage: RESPONSE_MESSAGES.EMAIL_SIZE_LIMIT_REACHED,
+      });
+    }
+
+    emailContentCharge = calculateEmailContentCharge({
+      campaignEmailContentSize: campaign.emailTemplate.size,
+    });
+
+    if (parseInt(companyBalance.split("$")[0]) < emailContentCharge) {
+      disableCampaign({ campaignId: campaign._id });
+
+      throw createHttpError(400, {
+        errorMessage: RESPONSE_MESSAGES.EMAIL_CONTENT_LIMIT_REACHED,
+      });
+    }
+  }
+
+  const totalCharge = emailSendingCharge + emailContentCharge;
+
+  await stripeController.generateImmediateChargeInvoice({
+    customerId: company.stripe.id,
+    amountInCents: totalCharge * 100,
+  });
 };
 
 module.exports = {

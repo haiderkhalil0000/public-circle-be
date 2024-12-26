@@ -47,6 +47,12 @@ const getPossibleFilterValues = async ({ companyId, key }) => {
   return uniqueValues;
 };
 
+const getFilterCount = async ({ filter, companyId }) =>
+  CompanyUser.countDocuments({
+    company: companyId,
+    ...filter,
+  });
+
 const getFiltersCount = async ({ filters, companyId }) => {
   const promises = [];
 
@@ -210,6 +216,7 @@ const uploadCsv = async ({ companyId, file }) => {
 module.exports = {
   getPossibleFilterKeys,
   getPossibleFilterValues,
+  getFilterCount,
   getFiltersCount,
   search,
   readAllCompanyUsers,

@@ -46,6 +46,11 @@ const schema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    size: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
     sesMessageId: {
       type: String,
     },
