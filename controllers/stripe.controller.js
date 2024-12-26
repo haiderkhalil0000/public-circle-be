@@ -345,7 +345,6 @@ const createATopUpInCustomerBalance = async ({
     });
   }
 
-  // Add a line item to the invoice
   await stripe.invoiceItems.create({
     customer: customerId,
     amount: amountInSmallestUnit,
@@ -353,21 +352,16 @@ const createATopUpInCustomerBalance = async ({
     description: "Top up",
   });
 
-  // Create and finalize the invoice
   const invoice = await stripe.invoices.create({
     customer: customerId,
-    description: "Top up",
-    collection_method: "send_invoice", // Ensure no automatic charge
-    auto_advance: false, // Do not finalize automatically
-    days_until_due: 1,
+    collection_method: "manual",
+    auto_advance: false,
   });
 
-  // Finalize the invoice
-  await stripe.invoices.finalizeInvoice(invoice.id);
+  const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
 
-  // Mark the invoice as paid manually
-  await stripe.invoices.pay(invoice.id, {
-    paid_out_of_band: true, // Indicates the payment was made outside of Stripe
+  await stripe.invoices.pay(finalizedInvoice.id, {
+    paid_out_of_band: true,
   });
 };
 
