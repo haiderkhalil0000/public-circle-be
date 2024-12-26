@@ -354,7 +354,8 @@ const createATopUpInCustomerBalance = async ({
 
   const invoice = await stripe.invoices.create({
     customer: customerId,
-    collection_method: "manual",
+    collection_method: "send_invoice",
+    days_until_due: 0,
     auto_advance: false,
   });
 
