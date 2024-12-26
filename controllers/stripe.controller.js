@@ -345,18 +345,19 @@ const createATopUpInCustomerBalance = async ({
     });
   }
 
-  await stripe.invoiceItems.create({
-    customer: customerId,
-    amount: amountInSmallestUnit,
-    currency: "cad",
-    description: "Top up",
-  });
-
   const invoice = await stripe.invoices.create({
     customer: customerId,
     collection_method: "send_invoice",
     days_until_due: 0,
     auto_advance: false,
+  });
+
+  await stripe.invoiceItems.create({
+    customer: customerId,
+    invoice: invoice.id,
+    amount: amountInSmallestUnit,
+    currency: "cad",
+    description: "Top up",
   });
 
   const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
