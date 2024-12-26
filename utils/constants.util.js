@@ -193,7 +193,13 @@ module.exports = {
     CUSTOMER_BALANCE_FETCHED: "Customer balance fetched successfully.",
     EMAIL_LIMIT_REACHED:
       "Email sending limit reached for your current subscription!",
+    EMAIL_CONTENT_LIMIT_REACHED:
+      "Email content limit reached for your current subscription!",
     INVOICES_FETCHED: "Invoices fetched successfully.",
+    RECEIPTS_FETCHED: "Receipts fetched successfully.",
+    DEFAULT_PAYMENT_METHOD_FETCHED:
+      "Default payment method fetched successfully.",
+    DEFAULT_PAYMENT_METHOD_MISSING: "Default payment method not found!",
   },
 
   INTERACTION_CHANNELS: {

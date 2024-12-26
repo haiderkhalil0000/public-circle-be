@@ -355,4 +355,29 @@ router.get(
   }
 );
 
+router.get(
+  "/default-payment-method",
+  authenticate.verifyToken,
+  async (req, res, next) => {
+    try {
+      const defaultPaymentMethod =
+        await stripeController.readDefaultPaymentMethod({
+          customerId: req.user.company.stripe.id,
+        });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.DEFAULT_PAYMENT_METHOD_FETCHED,
+        data: defaultPaymentMethod,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      stripeDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 module.exports = router;
