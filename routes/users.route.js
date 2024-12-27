@@ -22,6 +22,7 @@ router.post(
   async (req, res, next) => {
     try {
       const dashboardData = await usersController.readDashboardData({
+        currentUserId: req.user._id,
         companyId: req.user.company._id,
         ...req.body,
       });

@@ -240,7 +240,7 @@ const deleteUserUnderACompany = async ({ companyId, userId }) => {
   }
 };
 
-const readDashboardData = async ({ companyId, graphScope }) => {
+const readDashboardData = async ({ currentUserId, companyId, graphScope }) => {
   const emailsSentController = require("./emails-sent-controller");
   const [
     companyUsersCount,
@@ -253,6 +253,7 @@ const readDashboardData = async ({ companyId, graphScope }) => {
       company: companyId,
       isEmailVerified: true,
       status: USER_STATUS.ACTIVE,
+      _id: { $ne: currentUserId },
     }),
     CompanyUser.countDocuments({ company: companyId }),
     Campaign.countDocuments({
