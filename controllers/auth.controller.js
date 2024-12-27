@@ -36,6 +36,7 @@ const register = async ({ emailAddress, password }) => {
   return User.create({
     emailAddress,
     password,
+    isEmailVerified: true,
   });
 };
 
