@@ -120,22 +120,15 @@ const createSubscription = async ({ currentUserId, customerId, items }) => {
 
   const phaseStartDate = Math.floor(Date.now() / 1000);
 
-  console.log("phaseStartDate: ", phaseStartDate);
-  console.log("trialInDays: ", reward.trialInDays);
-  console.log("discountInDays: ", reward.discountInDays);
-  console.log("math: ", Math.floor(Date.now() / 1000) + 1);
-
   const phaseEndDate =
     phaseStartDate +
     (reward.trialInDays || reward.discountInDays || 1) * 24 * 60 * 60;
-
-  console.log("phaseEndDate: ", phaseEndDate);
 
   await stripe.subscriptionSchedules.create({
     customer: customerId,
     start_date: Math.floor(Date.now() / 1000), // Start immediately
     end_behavior: "release", // Continue the subscription after the schedule ends
-    // payment_behavior: "immediate_payment",
+    payment_behavior: "immediate_payment",
     phases: [
       {
         items,
