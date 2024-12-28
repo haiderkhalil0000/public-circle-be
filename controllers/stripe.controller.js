@@ -123,7 +123,7 @@ const createSubscription = async ({ currentUserId, customerId, items }) => {
   console.log("phaseStartDate: ", phaseStartDate);
   console.log("trialInDays: ", reward.trialInDays);
   console.log("discountInDays: ", reward.discountInDays);
-  console.log("math: ", Math.floor(Date.now() / 1000));
+  console.log("math: ", Math.floor(Date.now() / 1000) + 1);
 
   const phaseEndDate =
     phaseStartDate +
