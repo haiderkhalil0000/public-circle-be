@@ -191,6 +191,7 @@ router.patch(
   async (req, res, next) => {
     try {
       await stripeController.upgradeOrDowngradeSubscription({
+        currentUser: req.user,
         customerId: req.user.company.stripe.id,
         ...req.body,
       });

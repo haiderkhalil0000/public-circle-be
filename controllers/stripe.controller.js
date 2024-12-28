@@ -186,7 +186,11 @@ const createCoupon = async ({ id, name, amountOff, percentageOff }) => {
   await stripe.coupons.create(query);
 };
 
-const upgradeOrDowngradeSubscription = async ({ customerId, items }) => {
+const upgradeOrDowngradeSubscription = async ({
+  currentUser,
+  customerId,
+  items,
+}) => {
   // Retrieve active subscriptions
   const activeSubscriptions = await stripe.subscriptions.list({
     customer: customerId,
@@ -209,10 +213,37 @@ const upgradeOrDowngradeSubscription = async ({ customerId, items }) => {
 
   const combinedItems = [...currentItems, ...updatedItems];
 
-  await stripe.subscriptions.update(subscription.id, {
-    items: combinedItems,
-    proration_behavior: "always_invoice",
-  });
+  if (currentUser.referralCodeConsumed) {
+    const subscriptionSchedule = await stripe.subscriptionSchedules.retrieve(
+      subscription.schedule
+    );
+
+    const updatedPhases = subscriptionSchedule.phases.map((phase, index) => {
+      // First phase: Keep coupon and plan unchanged
+      if (index === 0) {
+        return phase; // Leave the first phase as-is
+      }
+
+      // Second phase: Upgrade to the new plan without a coupon
+      if (index === 1) {
+        return {
+          ...phase,
+          items: combinedItems,
+        };
+      }
+
+      return phase; // Leave other phases unchanged
+    });
+
+    await stripe.subscriptionSchedules.update(subscription.schedule, {
+      phases: updatedPhases,
+    });
+  } else {
+    await stripe.subscriptions.update(subscription.id, {
+      items: combinedItems,
+      proration_behavior: "always_invoice",
+    });
+  }
 };
 
 const chargeCustomerThroughPaymentIntent = ({
