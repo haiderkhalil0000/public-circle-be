@@ -129,7 +129,7 @@ const createSubscription = async ({ currentUserId, customerId, items }) => {
     phaseStartDate +
     (reward.trialInDays ||
       reward.discountInDays ||
-      Math.floor(Date.now() / 1000)) *
+      Math.floor(Date.now() / 1000) + 1) *
       24 *
       60 *
       60;
