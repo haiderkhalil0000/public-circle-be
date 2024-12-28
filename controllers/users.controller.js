@@ -274,11 +274,12 @@ const readDashboardData = async ({ currentUserId, companyId, graphScope }) => {
 };
 
 const verifyReferralCode = async ({ referralCode, currentUserId }) => {
-  const [referralCodeDoc, currentUserDoc] = await Promise.all([
+  const [referralCodeDoc, currentUserDoc, genericReward] = await Promise.all([
     ReferralCode.findOne({
       code: referralCode,
     }).populate("reward"),
     User.findById(currentUserId),
+    Reward.findOne({ isGeneric: true }),
   ]);
 
   if (currentUserDoc.invalidReferralCodeAttempts >= 8) {
@@ -306,6 +307,8 @@ const verifyReferralCode = async ({ referralCode, currentUserId }) => {
   if (referralCodeDoc.reward) {
     return referralCodeDoc.reward;
   }
+
+  return genericReward;
 };
 
 const readCurrentUser = ({ currentUserId }) =>
