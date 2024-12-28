@@ -128,7 +128,6 @@ const createSubscription = async ({ currentUserId, customerId, items }) => {
     customer: customerId,
     start_date: Math.floor(Date.now() / 1000), // Start immediately
     end_behavior: "release", // Continue the subscription after the schedule ends
-    payment_behavior: "immediate_payment",
     phases: [
       {
         items,
@@ -140,6 +139,23 @@ const createSubscription = async ({ currentUserId, customerId, items }) => {
       },
     ],
   });
+
+  // Retrieve the first invoice created for this customer
+  const invoices = await stripe.invoices.list({
+    customer: customerId,
+    limit: 1,
+  });
+
+  if (invoices.data.length > 0) {
+    const latestInvoice = invoices.data[0];
+    if (latestInvoice.status === "draft") {
+      // Finalize the invoice
+      await stripe.invoices.finalizeInvoice(latestInvoice.id);
+
+      // Attempt immediate payment (optional, for fail-safe)
+      await stripe.invoices.pay(latestInvoice.id);
+    }
+  }
 };
 
 const attachPaymentMethod = async ({ customerId, paymentMethodId }) => {
