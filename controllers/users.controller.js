@@ -8,6 +8,7 @@ const {
   Campaign,
   EmailSent,
   ReferralCode,
+  Reward,
 } = require("../models");
 const {
   basicUtil,
