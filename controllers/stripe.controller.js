@@ -228,7 +228,7 @@ const upgradeOrDowngradeSubscription = async ({
       if (index === 1) {
         return {
           ...phase,
-          items: combinedItems,
+          items,
         };
       }
 
