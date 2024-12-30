@@ -208,7 +208,6 @@ const upgradeOrDowngradeSubscription = async ({
   // Merge new items into the existing ones
   const updatedItems = items.map((item) => ({
     price: item.price,
-    quantity: item.quantity || 1,
   }));
 
   const combinedItems = [...currentItems, ...updatedItems];
@@ -218,25 +217,15 @@ const upgradeOrDowngradeSubscription = async ({
       subscription.schedule
     );
 
-    const updatedPhases = subscriptionSchedule.phases.map((phase, index) => {
-      // First phase: Keep coupon and plan unchanged
-      if (index === 0) {
-        return phase; // Leave the first phase as-is
-      }
-
-      // Second phase: Upgrade to the new plan without a coupon
-      if (index === 1) {
-        return {
-          ...phase,
-          items,
-        };
-      }
-
-      return phase; // Leave other phases unchanged
-    });
+    const newPhase = [
+      {
+        start_date: Math.floor(Date.now() / 1000),
+        items,
+      },
+    ];
 
     await stripe.subscriptionSchedules.update(subscription.schedule, {
-      phases: updatedPhases,
+      phases: newPhase,
     });
   } else {
     await stripe.subscriptions.update(subscription.id, {
