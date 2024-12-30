@@ -197,7 +197,7 @@ const upgradeOrDowngradeSubscription = async ({
   customerId,
   items,
 }) => {
-  // Retrieve active subscriptions
+  // 1. Retrieve the active subscription(s)
   const activeSubscriptions = await stripe.subscriptions.list({
     customer: customerId,
     status: "active",
@@ -205,7 +205,6 @@ const upgradeOrDowngradeSubscription = async ({
 
   const subscription = activeSubscriptions.data[0];
 
-  // Map current subscription items to match Stripe's update format
   const currentItems = subscription.items.data.map((item) => ({
     id: item.id,
     deleted: true,
@@ -217,10 +216,8 @@ const upgradeOrDowngradeSubscription = async ({
 
   const combinedItems = [...currentItems, ...updatedItems];
 
-  if (currentUser.referralCodeConsumed) {
-    if (subscription.schedule) {
-      await stripe.subscriptionSchedules.release(subscription.schedule);
-    }
+  if (currentUser.referralCodeConsumed && subscription.schedule) {
+    await stripe.subscriptionSchedules.release(subscription.schedule.id);
   }
 
   const updatedSubscription = await stripe.subscriptions.update(
@@ -232,8 +229,10 @@ const upgradeOrDowngradeSubscription = async ({
   );
 
   if (updatedSubscription.discount) {
-    await stripe.subscriptions.deleteDiscount(subscription.id);
+    await stripe.subscriptions.deleteDiscount(updatedSubscription.id);
   }
+
+  return updatedSubscription;
 };
 
 const chargeCustomerThroughPaymentIntent = ({
