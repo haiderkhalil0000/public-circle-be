@@ -242,7 +242,7 @@ const deleteUserUnderACompany = async ({ companyId, userId }) => {
 };
 
 const readDashboardData = async ({ currentUserId, companyId, graphScope }) => {
-  const emailsSentController = require("./emails-sent-controller");
+  const emailsSentController = require("./emails-sent.controller");
   const [
     companyUsersCount,
     companyContactsCount,

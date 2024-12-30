@@ -10,7 +10,7 @@ const readCampaignRunsStats = async ({ campaignId, graphScope }) => {
 
   const query = { campaignRun: { $in: campaignRunIds } };
 
-  const emailsSentController = require("./emails-sent-controller");
+  const emailsSentController = require("./emails-sent.controller");
 
   const [
     totalEmailsSent,
@@ -109,7 +109,7 @@ const readCampaignRunEmailsSentStats = async ({
 }) => {
   const query = { campaignRun: campaignRunId };
 
-  const emailsSentController = require("./emails-sent-controller");
+  const emailsSentController = require("./emails-sent.controller");
 
   const [
     totalEmailsSent,

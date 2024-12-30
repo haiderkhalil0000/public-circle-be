@@ -151,7 +151,15 @@ const createSubscription = async ({ currentUserId, customerId, items }) => {
       await stripe.invoices.finalizeInvoice(latestInvoice.id);
 
       // Attempt immediate payment (optional, for fail-safe)
-      await stripe.invoices.pay(latestInvoice.id);
+      try {
+        await stripe.invoices.pay(latestInvoice.id);
+      } catch (err) {
+        if (err.message.includes("This invoice has already been paid")) {
+          //ignore
+        } else {
+          throw createHttpError(400, { errorMessage: err.message });
+        }
+      }
     }
   }
 };
