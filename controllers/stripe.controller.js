@@ -205,7 +205,6 @@ const upgradeOrDowngradeSubscription = async ({
     deleted: true,
   }));
 
-  // Merge new items into the existing ones
   const updatedItems = items.map((item) => ({
     price: item.price,
   }));
@@ -219,6 +218,7 @@ const upgradeOrDowngradeSubscription = async ({
   await stripe.subscriptions.update(subscription.id, {
     items: combinedItems,
     proration_behavior: "always_invoice",
+    coupon: null,
   });
 };
 
