@@ -217,12 +217,17 @@ const upgradeOrDowngradeSubscription = async ({
     }
   }
 
-  await stripe.subscriptions.update(subscription.id, {
-    items: combinedItems,
-    proration_behavior: "always_invoice",
-  });
+  const updatedSubscription = await stripe.subscriptions.update(
+    subscription.id,
+    {
+      items: combinedItems,
+      proration_behavior: "always_invoice",
+    }
+  );
 
-  await stripe.subscriptions.deleteDiscount(subscription.id);
+  if (updatedSubscription.discount) {
+    await stripe.subscriptions.deleteDiscount(subscription.id);
+  }
 };
 
 const chargeCustomerThroughPaymentIntent = ({
