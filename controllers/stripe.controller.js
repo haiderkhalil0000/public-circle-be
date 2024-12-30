@@ -351,6 +351,21 @@ const readDefaultPaymentMethod = async ({ customerId }) => {
 const readStripeCustomer = ({ customerId }) =>
   stripe.customers.retrieve(customerId);
 
+const readCustomerBalanceHistory = async ({ customerId }) => {
+  const transactions = await stripe.customers.listBalanceTransactions(
+    customerId
+  );
+
+  return transactions.data.map((transaction) => ({
+    id: transaction.id,
+    amount: transaction.amount,
+    currency: transaction.currency,
+    description: transaction.description,
+    created: transaction.created * 1000, // Send as timestamp
+    type: transaction.type,
+  }));
+};
+
 module.exports = {
   createStripeCustomer,
   readStripeCustomer,
@@ -369,4 +384,5 @@ module.exports = {
   readCustomerUpcomingInvoices,
   readCustomerReceipts,
   readDefaultPaymentMethod,
+  readCustomerBalanceHistory,
 };

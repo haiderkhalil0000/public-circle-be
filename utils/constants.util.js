@@ -191,6 +191,8 @@ module.exports = {
     SUBSCRIPTION_UPDATED: "Subscription updated successfully.",
     TOP_UP_SUCCESSFULL: "Topped up successfully.",
     CUSTOMER_BALANCE_FETCHED: "Customer balance fetched successfully.",
+    CUSTOMER_BALANCE_HISTORY_FETCHED:
+      "Customer balance history fetched successfully.",
     EMAIL_LIMIT_REACHED:
       "Email sending limit reached for your current subscription!",
     EMAIL_CONTENT_LIMIT_REACHED:

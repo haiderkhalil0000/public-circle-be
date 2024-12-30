@@ -266,6 +266,31 @@ router.get(
 );
 
 router.get(
+  "/customer-balance-history",
+  authenticate.verifyToken,
+  async (req, res, next) => {
+    try {
+      const customerBalanceHistory =
+        await stripeController.readCustomerBalanceHistory({
+          customerId: req.user.company.stripe.id,
+        });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.CUSTOMER_BALANCE_HISTORY_FETCHED,
+        data: customerBalanceHistory,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      stripeDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.get(
   "/customer-invoices",
   authenticate.verifyToken,
   validate({
