@@ -213,26 +213,13 @@ const upgradeOrDowngradeSubscription = async ({
   const combinedItems = [...currentItems, ...updatedItems];
 
   if (currentUser.referralCodeConsumed) {
-    const subscriptionSchedule = await stripe.subscriptionSchedules.retrieve(
-      subscription.schedule
-    );
-
-    const newPhase = [
-      {
-        start_date: Math.floor(Date.now() / 1000),
-        items,
-      },
-    ];
-
-    await stripe.subscriptionSchedules.update(subscription.schedule, {
-      phases: newPhase,
-    });
-  } else {
-    await stripe.subscriptions.update(subscription.id, {
-      items: combinedItems,
-      proration_behavior: "always_invoice",
-    });
+    await stripe.subscriptionSchedules.release(subscription.schedule);
   }
+
+  await stripe.subscriptions.update(subscription.id, {
+    items: combinedItems,
+    proration_behavior: "always_invoice",
+  });
 };
 
 const chargeCustomerThroughPaymentIntent = ({
