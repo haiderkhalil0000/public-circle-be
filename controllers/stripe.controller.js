@@ -98,8 +98,6 @@ const createSubscription = async ({ currentUserId, customerId, items }) => {
     return await stripe.subscriptions.create({
       customer: customerId,
       items,
-      // trial_period_days: trialDays, // Optional: Set the trial period (in days)
-      // expand: ["latest_invoice.payment_intent"], // Expand the invoice and payment intent for further processing
     });
   }
 
@@ -153,7 +151,7 @@ const createSubscription = async ({ currentUserId, customerId, items }) => {
       await stripe.invoices.finalizeInvoice(latestInvoice.id);
 
       // Attempt immediate payment (optional, for fail-safe)
-      await stripe.invoices.pay(latestInvoice.id);
+      // await stripe.invoices.pay(latestInvoice.id);
     }
   }
 };
