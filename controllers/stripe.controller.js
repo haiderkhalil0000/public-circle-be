@@ -154,7 +154,7 @@ const createSubscription = async ({ currentUserId, customerId, items }) => {
       try {
         await stripe.invoices.pay(latestInvoice.id);
       } catch (err) {
-        if (err.message.includes("This invoice has already been paid")) {
+        if (err.message.includes("Invoice is already paid")) {
           //ignore
         } else {
           throw createHttpError(400, { errorMessage: err.message });
