@@ -212,13 +212,14 @@ const upgradeOrDowngradeSubscription = async ({
   const combinedItems = [...currentItems, ...updatedItems];
 
   if (currentUser.referralCodeConsumed) {
-    await stripe.subscriptionSchedules.release(subscription.schedule);
+    if (subscription.schedule) {
+      await stripe.subscriptionSchedules.release(subscription.schedule);
+    }
   }
 
   await stripe.subscriptions.update(subscription.id, {
     items: combinedItems,
     proration_behavior: "always_invoice",
-    coupon: null,
   });
 
   await stripe.subscriptions.deleteDiscount(subscription.id);
