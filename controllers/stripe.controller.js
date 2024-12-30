@@ -220,6 +220,8 @@ const upgradeOrDowngradeSubscription = async ({
     proration_behavior: "always_invoice",
     coupon: null,
   });
+
+  await stripe.subscriptions.deleteDiscount(subscription.id);
 };
 
 const chargeCustomerThroughPaymentIntent = ({
