@@ -151,7 +151,7 @@ const createSubscription = async ({ currentUserId, customerId, items }) => {
       await stripe.invoices.finalizeInvoice(latestInvoice.id);
 
       // Attempt immediate payment (optional, for fail-safe)
-      // await stripe.invoices.pay(latestInvoice.id);
+      await stripe.invoices.pay(latestInvoice.id);
     }
   }
 };
