@@ -18,7 +18,6 @@ router.post(
     body: Joi.object({
       name: Joi.string().required(),
       body: Joi.string().required(),
-      json: Joi.string().required(),
       kind: Joi.string()
         .valid(TEMPLATE_KINDS.REGULAR, TEMPLATE_KINDS.SAMPLE)
         .required(),

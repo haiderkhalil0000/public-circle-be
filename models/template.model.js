@@ -28,10 +28,6 @@ const schema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    json: {
-      type: Object,
-      required: true,
-    },
     size: {
       type: Number,
       required: true,

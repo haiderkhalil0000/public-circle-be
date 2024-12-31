@@ -40,7 +40,7 @@ const createThumbnail = async ({ html, width, height }) => {
   return screenshotBuffer;
 };
 
-const createTemplate = async ({ companyId, name, kind, body, json }) => {
+const createTemplate = async ({ companyId, name, kind, body }) => {
   const existingTemplate = await Template.findOne({
     name,
     company: companyId,
@@ -57,7 +57,6 @@ const createTemplate = async ({ companyId, name, kind, body, json }) => {
     name,
     kind,
     body,
-    json,
     size: Buffer.byteLength(body, "utf-8"),
   };
 
