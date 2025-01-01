@@ -100,6 +100,9 @@ const createSubscription = async ({ currentUserId, customerId, items }) => {
       items,
       payment_behavior: "default_incomplete", // Prevents automatic finalization
       collection_method: "charge_automatically", // Automatically charge when finalized
+      invoice_settings: {
+        auto_advance: false, // Ensure the invoice remains in draft state
+      },
     });
 
     const invoices = await stripe.invoices.list({
@@ -113,9 +116,6 @@ const createSubscription = async ({ currentUserId, customerId, items }) => {
     console.log("newInvoiceId", newInvoiceId);
 
     if (newInvoiceId) {
-      // Ensure the invoice is not auto-finalized (optional safety check)
-      await stripe.invoices.update(newInvoiceId, { auto_advance: false });
-
       await stripe.invoices.finalizeInvoice(newInvoiceId);
     }
 
