@@ -95,7 +95,7 @@ const createSubscription = async ({ currentUserId, customerId, items }) => {
   }).populate("referralCodeConsumed");
 
   if (!currentUserDoc.referralCodeConsumed) {
-    await stripe.subscriptions.create({
+    const subscription = await stripe.subscriptions.create({
       customer: customerId,
       items,
       payment_behavior: "default_incomplete", // Prevents automatic finalization
