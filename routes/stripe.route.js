@@ -15,7 +15,7 @@ router.get(
   authenticate.verifyToken,
   validate({
     query: Joi.object({
-      pageSize: Joi.number().positive().strict().required(),
+      pageSize: Joi.number().required(),
     }),
   }),
   async (req, res, next) => {
@@ -133,7 +133,7 @@ router.get(
   authenticate.verifyToken,
   validate({
     query: Joi.object({
-      pageSize: Joi.number().positive().strict().required(),
+      pageSize: Joi.number().required(),
     }),
   }),
   async (req, res, next) => {
@@ -306,7 +306,7 @@ router.get(
   authenticate.verifyToken,
   validate({
     query: Joi.object({
-      pageSize: Joi.number().positive().strict().positive().strict().optional(),
+      pageSize: Joi.number().optional(),
     }),
   }),
   async (req, res, next) => {
@@ -336,7 +336,7 @@ router.get(
   authenticate.verifyToken,
   validate({
     query: Joi.object({
-      pageSize: Joi.number().positive().strict().positive().strict().optional(),
+      pageSize: Joi.number().optional(),
     }),
   }),
   async (req, res, next) => {
@@ -367,7 +367,7 @@ router.get(
   authenticate.verifyToken,
   validate({
     query: Joi.object({
-      pageSize: Joi.number().positive().strict().positive().strict().optional(),
+      pageSize: Joi.number().optional(),
     }),
   }),
   async (req, res, next) => {

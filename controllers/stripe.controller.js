@@ -98,8 +98,6 @@ const createSubscription = async ({ currentUserId, customerId, items }) => {
     const subscription = await stripe.subscriptions.create({
       customer: customerId,
       items,
-      payment_behavior: "default_incomplete", // Prevents automatic finalization
-      collection_method: "charge_automatically", // Automatically charge when finalized
     });
 
     const invoices = await stripe.invoices.list({
