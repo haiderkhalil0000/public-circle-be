@@ -151,8 +151,8 @@ router.get(
   authenticate.verifyToken,
   validate({
     query: Joi.object({
-      pageNumber: Joi.number().optional(),
-      pageSize: Joi.number().optional(),
+      pageNumber: Joi.number().positive().strict().optional(),
+      pageSize: Joi.number().positive().strict().optional(),
     }),
   }),
   async (req, res, next) => {

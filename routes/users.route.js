@@ -75,13 +75,17 @@ router.patch(
       secondaryEmail: Joi.string(),
       companySize: Joi.string(),
       address: Joi.string(),
-      postalCode: Joi.number(),
+      postalCode: Joi.number().positive().strict(),
       city: Joi.string(),
       province: Joi.string(),
       country: Joi.string(),
       role: Joi.string(),
-      signUpStepsCompleted: Joi.number().min(1).max(8),
-      watchTutorialStepsCompleted: Joi.number().min(1).max(8),
+      signUpStepsCompleted: Joi.number().positive().strict().min(1).max(8),
+      watchTutorialStepsCompleted: Joi.number()
+        .positive()
+        .strict()
+        .min(1)
+        .max(8),
     }),
   }),
   async (req, res, next) => {
@@ -192,8 +196,8 @@ router.get(
   authenticate.verifyToken,
   validate({
     query: Joi.object({
-      pageNumber: Joi.number().required(),
-      pageSize: Joi.number().required(),
+      pageNumber: Joi.number().positive().strict().required(),
+      pageSize: Joi.number().positive().strict().required(),
     }),
   }),
   async (req, res, next) => {

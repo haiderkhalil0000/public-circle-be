@@ -22,11 +22,11 @@ router.post(
           REWARD_KIND.PERCENTAGE_DISCOUNT
         )
         .required(),
-      trialInDays: Joi.number().optional(),
-      discountInDays: Joi.number().optional(),
+      trialInDays: Joi.number().positive().strict().optional(),
+      discountInDays: Joi.number().positive().strict().optional(),
       discounts: Joi.object({
-        fixedDiscount: Joi.number().optional(),
-        percentageDiscount: Joi.number().optional(),
+        fixedDiscount: Joi.number().positive().strict().optional(),
+        percentageDiscount: Joi.number().positive().strict().optional(),
       }).optional(),
     }),
   }),

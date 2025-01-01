@@ -15,7 +15,7 @@ router.get(
   authenticate.verifyToken,
   validate({
     query: Joi.object({
-      pageSize: Joi.number().required(),
+      pageSize: Joi.number().positive().strict().required(),
     }),
   }),
   async (req, res, next) => {
@@ -96,7 +96,13 @@ router.post(
   authenticate.verifyToken,
   validate({
     body: Joi.object({
-      items: Joi.array().required(),
+      items: Joi.array()
+        .items(
+          Joi.object({
+            price: Joi.string().required(),
+          })
+        )
+        .required(),
     }),
   }),
   async (req, res, next) => {
@@ -127,7 +133,7 @@ router.get(
   authenticate.verifyToken,
   validate({
     query: Joi.object({
-      pageSize: Joi.number().required(),
+      pageSize: Joi.number().positive().strict().required(),
     }),
   }),
   async (req, res, next) => {
@@ -216,7 +222,12 @@ router.post(
   authenticate.verifyToken,
   validate({
     body: Joi.object({
-      amountInSmallestUnit: Joi.number().positive().strict().required(),
+      amountInSmallestUnit: Joi.number()
+        .positive()
+        .strict()
+        .positive()
+        .strict()
+        .required(),
     }),
   }),
   async (req, res, next) => {
@@ -295,7 +306,7 @@ router.get(
   authenticate.verifyToken,
   validate({
     query: Joi.object({
-      pageSize: Joi.number().positive().strict().optional(),
+      pageSize: Joi.number().positive().strict().positive().strict().optional(),
     }),
   }),
   async (req, res, next) => {
@@ -325,7 +336,7 @@ router.get(
   authenticate.verifyToken,
   validate({
     query: Joi.object({
-      pageSize: Joi.number().positive().strict().optional(),
+      pageSize: Joi.number().positive().strict().positive().strict().optional(),
     }),
   }),
   async (req, res, next) => {
@@ -356,7 +367,7 @@ router.get(
   authenticate.verifyToken,
   validate({
     query: Joi.object({
-      pageSize: Joi.number().positive().strict().optional(),
+      pageSize: Joi.number().positive().strict().positive().strict().optional(),
     }),
   }),
   async (req, res, next) => {

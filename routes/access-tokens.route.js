@@ -93,8 +93,8 @@ router.get(
   authenticate.verifyToken,
   validate({
     query: Joi.object({
-      pageNumber: Joi.number().required(),
-      pageSize: Joi.number().required(),
+      pageNumber: Joi.number().positive().strict().required(),
+      pageSize: Joi.number().positive().strict().required(),
     }),
   }),
   async (req, res, next) => {
