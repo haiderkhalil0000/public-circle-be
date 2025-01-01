@@ -104,6 +104,8 @@ const createSubscription = async ({ currentUserId, customerId, items }) => {
 
     const newInvoiceId = subscription.latest_invoice?.id;
 
+    console.log("newInvoiceId", newInvoiceId);
+
     if (newInvoiceId) {
       // Ensure the invoice is not auto-finalized (optional safety check)
       await stripe.invoices.update(newInvoiceId, { auto_advance: false });
