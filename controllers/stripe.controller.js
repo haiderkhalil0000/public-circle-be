@@ -95,10 +95,23 @@ const createSubscription = async ({ currentUserId, customerId, items }) => {
   }).populate("referralCodeConsumed");
 
   if (!currentUserDoc.referralCodeConsumed) {
-    return await stripe.subscriptions.create({
+    await stripe.subscriptions.create({
       customer: customerId,
       items,
+      payment_behavior: "default_incomplete", // Prevents automatic finalization
+      collection_method: "charge_automatically", // Automatically charge when finalized
     });
+
+    const newInvoiceId = subscription.latest_invoice?.id;
+
+    if (newInvoiceId) {
+      // Ensure the invoice is not auto-finalized (optional safety check)
+      await stripe.invoices.update(newInvoiceId, { auto_advance: false });
+
+      await stripe.invoices.finalizeInvoice(newInvoiceId);
+    }
+
+    return;
   }
 
   let referralCodeDoc = await ReferralCode.findById(
@@ -217,7 +230,7 @@ const upgradeOrDowngradeSubscription = async ({
   const combinedItems = [...currentItems, ...updatedItems];
 
   if (currentUser.referralCodeConsumed && subscription.schedule) {
-    await stripe.subscriptionSchedules.release(subscription.schedule.id);
+    await stripe.subscriptionSchedules.release(subscription.schedule);
   }
 
   const updatedSubscription = await stripe.subscriptions.update(
@@ -225,14 +238,39 @@ const upgradeOrDowngradeSubscription = async ({
     {
       items: combinedItems,
       proration_behavior: "always_invoice",
+      // This ensures the invoice isn't automatically finalized & charged
+      payment_behavior: "default_incomplete",
+      // Expand the latest invoice so we can manipulate it right away
+      expand: ["latest_invoice"],
     }
   );
+
+  const newInvoiceId = updatedSubscription.latest_invoice?.id;
+
+  // // Optionally set auto_advance to false
+  // await stripe.invoices.update(newInvoiceId, { auto_advance: false });
+
+  let invoice = await stripe.invoices.retrieve(newInvoiceId);
+
+  await stripe.invoiceItems.create({
+    customer: customerId,
+    invoice: newInvoiceId,
+    amount: Math.abs(invoice.starting_balance - invoice.ending_balance), // Convert negative total to a positive integer
+    currency: "usd",
+    description: "Customer balance adjustment.",
+  });
+
+  await stripe.invoices.finalizeInvoice(newInvoiceId);
+
+  // await stripe.creditNotes.create({
+  //   invoice: newInvoiceId,
+  //   amount: Math.abs(invoice.starting_balance - invoice.ending_balance), // Amount to credit in cents (e.g., $200)
+  //   reason: "duplicate",
+  // });
 
   if (updatedSubscription.discount) {
     await stripe.subscriptions.deleteDiscount(updatedSubscription.id);
   }
-
-  return updatedSubscription;
 };
 
 const chargeCustomerThroughPaymentIntent = ({
