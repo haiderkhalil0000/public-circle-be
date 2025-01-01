@@ -102,7 +102,13 @@ const createSubscription = async ({ currentUserId, customerId, items }) => {
       collection_method: "charge_automatically", // Automatically charge when finalized
     });
 
-    const newInvoiceId = subscription.latest_invoice?.id;
+    const invoices = await stripe.invoices.list({
+      subscription: subscription.id,
+      limit: 1, // Fetch the most recent invoice
+    });
+
+    const newInvoiceId =
+      invoices.data.length > 0 ? invoices.data[0].id : undefined;
 
     console.log("newInvoiceId", newInvoiceId);
 
