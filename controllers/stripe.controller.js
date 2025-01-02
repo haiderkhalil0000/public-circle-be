@@ -223,7 +223,7 @@ const upgradeOrDowngradeSubscription = async ({
     subscription.id,
     {
       items: combinedItems,
-      coupon: null,
+      // coupon: null,
       proration_behavior: "always_invoice",
     }
   );
