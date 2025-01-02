@@ -310,11 +310,27 @@ const generateImmediateChargeInvoice = async ({
   await stripe.invoices.finalizeInvoice(invoice.id);
 };
 
-const readCustomerInvoices = ({ customerId, pageSize = 10 }) =>
-  stripe.invoices.list({
+const readCustomerPaidInvoices = async ({ customerId, pageSize = 10 }) => {
+  const invoices = await stripe.invoices.list({
     customer: customerId,
     limit: pageSize,
   });
+
+  return invoices.data.map((item) => ({
+    createdAt: moment.unix(item.created).format("YYYY-MM-DD h:mm:ss A"),
+    description: item.lines.data
+      .reduce((description, item) => {
+        return `${description}${item.description}\n`;
+      }, "")
+      .trimStart(),
+    totalCost: Math.abs(item.total) / 100,
+    paidWithCustomerBalance:
+      Math.abs(item.starting_balance - item.ending_balance) / 100,
+    paidWithCard: Math.abs(item.amount_due),
+    status: item.status,
+    currency: item.currency,
+  }));
+};
 
 const readCustomerUpcomingInvoices = async ({ customerId }) => {
   const upcomingInvoice = await stripe.invoices.retrieveUpcoming({
@@ -337,6 +353,7 @@ const readCustomerUpcomingInvoices = async ({ customerId }) => {
         upcomingInvoice.starting_balance - upcomingInvoice.ending_balance
       ) / 100,
     costDue: upcomingInvoice.amount_due,
+    currency: upcomingInvoice.currency,
   };
 };
 
@@ -397,7 +414,7 @@ module.exports = {
   createATopUpInCustomerBalance,
   readCustomerBalance,
   generateImmediateChargeInvoice,
-  readCustomerInvoices,
+  readCustomerPaidInvoices,
   readCustomerUpcomingInvoices,
   readCustomerReceipts,
   readDefaultPaymentMethod,

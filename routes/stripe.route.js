@@ -311,7 +311,7 @@ router.get(
   }),
   async (req, res, next) => {
     try {
-      const customerInvoices = await stripeController.readCustomerInvoices({
+      const customerInvoices = await stripeController.readCustomerPaidInvoices({
         customerId: req.user.company.stripe.id,
         ...req.query,
       });
