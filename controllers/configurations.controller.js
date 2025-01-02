@@ -86,7 +86,7 @@ const addDataInCompanyConfigurations = async ({
 };
 
 const initiateEmailVerification = async ({ companyId, emailAddress }) => {
-  await addDataInCompanyConfigurations({ company: companyId, emailAddress });
+  await addDataInCompanyConfigurations({ companyId, emailAddress });
 
   sendVerificationEmail({ emailAddress });
 };
