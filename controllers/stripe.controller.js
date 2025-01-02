@@ -329,6 +329,8 @@ const readCustomerPaidInvoices = async ({ customerId, pageSize = 10 }) => {
     paidWithCard: Math.abs(item.amount_due),
     status: item.status,
     currency: item.currency,
+    hostedInvoiceUrl: item.hosted_invoice_url,
+    invoicePdf: item.invoice_pdf,
   }));
 };
 
