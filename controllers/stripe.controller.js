@@ -1,5 +1,6 @@
 const createHttpError = require("http-errors");
 const _ = require("lodash");
+const moment = require("moment");
 
 const { ReferralCode, User, Reward } = require("../models");
 const {
@@ -315,10 +316,29 @@ const readCustomerInvoices = ({ customerId, pageSize = 10 }) =>
     limit: pageSize,
   });
 
-const readCustomerUpcomingInvoices = ({ customerId }) =>
-  stripe.invoices.retrieveUpcoming({
+const readCustomerUpcomingInvoices = async ({ customerId }) => {
+  const upcomingInvoice = await stripe.invoices.retrieveUpcoming({
     customer: customerId,
   });
+
+  return {
+    createdAt: moment
+      .unix(upcomingInvoice.created)
+      .format("YYYY-MM-DD h:mm:ss A"),
+    description: upcomingInvoice.lines.data
+      .reduce((description, item) => {
+        return `${description}${item.description}\n`;
+      }, "")
+      .trimStart(),
+    status: upcomingInvoice.status,
+    totalCost: upcomingInvoice.total / 100,
+    customerBalanceWillApply:
+      Math.abs(
+        upcomingInvoice.starting_balance - upcomingInvoice.ending_balance
+      ) / 100,
+    costDue: upcomingInvoice.amount_due,
+  };
+};
 
 const readCustomerReceipts = async ({ customerId }) => {
   const charges = await stripe.charges.list({
