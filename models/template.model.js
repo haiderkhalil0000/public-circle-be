@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema.Types;
 const {
   constants: {
-    MODELS: { TEMPLATE, COMPANY, DYNAMIC_TEMPLATE },
+    MODELS: { TEMPLATE, TEMPLATE_CATEGORY, COMPANY },
   },
 } = require("../utils");
 const { TEMPLATE_STATUS, TEMPLATE_KINDS } = require("../utils/constants.util");
@@ -40,6 +40,10 @@ const schema = new mongoose.Schema(
     thumbnailURL: {
       type: String,
       required: true,
+    },
+    category: {
+      type: ObjectId,
+      ref: TEMPLATE_CATEGORY,
     },
     status: {
       type: String,

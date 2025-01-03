@@ -17,4 +17,5 @@ module.exports = {
   ReferralCode: require("./referral-code.model"),
   Reward: require("./reward.model"),
   Plan: require("./plan.model"),
+  TemplateCategory: require("./template-category.model"),
 };

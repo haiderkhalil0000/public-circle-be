@@ -9,6 +9,7 @@ module.exports = {
     CAMPAIGN_RUN: "campaign-run",
     SEGMENT: "segment",
     TEMPLATE: "template",
+    TEMPLATE_CATEGORY: "template-categories",
     DYNAMIC_TEMPLATE: "dynamic-template",
     CRON_JOB: "cron-job",
     COMPANY: "companies",
@@ -304,6 +305,12 @@ module.exports = {
   },
 
   TEMPLATE_STATUS: {
+    ACTIVE: "ACTIVE",
+    ARCHIVED: "ARCHIVED",
+    DELETED: "DELETED",
+  },
+
+  TEMPLATE_CATEGORY_STATUS: {
     ACTIVE: "ACTIVE",
     ARCHIVED: "ARCHIVED",
     DELETED: "DELETED",
