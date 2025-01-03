@@ -326,7 +326,7 @@ const readCustomerPaidInvoices = async ({ customerId, pageSize = 10 }) => {
     totalCost: Math.abs(item.total) / 100,
     paidWithCustomerBalance:
       Math.abs(item.starting_balance - item.ending_balance) / 100,
-    paidWithCard: Math.abs(item.amount_due),
+    paidWithCard: Math.abs(item.amount_due) / 100,
     status: item.status,
     currency: item.currency,
     hostedInvoiceUrl: item.hosted_invoice_url,
@@ -354,7 +354,7 @@ const readCustomerUpcomingInvoices = async ({ customerId }) => {
       Math.abs(
         upcomingInvoice.starting_balance - upcomingInvoice.ending_balance
       ) / 100,
-    costDue: upcomingInvoice.amount_due,
+    costDue: upcomingInvoice.amount_due / 100,
     currency: upcomingInvoice.currency,
   };
 };
