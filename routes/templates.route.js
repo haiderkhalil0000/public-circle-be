@@ -11,6 +11,35 @@ const {
 
 const router = express.Router();
 
+router.get(
+  "/search/:searchString",
+  authenticate.verifyToken,
+  validate({
+    params: Joi.object({
+      searchString: Joi.string().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const searchResults = await templatesController.searchTemplate(
+        req.params
+      );
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.SEARCH_SUCCESSFUL,
+        data: searchResults,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      templateDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 router.post(
   "/",
   authenticate.verifyToken,

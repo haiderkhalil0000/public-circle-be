@@ -38,7 +38,7 @@ module.exports = {
     FETCHED_FILTER_KEYS: "Possible filter keys fetched successfully.",
     FETCHED_POSSIBLE_VALUES: "Possible filter values fetched successfully.",
     FETCHED_FILTER_COUNT: "Filter count fetched sucessfully.",
-    SEARCH_SUCCESSFUL: "Manually searched successfully.",
+    SEARCH_SUCCESSFUL: "Searched successfully.",
     COMPANY_USER_FETCHEDS: "Company users fetched successfully.",
     FETCHED_ALL_COMPANY_USERS: "All company users fetched successfully.",
     FILTER_ALREADY_EXISTS: "This filter already exists!",
@@ -203,6 +203,9 @@ module.exports = {
     DEFAULT_PAYMENT_METHOD_FETCHED:
       "Default payment method fetched successfully.",
     DEFAULT_PAYMENT_METHOD_MISSING: "Default payment method not found!",
+    FETCHED_ALL_TEMPLATE_CATEGORIES: "Fetched all template categories.",
+    FETCHED_TEMPLATE_CATEGORIES: "Fetched template categories.",
+    FETCHED_TEMPLATE_CATEGORY: "Fetched template category.",
   },
 
   INTERACTION_CHANNELS: {

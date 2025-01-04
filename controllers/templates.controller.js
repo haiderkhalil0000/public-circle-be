@@ -1,6 +1,5 @@
 const createHttpError = require("http-errors");
 const puppeteer = require("puppeteer-core");
-const sharp = require("sharp");
 
 const { Template } = require("../models");
 const {
@@ -197,6 +196,25 @@ const deleteTemplate = async ({ templateId }) => {
   }
 };
 
+const searchTemplate = async ({ searchString }) => {
+  const templateCategoriesController = require("./template-categories.controller");
+
+  let [templates, templateCategoryIds] = await Promise.all([
+    Template.find({
+      name: new RegExp(searchString, "i"),
+      kind: TEMPLATE_KINDS.SAMPLE,
+    }),
+    templateCategoriesController.searchTemplateCategoryIds({ searchString }),
+  ]);
+
+  const categoryTemplates = await Template.find({
+    category: { $in: templateCategoryIds },
+    kind: TEMPLATE_KINDS.SAMPLE,
+  });
+
+  return [...templates, ...categoryTemplates];
+};
+
 module.exports = {
   createTemplate,
   readTemplate,
@@ -204,4 +222,5 @@ module.exports = {
   readAllTemplates,
   updateTemplate,
   deleteTemplate,
+  searchTemplate,
 };

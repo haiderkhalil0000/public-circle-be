@@ -8,6 +8,7 @@ module.exports = {
   campaignsRunController: require("./campaigns-run.controller"),
   segmentsController: require("./segments.controller"),
   templatesController: require("./templates.controller"),
+  templateCategoriesController: require("./template-categories.controller"),
   usersController: require("./users.controller"),
   accessTokensController: require("./access-tokens.controller"),
   rolesController: require("./roles.controller"),

@@ -22,6 +22,7 @@ router.use("/campaigns", require("./campaign.route"));
 router.use("/campaigns-run", require("./campaign-run.route"));
 router.use("/segments", require("./segments.route"));
 router.use("/templates", require("./templates.route"));
+router.use("/template-categories", require("./template-categories.route"));
 router.use("/access-tokens", require("./access-tokens.route"));
 router.use("/roles", require("./roles.route"));
 router.use("/stripe", require("./stripe.route"));
