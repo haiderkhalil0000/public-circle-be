@@ -21,10 +21,10 @@ const createThumbnail = async ({ html, width, height }) => {
   });
 
   // Set the viewport size to the desired thumbnail dimensions
-  await page.setViewport({
-    width: width * 2, // Use a higher resolution for better quality
-    height: height * 2,
-  });
+  // await page.setViewport({
+  //   width: width * 2, // Use a higher resolution for better quality
+  //   height: height * 2,
+  // });
 
   // Take a screenshot
   const screenshotBuffer = await page.screenshot({ type: "png" });
