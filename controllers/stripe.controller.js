@@ -278,26 +278,49 @@ const createATopUpInCustomerBalance = async ({
   customerId,
   amountInSmallestUnit,
 }) => {
-  const customer = await stripe.customers.retrieve(customerId);
-
-  const defaultPaymentMethodId =
-    customer.invoice_settings.default_payment_method;
-
-  const paymentIntent = await chargeCustomerThroughPaymentIntent({
-    customerId,
-    amountInSmallestUnit,
+  const price = await stripe.prices.create({
+    product: "prod_RXLIDbemHmqlfQ",
+    unit_amount: amountInSmallestUnit,
     currency: "cad",
-    paymentMethodId: defaultPaymentMethodId,
-    description: "Top up",
   });
 
-  if (paymentIntent.status === "succeeded") {
-    await addCustomerBalance({
-      customerId,
-      amountInSmallestUnit,
-      currency: "cad",
-    });
-  }
+  const draftInvoice = await stripe.invoices.create({
+    customer: customerId,
+    auto_advance: false,
+  });
+
+  const invoiceItem = await stripe.invoiceItems.create({
+    customer: customerId,
+    price: price.id,
+    invoice: draftInvoice.id,
+  });
+
+  const finalizedInvoice = await stripe.invoices.finalizeInvoice(
+    draftInvoice.id
+  );
+
+  await stripe.invoices.pay(finalizedInvoice.id);
+
+  // const customer = await stripe.customers.retrieve(customerId);
+
+  // const defaultPaymentMethodId =
+  //   customer.invoice_settings.default_payment_method;
+
+  // const paymentIntent = await chargeCustomerThroughPaymentIntent({
+  //   customerId,
+  //   amountInSmallestUnit,
+  //   currency: "cad",
+  //   paymentMethodId: defaultPaymentMethodId,
+  //   description: "Top up",
+  // });
+
+  // if (paymentIntent.status === "succeeded") {
+  //   await addCustomerBalance({
+  //     customerId,
+  //     amountInSmallestUnit,
+  //     currency: "cad",
+  //   });
+  // }
 };
 
 const readCustomerBalance = async ({ customerId }) => {

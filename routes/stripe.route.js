@@ -221,12 +221,7 @@ router.post(
   authenticate.verifyToken,
   validate({
     body: Joi.object({
-      amountInSmallestUnit: Joi.number()
-        .positive()
-        .strict()
-        .positive()
-        .strict()
-        .required(),
+      amountInSmallestUnit: Joi.number().positive().strict().required(),
     }),
   }),
   async (req, res, next) => {
