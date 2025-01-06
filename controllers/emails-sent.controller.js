@@ -2,6 +2,7 @@ const moment = require("moment");
 const mongoose = require("mongoose");
 
 const { EmailSent } = require("../models");
+const { EMAIL_KIND } = require("../utils/constants.util");
 
 const MONTH_NAMES = moment.months().map((month) => month.substring(0, 3)); // ['Jan', 'Feb', ... 'Dec']
 
@@ -148,6 +149,34 @@ const readEmailSentGraphData = async ({
   );
 };
 
+const readEmailSentCount = ({ companyId }) =>
+  EmailSent.countDocuments({
+    company: companyId,
+    kind: {
+      $in: [EMAIL_KIND.REGULAR, EMAIL_KIND.TEST],
+    },
+  });
+
+const readEmailContentConsumed = async ({ companyId }) => {
+  const emailContentSizeDocs = await EmailSent.find(
+    {
+      company: companyId,
+      kind: {
+        $in: [EMAIL_KIND.REGULAR, EMAIL_KIND.TEST],
+      },
+    },
+    {
+      size: 1,
+    }
+  );
+
+  return emailContentSizeDocs
+    .map((item) => item.size)
+    .reduce((total, current) => total + current, 0);
+};
+
 module.exports = {
   readEmailSentGraphData,
+  readEmailSentCount,
+  readEmailContentConsumed,
 };

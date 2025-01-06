@@ -2,12 +2,18 @@ const createHttpError = require("http-errors");
 const _ = require("lodash");
 const moment = require("moment");
 
-const { ReferralCode, User, Reward } = require("../models");
+const { ReferralCode, User, Reward, Company } = require("../models");
 const {
   constants: { RESPONSE_MESSAGES },
 } = require("../utils");
 
-const { STRIPE_KEY } = process.env;
+const {
+  STRIPE_KEY,
+  EXTRA_EMAIL_QUOTA,
+  EXTRA_EMAIL_CHARGE,
+  EXTRA_EMAIL_CONTENT_QUOTA,
+  EXTRA_EMAIL_CONTENT_CHARGE,
+} = process.env;
 
 const stripe = require("stripe")(STRIPE_KEY);
 
@@ -289,7 +295,7 @@ const createATopUpInCustomerBalance = async ({
     auto_advance: false,
   });
 
-  const invoiceItem = await stripe.invoiceItems.create({
+  await stripe.invoiceItems.create({
     customer: customerId,
     price: price.id,
     invoice: draftInvoice.id,
@@ -323,10 +329,64 @@ const createATopUpInCustomerBalance = async ({
   // }
 };
 
-const readCustomerBalance = async ({ customerId }) => {
-  const customer = await stripe.customers.retrieve(customerId);
+const readCustomerBalance = async ({ customerId, companyId }) => {
+  const invoices = await stripe.invoices.list({
+    customer: customerId,
+  });
 
-  return `${-customer.balance / 100}$`;
+  let total = 0;
+
+  for (const invoice of invoices.data) {
+    const lineItems = await stripe.invoices.listLineItems(invoice.id);
+
+    for (const item of lineItems.data) {
+      if (item.price.product === "prod_RXLIDbemHmqlfQ" && item.price) {
+        total = total + item.price.unit_amount;
+      }
+    }
+  }
+
+  const emailsSentController = require("./emails-sent.controller");
+
+  const [
+    totalEmailsSentByCompany,
+    totalEmailContentConsumedByCompany,
+    company,
+  ] = await Promise.all([
+    emailsSentController.readEmailSentCount({ companyId }),
+    emailsSentController.readEmailContentConsumed({ companyId }),
+    Company.findById(companyId).populate("plan"),
+  ]);
+
+  const emailQuota = company.plan.quota.email;
+  const emailContentQuota = company.plan.quota.emailContent;
+
+  if (
+    totalEmailsSentByCompany <= emailQuota &&
+    totalEmailContentConsumedByCompany <= emailContentQuota
+  ) {
+    return {
+      currentBalance: total / 100,
+      emailOverage: 0,
+      emailContentOverage: 0,
+    };
+  }
+
+  const emailsCountAboveQuota = totalEmailsSentByCompany - emailQuota;
+
+  const extraEmailQuotaCharge =
+    Math.ceil(emailsCountAboveQuota / EXTRA_EMAIL_QUOTA) * EXTRA_EMAIL_CHARGE;
+
+  const extraEmailContentQuotaCharge =
+    Math.ceil(emailsCountAboveQuota / EXTRA_EMAIL_CONTENT_QUOTA) *
+    EXTRA_EMAIL_CONTENT_CHARGE;
+
+  return {
+    currentBalance:
+      total / 100 - extraEmailQuotaCharge - extraEmailContentQuotaCharge,
+    emailOverage: extraEmailQuotaCharge,
+    emailContentOverage: extraEmailContentQuotaCharge,
+  };
 };
 
 const generateImmediateChargeInvoice = async ({

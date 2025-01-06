@@ -253,6 +253,7 @@ router.get(
     try {
       const customerBalance = await stripeController.readCustomerBalance({
         customerId: req.user.company.stripe.id,
+        companyId: req.user.company._id,
       });
 
       res.status(200).json({
