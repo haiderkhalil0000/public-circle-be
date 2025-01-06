@@ -193,11 +193,7 @@ const createCoupon = async ({ id, name, amountOff, percentageOff }) => {
   await stripe.coupons.create(query);
 };
 
-const upgradeOrDowngradeSubscription = async ({
-  currentUser,
-  customerId,
-  items,
-}) => {
+const upgradeOrDowngradeSubscription = async ({ customerId, items }) => {
   const activeSubscriptions = await stripe.subscriptions.list({
     customer: customerId,
     status: "active",
@@ -231,6 +227,27 @@ const upgradeOrDowngradeSubscription = async ({
 
   if (updatedSubscription.discount) {
     await stripe.subscriptions.deleteDiscount(subscription.id);
+  }
+
+  const customer = await stripe.customers.retrieve(customerId);
+  const balance = customer.balance;
+
+  if (balance < 0) {
+    const invoices = await stripe.invoices.list({
+      subscription: subscription.id,
+      limit: 5,
+    });
+
+    const paidInvoice = invoices.data.find((invoice) => invoice.charge);
+
+    await stripe.refunds.create({
+      charge: paidInvoice.charge,
+      amount: Math.abs(balance),
+    });
+
+    await stripe.customers.update(customerId, {
+      balance: 0,
+    });
   }
 };
 
