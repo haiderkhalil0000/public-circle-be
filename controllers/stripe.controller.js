@@ -305,7 +305,9 @@ const createATopUpInCustomerBalance = async ({
     draftInvoice.id
   );
 
-  await stripe.invoices.pay(finalizedInvoice.id);
+  if (finalizedInvoice.status !== "paid") {
+    await stripe.invoices.pay(finalizedInvoice.id);
+  }
 
   // const customer = await stripe.customers.retrieve(customerId);
 
@@ -366,6 +368,7 @@ const readCustomerBalance = async ({ customerId, companyId }) => {
     totalEmailContentConsumedByCompany <= emailContentQuota
   ) {
     return {
+      previousBalance: total / 100,
       currentBalance: total / 100,
       emailOverage: 0,
       emailContentOverage: 0,
@@ -382,6 +385,7 @@ const readCustomerBalance = async ({ customerId, companyId }) => {
     EXTRA_EMAIL_CONTENT_CHARGE;
 
   return {
+    previousBalance: total / 100,
     currentBalance:
       total / 100 - extraEmailQuotaCharge - extraEmailContentQuotaCharge,
     emailOverage: extraEmailQuotaCharge,
@@ -502,6 +506,14 @@ const readCustomerBalanceHistory = async ({ customerId }) => {
   }));
 };
 
+const chargeInUpcomingInvoice = async ({ customerId, chargeAmount }) =>
+  stripe.invoiceItems.create({
+    customer: customerId,
+    amount: chargeAmount,
+    currency: "cad",
+    description: "Import contacts overage charges.",
+  });
+
 module.exports = {
   createStripeCustomer,
   readStripeCustomer,
@@ -521,4 +533,5 @@ module.exports = {
   readCustomerReceipts,
   readDefaultPaymentMethod,
   readCustomerBalanceHistory,
+  chargeInUpcomingInvoice,
 };
