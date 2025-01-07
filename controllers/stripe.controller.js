@@ -83,17 +83,20 @@ const getPlans = async ({ pageSize }) => {
     limit: pageSize,
   });
 
-  plans.data.forEach((item) => {
+  // Exclude the product with the name "Top Up"
+  const filteredPlans = plans.data.filter((item) => item.name !== "Top Up");
+
+  filteredPlans.forEach((item) => {
     promises.push(stripe.prices.retrieve(item.default_price));
   });
 
   const prices = await Promise.all(promises);
 
-  plans.data.forEach((item, index) => {
+  filteredPlans.forEach((item, index) => {
     item.price = prices[index];
   });
 
-  return plans.data;
+  return filteredPlans;
 };
 
 const createSubscription = async ({ currentUserId, customerId, items }) => {
@@ -506,12 +509,15 @@ const readCustomerBalanceHistory = async ({ customerId }) => {
   }));
 };
 
-const chargeInUpcomingInvoice = async ({ customerId, chargeAmount }) =>
+const chargeInUpcomingInvoice = async ({
+  customerId,
+  chargeAmountInSmallestUnit,
+}) =>
   stripe.invoiceItems.create({
     customer: customerId,
-    amount: chargeAmount,
+    amount: chargeAmountInSmallestUnit,
     currency: "cad",
-    description: "Import contacts overage charges.",
+    description: "Contacts import overage charges.",
   });
 
 module.exports = {

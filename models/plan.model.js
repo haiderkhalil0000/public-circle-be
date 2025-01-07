@@ -20,6 +20,11 @@ const schema = new mongoose.Schema(
         required: true,
         default: 0,
       },
+      contacts: {
+        type: Number,
+        required: true,
+        default: 0,
+      },
     },
     price: {
       type: Number,
