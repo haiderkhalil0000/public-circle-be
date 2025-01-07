@@ -718,7 +718,7 @@ const validateCampaign = async ({ campaign }) => {
 
   await stripeController.generateImmediateChargeInvoice({
     customerId: company.stripe.id,
-    amountInCents: totalCharge * 100,
+    amountInCents: totalCharge,
   });
 };
 

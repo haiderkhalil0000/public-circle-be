@@ -414,7 +414,11 @@ const generateImmediateChargeInvoice = async ({
     description: "Extra quota charges",
   });
 
-  await stripe.invoices.finalizeInvoice(invoice.id);
+  const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
+
+  if (finalizedInvoice.status !== "paid") {
+    await stripe.invoices.pay(finalizedInvoice.id);
+  }
 };
 
 const readCustomerPaidInvoices = async ({ customerId, pageSize = 10 }) => {
