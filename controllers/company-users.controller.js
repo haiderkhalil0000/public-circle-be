@@ -258,6 +258,33 @@ const createPrimaryKey = async ({ companyId, primaryKey }) => {
   await removeDuplicatesWithPrimaryKey({ companyId, primaryKey });
 };
 
+const readPrimaryKey = async ({ companyId }) => {
+  const companyDoc = await Company.findById(companyId).select(
+    "contactsPrimaryKey"
+  );
+
+  if (!companyDoc.contactsPrimaryKey) {
+    throw createHttpError(400, {
+      errorMessage: RESPONSE_MESSAGES.PRIMARY_KEY_NOT_FOUND,
+    });
+  }
+
+  return companyDoc.contactsPrimaryKey;
+};
+
+const updatePrimaryKey = async ({ companyId, primaryKey }) => {
+  await Company.findByIdAndUpdate(companyId, {
+    contactsPrimaryKey: primaryKey,
+  });
+
+  await removeDuplicatesWithPrimaryKey({ companyId, primaryKey });
+};
+
+const deletePrimaryKey = async ({ companyId }) =>
+  Company.findByIdAndUpdate(companyId, {
+    contactsPrimaryKey: null,
+  });
+
 module.exports = {
   getPossibleFilterKeys,
   getPossibleFilterValues,
@@ -272,4 +299,7 @@ module.exports = {
   deleteCompanyUser,
   uploadCsv,
   createPrimaryKey,
+  readPrimaryKey,
+  updatePrimaryKey,
+  deletePrimaryKey,
 };

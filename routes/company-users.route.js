@@ -311,6 +311,25 @@ router.delete(
   }
 );
 
+router.get("/primary-key", authenticate.verifyToken, async (req, res, next) => {
+  try {
+    const primaryKey = await companyUsersController.readPrimaryKey({
+      companyId: req.user.company._id,
+    });
+
+    res.status(200).json({
+      message: RESPONSE_MESSAGES.PRIMARY_KEY_FETCHED,
+      data: primaryKey,
+    });
+  } catch (err) {
+    // sendErrorReportToSentry(error);
+
+    companyUsersDebugger(err);
+
+    next(err);
+  }
+});
+
 router.post(
   "/primary-key",
   authenticate.verifyToken,
@@ -328,6 +347,58 @@ router.post(
 
       res.status(200).json({
         message: RESPONSE_MESSAGES.PRIMARY_KEY_CREATED,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      companyUsersDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.patch(
+  "/primary-key",
+  authenticate.verifyToken,
+  validate({
+    body: Joi.object({
+      primaryKey: Joi.string().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      await companyUsersController.updatePrimaryKey({
+        companyId: req.user.company._id,
+        ...req.body,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.PRIMARY_KEY_UPDATED,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      companyUsersDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.delete(
+  "/primary-key",
+  authenticate.verifyToken,
+  async (req, res, next) => {
+    try {
+      await companyUsersController.deletePrimaryKey({
+        companyId: req.user.company._id,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.PRIMARY_KEY_DELETED,
         data: {},
       });
     } catch (err) {

@@ -207,7 +207,10 @@ module.exports = {
     FETCHED_TEMPLATE_CATEGORIES: "Fetched template categories.",
     FETCHED_TEMPLATE_CATEGORY: "Fetched template category.",
     PRIMARY_KEY_CREATED: "Primary key created successfully.",
-    PRIMARY_KEY_NOT_FOUND: "Forbidden, Primary key not added!",
+    PRIMARY_KEY_NOT_FOUND: "Primary key not found!",
+    PRIMARY_KEY_FETCHED: "Primary key fetched successfully.",
+    PRIMARY_KEY_UPDATED: "Primary key updated successfully.",
+    PRIMARY_KEY_DELETED: "Primary key deleted successfully.",
   },
 
   INTERACTION_CHANNELS: {
