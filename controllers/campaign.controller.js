@@ -270,7 +270,7 @@ const deleteCampaign = async ({ campaignId }) => {
   basicUtil.validateObjectId({ inputString: campaignId });
 
   const result = await Campaign.updateOne(
-    { _id: campaignId, status: CAMPAIGN_STATUS.ACTIVE },
+    { _id: campaignId },
     {
       status: CAMPAIGN_STATUS.DELETED,
     }
@@ -705,7 +705,12 @@ const validateCampaign = async ({ campaign }) => {
     }
 
     emailContentCharge = calculateEmailContentCharge({
-      campaignEmailContentSize: campaign.emailTemplate.size,
+      campaignEmailContentSize:
+        companyBalance.emailContentOverage === 0
+          ? totalEmailContentSize +
+            campaign.emailTemplate.size -
+            company.plan.quota.emailContent
+          : campaign.emailTemplate.size,
     });
 
     if (parseInt(companyBalance.currentBalance * 100) < emailContentCharge) {
@@ -717,12 +722,13 @@ const validateCampaign = async ({ campaign }) => {
     }
   }
 
-  const totalCharge = emailSendingCharge + emailContentCharge;
+  // const totalCharge = emailSendingCharge + emailContentCharge;
 
-  await stripeController.chargeCustomerFromBalance({
-    customerId: company.stripe.id,
-    amountInCents: totalCharge,
-  });
+  // await stripeController.chargeCustomerFromBalance({
+  //   customerId: company.stripe.id,
+  //   amountInSmallestUnit: totalCharge,
+  //   updatedBalance: companyBalance.currentBalance * 100 - totalCharge,
+  // });
 };
 
 module.exports = {
