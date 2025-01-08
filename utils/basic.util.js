@@ -21,9 +21,13 @@ const fiterUniqueObjectsFromArray = (arrayOfObjects) =>
 
 const fiterUniqueStringsFromArray = (arrayOfStrings) => _.uniq(arrayOfStrings);
 
+const filterUniqueObjectsFromArrayByProperty = (arrayOfObjects, property) =>
+  _.uniqBy(arrayOfObjects, property);
+
 module.exports = {
   validateObjectId,
   decodeJwt,
   fiterUniqueObjectsFromArray,
   fiterUniqueStringsFromArray,
+  filterUniqueObjectsFromArrayByProperty,
 };

@@ -18,6 +18,7 @@ const schema = new mongoose.Schema(
     province: { type: String },
     country: { type: String },
     stripe: { type: Object, default: {} },
+    contactsPrimaryKey: { type: String },
     plan: { type: ObjectId, ref: PLAN },
   },
   { timestamps: true }

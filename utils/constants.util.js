@@ -206,6 +206,8 @@ module.exports = {
     FETCHED_ALL_TEMPLATE_CATEGORIES: "Fetched all template categories.",
     FETCHED_TEMPLATE_CATEGORIES: "Fetched template categories.",
     FETCHED_TEMPLATE_CATEGORY: "Fetched template category.",
+    PRIMARY_KEY_CREATED: "Primary key created successfully.",
+    PRIMARY_KEY_NOT_FOUND: "Forbidden, Primary key not added!",
   },
 
   INTERACTION_CHANNELS: {

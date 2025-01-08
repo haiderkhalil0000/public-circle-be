@@ -311,4 +311,33 @@ router.delete(
   }
 );
 
+router.post(
+  "/primary-key",
+  authenticate.verifyToken,
+  validate({
+    body: Joi.object({
+      primaryKey: Joi.string().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      await companyUsersController.createPrimaryKey({
+        companyId: req.user.company._id,
+        ...req.body,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.PRIMARY_KEY_CREATED,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      companyUsersDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 module.exports = router;

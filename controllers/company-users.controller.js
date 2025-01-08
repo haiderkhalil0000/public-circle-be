@@ -5,7 +5,7 @@ const fs = require("fs");
 const csvParser = require("csv-parser");
 const { Readable } = require("stream");
 
-const { CompanyUser } = require("../models");
+const { CompanyUser, Company } = require("../models");
 const {
   constants: { RESPONSE_MESSAGES },
   basicUtil,
@@ -35,10 +35,16 @@ const getPossibleFilterKeys = async ({ companyId = "" }) => {
 };
 
 const getPossibleFilterValues = async ({ companyId, key }) => {
-  const results = await CompanyUser.find(
-    { company: companyId },
-    { [key]: 1, _id: 0 }
-  );
+  const [company, results] = await Promise.all([
+    Company.findById(companyId),
+    CompanyUser.find({ company: companyId }, { [key]: 1, _id: 0 }),
+  ]);
+
+  if (!company.contactsPrimaryKey) {
+    throw createHttpError(403, {
+      errorMessage: RESPONSE_MESSAGES.PRIMARY_KEY_NOT_FOUND,
+    });
+  }
 
   const values = results.map((item) => item[key]);
 
@@ -222,6 +228,36 @@ const uploadCsv = async ({ companyId, file }) => {
   }
 };
 
+const removeDuplicatesWithPrimaryKey = async ({ companyId, primaryKey }) => {
+  const [companyContacts, companyContactIds] = await Promise.all([
+    CompanyUser.find({ company: companyId }).lean(),
+    CompanyUser.distinct("_id", { company: companyId }),
+  ]);
+
+  await CompanyUser.deleteMany({ _id: { $in: companyContactIds } });
+
+  const uniqueContacts = basicUtil.filterUniqueObjectsFromArrayByProperty(
+    companyContacts,
+    primaryKey
+  );
+
+  const promises = [];
+
+  uniqueContacts.forEach((item) => {
+    promises.push(CompanyUser.create(item));
+  });
+
+  await Promise.all(promises);
+};
+
+const createPrimaryKey = async ({ companyId, primaryKey }) => {
+  await Company.findByIdAndUpdate(companyId, {
+    contactsPrimaryKey: primaryKey,
+  });
+
+  await removeDuplicatesWithPrimaryKey({ companyId, primaryKey });
+};
+
 module.exports = {
   getPossibleFilterKeys,
   getPossibleFilterValues,
@@ -235,4 +271,5 @@ module.exports = {
   updateCompanyUser,
   deleteCompanyUser,
   uploadCsv,
+  createPrimaryKey,
 };
