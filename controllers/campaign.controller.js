@@ -597,7 +597,7 @@ const calculateEmailSendingCharge = ({ campaignRecipientsCount }) => {
   // Calculate how many times the quota is exceeded
   const timesExceeded = Math.ceil(campaignRecipientsCount / EXTRA_EMAIL_QUOTA);
 
-  return timesExceeded * EXTRA_EMAIL_CHARGE;
+  return timesExceeded * (EXTRA_EMAIL_CHARGE * 100);
 };
 
 const calculateEmailContentCharge = ({ campaignEmailContentSize }) => {
@@ -606,7 +606,7 @@ const calculateEmailContentCharge = ({ campaignEmailContentSize }) => {
     campaignEmailContentSize / EXTRA_EMAIL_CONTENT_QUOTA
   );
 
-  return timesExceeded * EXTRA_EMAIL_CHARGE;
+  return timesExceeded * (EXTRA_EMAIL_CONTENT_CHARGE * 100);
 };
 
 const disableCampaign = ({ campaignId }) =>
