@@ -719,7 +719,7 @@ const validateCampaign = async ({ campaign }) => {
 
   const totalCharge = emailSendingCharge + emailContentCharge;
 
-  await stripeController.generateImmediateChargeInvoice({
+  await stripeController.chargeCustomerFromBalance({
     customerId: company.stripe.id,
     amountInCents: totalCharge,
   });
