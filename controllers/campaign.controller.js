@@ -665,7 +665,10 @@ const validateCampaign = async ({ campaign }) => {
     company.plan.quota.email <
       campaignRecipientsCount + totalEmailsSentByCompany
   ) {
-    if (parseInt(companyBalance.split("$")[0]) < parseInt(EXTRA_EMAIL_CHARGE)) {
+    if (
+      parseInt(companyBalance.currentBalance * 100) <
+      parseInt(EXTRA_EMAIL_CHARGE)
+    ) {
       disableCampaign({ campaignId: campaign._id });
 
       throw createHttpError(400, {
@@ -677,7 +680,7 @@ const validateCampaign = async ({ campaign }) => {
       campaignRecipientsCount,
     });
 
-    if (parseInt(companyBalance.split("$")[0]) < emailSendingCharge) {
+    if (parseInt(companyBalance.currentBalance * 100) < emailSendingCharge) {
       disableCampaign({ campaignId: campaign._id });
 
       throw createHttpError(400, {
@@ -692,7 +695,7 @@ const validateCampaign = async ({ campaign }) => {
       totalEmailContentSize + campaign.emailTemplate.size
   ) {
     if (
-      parseInt(companyBalance.split("$")[0]) <
+      parseInt(companyBalance.currentBalance * 100) <
       parseInt(EXTRA_EMAIL_CONTENT_CHARGE)
     ) {
       disableCampaign({ campaignId: campaign._id });
@@ -706,7 +709,7 @@ const validateCampaign = async ({ campaign }) => {
       campaignEmailContentSize: campaign.emailTemplate.size,
     });
 
-    if (parseInt(companyBalance.split("$")[0]) < emailContentCharge) {
+    if (parseInt(companyBalance.currentBalance * 100) < emailContentCharge) {
       disableCampaign({ campaignId: campaign._id });
 
       throw createHttpError(400, {

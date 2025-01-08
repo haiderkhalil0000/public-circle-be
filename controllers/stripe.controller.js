@@ -391,8 +391,8 @@ const readCustomerBalance = async ({ customerId, companyId }) => {
     previousBalance: total / 100,
     currentBalance:
       total / 100 - extraEmailQuotaCharge - extraEmailContentQuotaCharge,
-    emailOverage: extraEmailQuotaCharge,
-    emailContentOverage: extraEmailContentQuotaCharge,
+    emailOverage: extraEmailQuotaCharge / 100,
+    emailContentOverage: extraEmailContentQuotaCharge / 100,
   };
 };
 
