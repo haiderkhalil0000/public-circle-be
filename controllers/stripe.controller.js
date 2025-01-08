@@ -363,12 +363,12 @@ const readCustomerBalance = async ({ customerId, companyId }) => {
     Company.findById(companyId).populate("plan"),
   ]);
 
-  const emailQuota = company.plan.quota.email;
-  const emailContentQuota = company.plan.quota.emailContent;
+  const companyEmailQuota = company.plan.quota.email;
+  const companyEmailContentQuota = company.plan.quota.emailContent;
 
   if (
-    totalEmailsSentByCompany <= emailQuota &&
-    totalEmailContentConsumedByCompany <= emailContentQuota
+    totalEmailsSentByCompany <= companyEmailQuota &&
+    totalEmailContentConsumedByCompany <= companyEmailContentQuota
   ) {
     return {
       previousBalance: total / 100,
@@ -378,19 +378,27 @@ const readCustomerBalance = async ({ customerId, companyId }) => {
     };
   }
 
-  const emailsCountAboveQuota = totalEmailsSentByCompany - emailQuota;
+  const emailsAboveQuota =
+    totalEmailsSentByCompany > companyEmailQuota
+      ? totalEmailsSentByCompany - companyEmailQuota
+      : 0;
+
+  const emailsContentAboveQuota =
+    totalEmailContentConsumedByCompany > companyEmailContentQuota
+      ? totalEmailContentConsumedByCompany - companyEmailContentQuota
+      : 0;
 
   const extraEmailQuotaCharge =
-    Math.ceil(emailsCountAboveQuota / EXTRA_EMAIL_QUOTA) * EXTRA_EMAIL_CHARGE;
+    Math.ceil(emailsAboveQuota / EXTRA_EMAIL_QUOTA) * EXTRA_EMAIL_CHARGE;
 
   const extraEmailContentQuotaCharge =
-    Math.ceil(emailsCountAboveQuota / EXTRA_EMAIL_CONTENT_QUOTA) *
+    Math.ceil(emailsContentAboveQuota / EXTRA_EMAIL_CONTENT_QUOTA) *
     EXTRA_EMAIL_CONTENT_CHARGE;
 
   return {
     previousBalance: total / 100,
     currentBalance:
-      total / 100 - extraEmailQuotaCharge - extraEmailContentQuotaCharge,
+      (total - extraEmailQuotaCharge - extraEmailContentQuotaCharge) / 100,
     emailOverage: extraEmailQuotaCharge / 100,
     emailContentOverage: extraEmailContentQuotaCharge / 100,
   };

@@ -609,9 +609,8 @@ const calculateEmailContentCharge = ({ campaignEmailContentSize }) => {
   return timesExceeded * EXTRA_EMAIL_CHARGE;
 };
 
-const disableCampaign = ({ campaignId }) => {
+const disableCampaign = ({ campaignId }) =>
   Campaign.findByIdAndUpdate(campaignId, { status: CAMPAIGN_STATUS.DISABLED });
-};
 
 const validateCampaign = async ({ campaign }) => {
   const populatedCampaign = await Campaign.findById(campaign._id).populate(
@@ -669,7 +668,7 @@ const validateCampaign = async ({ campaign }) => {
       parseInt(companyBalance.currentBalance * 100) <
       parseInt(EXTRA_EMAIL_CHARGE)
     ) {
-      disableCampaign({ campaignId: campaign._id });
+      await disableCampaign({ campaignId: campaign._id });
 
       throw createHttpError(400, {
         errorMessage: RESPONSE_MESSAGES.EMAIL_LIMIT_REACHED,
@@ -681,7 +680,7 @@ const validateCampaign = async ({ campaign }) => {
     });
 
     if (parseInt(companyBalance.currentBalance * 100) < emailSendingCharge) {
-      disableCampaign({ campaignId: campaign._id });
+      await disableCampaign({ campaignId: campaign._id });
 
       throw createHttpError(400, {
         errorMessage: RESPONSE_MESSAGES.EMAIL_LIMIT_REACHED,
@@ -698,7 +697,7 @@ const validateCampaign = async ({ campaign }) => {
       parseInt(companyBalance.currentBalance * 100) <
       parseInt(EXTRA_EMAIL_CONTENT_CHARGE)
     ) {
-      disableCampaign({ campaignId: campaign._id });
+      await disableCampaign({ campaignId: campaign._id });
 
       throw createHttpError(400, {
         errorMessage: RESPONSE_MESSAGES.EMAIL_CONTENT_LIMIT_REACHED,
@@ -710,7 +709,7 @@ const validateCampaign = async ({ campaign }) => {
     });
 
     if (parseInt(companyBalance.currentBalance * 100) < emailContentCharge) {
-      disableCampaign({ campaignId: campaign._id });
+      await disableCampaign({ campaignId: campaign._id });
 
       throw createHttpError(400, {
         errorMessage: RESPONSE_MESSAGES.EMAIL_CONTENT_LIMIT_REACHED,
