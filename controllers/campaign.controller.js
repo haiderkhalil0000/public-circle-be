@@ -654,6 +654,7 @@ const validateCampaign = async ({ campaign }) => {
 
   const companyBalance = await stripeController.readCustomerBalance({
     customerId: company.stripe.id,
+    companyId: campaign.company,
   });
 
   let emailSendingCharge = 0,
