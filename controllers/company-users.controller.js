@@ -47,11 +47,20 @@ const getPossibleFilterValues = async ({ companyId, key }) => {
   return uniqueValues;
 };
 
-const getFilterCount = async ({ filter, companyId }) =>
-  CompanyUser.countDocuments({
+const getFilterCount = ({ filter, companyId }) => {
+  for (let key in filter) {
+    if (Array.isArray(filter[key])) {
+      filter[key] = { $in: filter[key] }; // Add $in for arrays
+    } else {
+      filter[key] = filter[key]; // Leave as is if not an array
+    }
+  }
+
+  return CompanyUser.countDocuments({
     company: companyId,
     ...filter,
   });
+};
 
 const getFiltersCount = async ({ filters, companyId }) => {
   const promises = [];

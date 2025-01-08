@@ -701,7 +701,7 @@ const validateCampaign = async ({ campaign }) => {
       disableCampaign({ campaignId: campaign._id });
 
       throw createHttpError(400, {
-        errorMessage: RESPONSE_MESSAGES.EMAIL_SIZE_LIMIT_REACHED,
+        errorMessage: RESPONSE_MESSAGES.EMAIL_CONTENT_LIMIT_REACHED,
       });
     }
 
