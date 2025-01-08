@@ -532,10 +532,15 @@ const chargeInUpcomingInvoice = async ({
     description: "Contacts import overage charges.",
   });
 
-const chargeCustomerFromBalance = ({ customerId, amountInSmallestUnit }) =>
-  stripe.customers.update(customerId, {
+const chargeCustomerFromBalance = ({ customerId, amountInSmallestUnit }) => {
+  if (amountInSmallestUnit < 0) {
+    amountInSmallestUnit = 0;
+  }
+
+  return stripe.customers.update(customerId, {
     balance: amountInSmallestUnit,
   });
+};
 
 module.exports = {
   createStripeCustomer,
