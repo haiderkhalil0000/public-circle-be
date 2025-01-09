@@ -689,7 +689,11 @@ const validateCampaign = async ({ campaign }) => {
   ) {
     emailContentCharge = calculateEmailContentCharge({
       campaignEmailContentSize:
-        campaign.emailTemplate.size * campaignRecipientsCount,
+        companyBalance.emailContentOverage === 0
+          ? totalEmailContentSize +
+            campaign.emailTemplate.size -
+            plan.quota.emailContent * campaignRecipientsCount
+          : campaign.emailTemplate.size * campaignRecipientsCount,
     });
 
     if (
