@@ -311,27 +311,6 @@ const createATopUpInCustomerBalance = async ({
   if (finalizedInvoice.status !== "paid") {
     await stripe.invoices.pay(finalizedInvoice.id);
   }
-
-  // const customer = await stripe.customers.retrieve(customerId);
-
-  // const defaultPaymentMethodId =
-  //   customer.invoice_settings.default_payment_method;
-
-  // const paymentIntent = await chargeCustomerThroughPaymentIntent({
-  //   customerId,
-  //   amountInSmallestUnit,
-  //   currency: "cad",
-  //   paymentMethodId: defaultPaymentMethodId,
-  //   description: "Top up",
-  // });
-
-  // if (paymentIntent.status === "succeeded") {
-  //   await addCustomerBalance({
-  //     customerId,
-  //     amountInSmallestUnit,
-  //     currency: "cad",
-  //   });
-  // }
 };
 
 const readCustomerBalance = async ({ customerId, companyId }) => {

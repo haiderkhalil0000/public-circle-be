@@ -664,23 +664,12 @@ const validateCampaign = async ({ campaign }) => {
     company.plan.quota.email <
       campaignRecipientsCount + totalEmailsSentByCompany
   ) {
-    // if (
-    //   parseInt(companyBalance.currentBalance * 100) <
-    //   parseInt(EXTRA_EMAIL_CHARGE)
-    // ) {
-    //   await disableCampaign({ campaignId: campaign._id });
-
-    //   throw createHttpError(400, {
-    //     errorMessage: RESPONSE_MESSAGES.EMAIL_LIMIT_REACHED,
-    //   });
-    // }
-
     emailSendingCharge = calculateEmailSendingCharge({
       campaignRecipientsCount,
     });
 
     if (
-      parseInt(companyBalance.currentBalance * 100) <
+      companyBalance.currentBalance * 100 <
       emailSendingCharge * campaignRecipientsCount
     ) {
       await disableCampaign({ campaignId: campaign._id });
@@ -694,30 +683,16 @@ const validateCampaign = async ({ campaign }) => {
   if (
     company.plan &&
     company.plan.quota.emailContent <
-      totalEmailContentSize + campaign.emailTemplate.size
+      totalEmailContentSize +
+        campaign.emailTemplate.size * campaignRecipientsCount
   ) {
-    // if (
-    //   parseInt(companyBalance.currentBalance * 100) <
-    //   parseInt(EXTRA_EMAIL_CONTENT_CHARGE)
-    // ) {
-    //   await disableCampaign({ campaignId: campaign._id });
-
-    //   throw createHttpError(400, {
-    //     errorMessage: RESPONSE_MESSAGES.EMAIL_CONTENT_LIMIT_REACHED,
-    //   });
-    // }
-
     emailContentCharge = calculateEmailContentCharge({
       campaignEmailContentSize:
-        companyBalance.emailContentOverage === 0
-          ? totalEmailContentSize +
-            campaign.emailTemplate.size -
-            company.plan.quota.emailContent
-          : campaign.emailTemplate.size,
+        campaign.emailTemplate.size * campaignRecipientsCount,
     });
 
     if (
-      parseInt(companyBalance.currentBalance * 100) <
+      companyBalance.currentBalance * 100 <
       emailContentCharge * campaignRecipientsCount
     ) {
       await disableCampaign({ campaignId: campaign._id });
@@ -727,14 +702,6 @@ const validateCampaign = async ({ campaign }) => {
       });
     }
   }
-
-  // const totalCharge = emailSendingCharge + emailContentCharge;
-
-  // await stripeController.chargeCustomerFromBalance({
-  //   customerId: company.stripe.id,
-  //   amountInSmallestUnit: totalCharge,
-  //   updatedBalance: companyBalance.currentBalance * 100 - totalCharge,
-  // });
 };
 
 module.exports = {
