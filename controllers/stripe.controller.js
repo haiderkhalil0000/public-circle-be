@@ -2,7 +2,7 @@ const createHttpError = require("http-errors");
 const _ = require("lodash");
 const moment = require("moment");
 
-const { ReferralCode, User, Reward, Company } = require("../models");
+const { ReferralCode, User, Reward, Plan } = require("../models");
 const {
   constants: { RESPONSE_MESSAGES },
 } = require("../utils");
@@ -314,9 +314,12 @@ const createATopUpInCustomerBalance = async ({
 };
 
 const readCustomerBalance = async ({ customerId, companyId }) => {
-  const invoices = await stripe.invoices.list({
-    customer: customerId,
-  });
+  const [invoices, plans] = await Promise.all([
+    stripe.invoices.list({
+      customer: customerId,
+    }),
+    readPlanIds({ customerId }),
+  ]);
 
   let total = 0;
 
@@ -332,18 +335,15 @@ const readCustomerBalance = async ({ customerId, companyId }) => {
 
   const emailsSentController = require("./emails-sent.controller");
 
-  const [
-    totalEmailsSentByCompany,
-    totalEmailContentConsumedByCompany,
-    company,
-  ] = await Promise.all([
-    emailsSentController.readEmailSentCount({ companyId }),
-    emailsSentController.readEmailContentConsumed({ companyId }),
-    Company.findById(companyId).populate("plan"),
-  ]);
+  const [totalEmailsSentByCompany, totalEmailContentConsumedByCompany, plan] =
+    await Promise.all([
+      emailsSentController.readEmailSentCount({ companyId }),
+      emailsSentController.readEmailContentConsumed({ companyId }),
+      Plan.findById(plans[0].planId),
+    ]);
 
-  const companyEmailQuota = company.plan.quota.email;
-  const companyEmailContentQuota = company.plan.quota.emailContent;
+  const companyEmailQuota = plan.quota.email;
+  const companyEmailContentQuota = plan.quota.emailContent;
 
   if (
     totalEmailsSentByCompany <= companyEmailQuota &&
@@ -525,6 +525,29 @@ const chargeCustomerFromBalance = ({
   });
 };
 
+const readPlanIds = async ({ customerId }) => {
+  const subscriptions = await stripe.subscriptions.list({
+    customer: customerId,
+    status: "active",
+  });
+
+  const productIds = [
+    ...new Set(
+      subscriptions.data.flatMap((subscription) =>
+        subscription.items.data.map((item) => item.price.product)
+      )
+    ),
+  ];
+
+  return Promise.all(
+    productIds.map((productId) =>
+      stripe.products.retrieve(productId).then((product) => ({
+        planId: product.metadata.planId,
+      }))
+    )
+  );
+};
+
 module.exports = {
   createStripeCustomer,
   readStripeCustomer,
@@ -546,4 +569,5 @@ module.exports = {
   readCustomerBalanceHistory,
   chargeInUpcomingInvoice,
   chargeCustomerFromBalance,
+  readPlanIds,
 };
