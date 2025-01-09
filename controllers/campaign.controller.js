@@ -664,22 +664,25 @@ const validateCampaign = async ({ campaign }) => {
     company.plan.quota.email <
       campaignRecipientsCount + totalEmailsSentByCompany
   ) {
-    if (
-      parseInt(companyBalance.currentBalance * 100) <
-      parseInt(EXTRA_EMAIL_CHARGE)
-    ) {
-      await disableCampaign({ campaignId: campaign._id });
+    // if (
+    //   parseInt(companyBalance.currentBalance * 100) <
+    //   parseInt(EXTRA_EMAIL_CHARGE)
+    // ) {
+    //   await disableCampaign({ campaignId: campaign._id });
 
-      throw createHttpError(400, {
-        errorMessage: RESPONSE_MESSAGES.EMAIL_LIMIT_REACHED,
-      });
-    }
+    //   throw createHttpError(400, {
+    //     errorMessage: RESPONSE_MESSAGES.EMAIL_LIMIT_REACHED,
+    //   });
+    // }
 
     emailSendingCharge = calculateEmailSendingCharge({
       campaignRecipientsCount,
     });
 
-    if (parseInt(companyBalance.currentBalance * 100) < emailSendingCharge) {
+    if (
+      parseInt(companyBalance.currentBalance * 100) <
+      emailSendingCharge * campaignRecipientsCount
+    ) {
       await disableCampaign({ campaignId: campaign._id });
 
       throw createHttpError(400, {
@@ -693,16 +696,16 @@ const validateCampaign = async ({ campaign }) => {
     company.plan.quota.emailContent <
       totalEmailContentSize + campaign.emailTemplate.size
   ) {
-    if (
-      parseInt(companyBalance.currentBalance * 100) <
-      parseInt(EXTRA_EMAIL_CONTENT_CHARGE)
-    ) {
-      await disableCampaign({ campaignId: campaign._id });
+    // if (
+    //   parseInt(companyBalance.currentBalance * 100) <
+    //   parseInt(EXTRA_EMAIL_CONTENT_CHARGE)
+    // ) {
+    //   await disableCampaign({ campaignId: campaign._id });
 
-      throw createHttpError(400, {
-        errorMessage: RESPONSE_MESSAGES.EMAIL_CONTENT_LIMIT_REACHED,
-      });
-    }
+    //   throw createHttpError(400, {
+    //     errorMessage: RESPONSE_MESSAGES.EMAIL_CONTENT_LIMIT_REACHED,
+    //   });
+    // }
 
     emailContentCharge = calculateEmailContentCharge({
       campaignEmailContentSize:
@@ -713,7 +716,10 @@ const validateCampaign = async ({ campaign }) => {
           : campaign.emailTemplate.size,
     });
 
-    if (parseInt(companyBalance.currentBalance * 100) < emailContentCharge) {
+    if (
+      parseInt(companyBalance.currentBalance * 100) <
+      emailContentCharge * campaignRecipientsCount
+    ) {
       await disableCampaign({ campaignId: campaign._id });
 
       throw createHttpError(400, {
