@@ -1,6 +1,6 @@
 const _ = require("lodash");
 
-const { CompanyUser, Company } = require("../models");
+const { CompanyUser, Plan } = require("../models");
 const { basicUtil } = require("../utils");
 
 const { EXTRA_CONTACTS_QUOTA, EXTRA_CONTACTS_CHARGE } = process.env;
@@ -8,6 +8,8 @@ const { EXTRA_CONTACTS_QUOTA, EXTRA_CONTACTS_CHARGE } = process.env;
 const recieveEmailEvents = () => {};
 
 const recieveCompanyUsersData = async ({ companyId, users }) => {
+  const stripeController = require("./stripe.controller");
+
   const promises = [];
 
   users = basicUtil.fiterUniqueObjectsFromArray(users);
@@ -76,16 +78,16 @@ const recieveCompanyUsersData = async ({ companyId, users }) => {
     }
   });
 
-  promises.push(Company.findById(companyId).populate("plan").lean());
+  promises.push(stripeController.readPlanIds({ customerId }));
 
   const results = await Promise.all(promises);
 
-  const company = results[results.length - 1];
+  const planIds = results[results.length - 1];
 
-  if (company.plan.quota.contacts < users.length) {
-    const stripeController = require("./stripe.controller");
+  const plan = await Plan.findById(planIds[0].planId);
 
-    const emailsContactsAboveQuota = users.length - company.plan.quota.contacts;
+  if (plan.quota.contacts < users.length) {
+    const emailsContactsAboveQuota = users.length - plan.quota.contacts;
 
     const extraContactsQuotaCharge =
       Math.ceil(emailsContactsAboveQuota / EXTRA_CONTACTS_QUOTA) *

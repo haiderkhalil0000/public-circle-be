@@ -10,6 +10,7 @@ const {
   EmailSent,
   CampaignRun,
   Company,
+  Plan,
 } = require("../models");
 const {
   basicUtil,
@@ -638,9 +639,7 @@ const validateCampaign = async ({ campaign }) => {
       ),
       Company.findOne({
         _id: campaign.company,
-      })
-        .populate("stripe")
-        .populate("plan"),
+      }).populate("stripe"),
     ]);
 
   let totalEmailContentSize = emailContentSizeDocs;
@@ -651,19 +650,22 @@ const validateCampaign = async ({ campaign }) => {
 
   const stripeController = require("./stripe.controller");
 
-  const companyBalance = await stripeController.readCustomerBalance({
-    customerId: company.stripe.id,
-    companyId: campaign.company,
-  });
+  const [companyBalance, planIds] = await Promise.all([
+    stripeController.readCustomerBalance({
+      customerId: company.stripe.id,
+      companyId: campaign.company,
+    }),
+    stripeController.readPlanIds({
+      customerId: company.stripe.id,
+    }),
+  ]);
+
+  const plan = await Plan.findById(planIds[0].planId);
 
   let emailSendingCharge = 0,
     emailContentCharge = 0;
 
-  if (
-    company.plan &&
-    company.plan.quota.email <
-      campaignRecipientsCount + totalEmailsSentByCompany
-  ) {
+  if (plan.quota.email < campaignRecipientsCount + totalEmailsSentByCompany) {
     emailSendingCharge = calculateEmailSendingCharge({
       campaignRecipientsCount,
     });
@@ -681,10 +683,9 @@ const validateCampaign = async ({ campaign }) => {
   }
 
   if (
-    company.plan &&
-    company.plan.quota.emailContent <
-      totalEmailContentSize +
-        campaign.emailTemplate.size * campaignRecipientsCount
+    plan.quota.emailContent <
+    totalEmailContentSize +
+      campaign.emailTemplate.size * campaignRecipientsCount
   ) {
     emailContentCharge = calculateEmailContentCharge({
       campaignEmailContentSize:
