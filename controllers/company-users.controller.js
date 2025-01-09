@@ -40,11 +40,11 @@ const getPossibleFilterValues = async ({ companyId, key }) => {
     CompanyUser.find({ company: companyId }, { [key]: 1, _id: 0 }),
   ]);
 
-  if (!company.contactsPrimaryKey) {
-    throw createHttpError(403, {
-      errorMessage: RESPONSE_MESSAGES.PRIMARY_KEY_NOT_FOUND,
-    });
-  }
+  // if (!company.contactsPrimaryKey) {
+  //   throw createHttpError(403, {
+  //     errorMessage: RESPONSE_MESSAGES.PRIMARY_KEY_NOT_FOUND,
+  //   });
+  // }
 
   const values = results.map((item) => item[key]);
 
