@@ -263,12 +263,6 @@ const readPrimaryKey = async ({ companyId }) => {
     "contactsPrimaryKey"
   );
 
-  if (!companyDoc.contactsPrimaryKey) {
-    throw createHttpError(400, {
-      errorMessage: RESPONSE_MESSAGES.PRIMARY_KEY_NOT_FOUND,
-    });
-  }
-
   return companyDoc.contactsPrimaryKey;
 };
 
