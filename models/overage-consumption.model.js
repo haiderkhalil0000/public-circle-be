@@ -1,13 +1,20 @@
 const mongoose = require("mongoose");
 
+const { ObjectId } = mongoose.Schema.Types;
 const {
   constants: {
-    MODELS: { OVERAGE_CONSUMPTION },
+    MODELS: { OVERAGE_CONSUMPTION, COMPANY },
   },
 } = require("../utils");
 
 const schema = new mongoose.Schema(
   {
+    company: {
+      type: ObjectId,
+      required: true,
+      index: true,
+      ref: COMPANY,
+    },
     description: { type: String, required: true },
     previousBalance: {
       type: Number,

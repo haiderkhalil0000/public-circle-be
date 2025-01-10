@@ -716,6 +716,7 @@ const validateCampaign = async ({ campaign }) => {
     }
 
     OverageConsumption.create({
+      company: campaign.company,
       description: getDescription(),
       previousBalance: companyBalance.currentBalance,
       currentBalance:
