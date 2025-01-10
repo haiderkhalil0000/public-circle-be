@@ -179,7 +179,7 @@ const deleteCompanyUser = async ({ userId }) => {
   }
 };
 
-const uploadCsv = async ({ companyId, file }) => {
+const uploadCsv = async ({ companyId, customerId, file }) => {
   const results = [];
 
   if (!file) {
