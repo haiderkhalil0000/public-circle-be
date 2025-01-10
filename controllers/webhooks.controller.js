@@ -84,7 +84,10 @@ const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
 
   const planIds = results[results.length - 1];
 
-  const plan = await Plan.findById(planIds[0].planId);
+  const [company, plan] = await Promise.all([
+    Company.findById(companyId).populate("stripe"),
+    Plan.findById(planIds[0].planId),
+  ]);
 
   if (plan.quota.contacts < users.length) {
     const emailsContactsAboveQuota = users.length - plan.quota.contacts;
