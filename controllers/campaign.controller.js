@@ -679,10 +679,7 @@ const validateCampaign = async ({ campaign }) => {
       campaignRecipientsCount,
     });
 
-    if (
-      companyBalance.currentBalance * 100 <
-      emailSendingCharge * campaignRecipientsCount
-    ) {
+    if (companyBalance * 100 < emailSendingCharge * campaignRecipientsCount) {
       await disableCampaign({ campaignId: campaign._id });
 
       throw createHttpError(400, {
@@ -705,24 +702,22 @@ const validateCampaign = async ({ campaign }) => {
           : campaign.emailTemplate.size * campaignRecipientsCount,
     });
 
-    if (
-      companyBalance.currentBalance * 100 <
-      emailContentCharge * campaignRecipientsCount
-    ) {
+    if (companyBalance * 100 < emailContentCharge * campaignRecipientsCount) {
       await disableCampaign({ campaignId: campaign._id });
 
       throw createHttpError(400, {
         errorMessage: RESPONSE_MESSAGES.EMAIL_CONTENT_LIMIT_REACHED,
       });
     }
+  }
 
+  if (emailSendingCharge || emailContentCharge)
     OverageConsumption.create({
       company: campaign.company,
       description: getDescription({ emailSendingCharge, emailContentCharge }),
-      previousBalance: companyBalance.currentBalance,
+      previousBalance: companyBalance,
       currentBalance:
-        companyBalance.currentBalance -
-        (emailSendingCharge - emailContentCharge) / 100,
+        companyBalance - (emailSendingCharge - emailContentCharge) / 100,
       emailOverage: `${campaignRecipientsCount}`,
       emailContentOverage: `${
         companyBalance.emailContentOverage === 0
@@ -734,7 +729,6 @@ const validateCampaign = async ({ campaign }) => {
       emailOverageCharge: emailSendingCharge,
       emailContentOverageCharge: emailContentCharge,
     });
-  }
 };
 
 module.exports = {
