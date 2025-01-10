@@ -595,14 +595,12 @@ const readCampaignRecipientsCount = async ({ campaign }) => {
 };
 
 const calculateEmailSendingCharge = ({ campaignRecipientsCount }) => {
-  // Calculate how many times the quota is exceeded
   const timesExceeded = Math.ceil(campaignRecipientsCount / EXTRA_EMAIL_QUOTA);
 
   return timesExceeded * EXTRA_EMAIL_CHARGE;
 };
 
 const calculateEmailContentCharge = ({ campaignEmailContentSize }) => {
-  // Calculate how many times the quota is exceeded
   const timesExceeded = Math.ceil(
     campaignEmailContentSize / EXTRA_EMAIL_CONTENT_QUOTA
   );
@@ -612,6 +610,16 @@ const calculateEmailContentCharge = ({ campaignEmailContentSize }) => {
 
 const disableCampaign = ({ campaignId }) =>
   Campaign.findByIdAndUpdate(campaignId, { status: CAMPAIGN_STATUS.DISABLED });
+
+const getDescription = ({ emailSendingCharge, emailContentCharge }) => {
+  if ((emailSendingCharge, emailContentCharge)) {
+    return `Consumed balance over extra email overage + email content overage.`;
+  } else if (emailSendingCharge) {
+    return `Consumed balance over extra email overage.`;
+  } else {
+    return `Consumed balance over extra email content overage.`;
+  }
+};
 
 const validateCampaign = async ({ campaign }) => {
   const populatedCampaign = await Campaign.findById(campaign._id).populate(
@@ -706,6 +714,24 @@ const validateCampaign = async ({ campaign }) => {
         errorMessage: RESPONSE_MESSAGES.EMAIL_CONTENT_LIMIT_REACHED,
       });
     }
+
+    OverageConsumption.create({
+      description: getDescription(),
+      previousBalance: companyBalance.currentBalance,
+      currentBalance:
+        companyBalance.currentBalance -
+        (emailSendingCharge - emailContentCharge) / 100,
+      emailOverage: `${campaignRecipientsCount}`,
+      emailContentOverage: `${
+        companyBalance.emailContentOverage === 0
+          ? totalEmailContentSize +
+            campaign.emailTemplate.size -
+            plan.quota.emailContent * campaignRecipientsCount
+          : campaign.emailTemplate.size * campaignRecipientsCount
+      }`,
+      emailOverageCharge: emailSendingCharge,
+      emailContentOverageCharge: emailContentCharge,
+    });
   }
 };
 

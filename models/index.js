@@ -18,4 +18,5 @@ module.exports = {
   Reward: require("./reward.model"),
   Plan: require("./plan.model"),
   TemplateCategory: require("./template-category.model"),
+  OverageConsumption: require("./overage-consumption.model"),
 };

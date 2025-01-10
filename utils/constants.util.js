@@ -21,6 +21,7 @@ module.exports = {
     REFERRAL_CODE: "referral-code",
     REWARD: "reward",
     PLAN: "plan",
+    OVERAGE_CONSUMPTION: "overage-comsumption",
   },
 
   RESPONSE_MESSAGES: {

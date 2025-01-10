@@ -349,12 +349,7 @@ const readCustomerBalance = async ({ customerId, companyId }) => {
     totalEmailsSentByCompany <= companyEmailQuota &&
     totalEmailContentConsumedByCompany <= companyEmailContentQuota
   ) {
-    return {
-      previousBalance: total / 100,
-      currentBalance: total / 100,
-      emailOverage: 0,
-      emailContentOverage: 0,
-    };
+    return total / 100;
   }
 
   const emailsAboveQuota =
@@ -374,13 +369,7 @@ const readCustomerBalance = async ({ customerId, companyId }) => {
     Math.ceil(emailsContentAboveQuota / EXTRA_EMAIL_CONTENT_QUOTA) *
     EXTRA_EMAIL_CONTENT_CHARGE;
 
-  return {
-    previousBalance: total / 100,
-    currentBalance:
-      (total - extraEmailQuotaCharge - extraEmailContentQuotaCharge) / 100,
-    emailOverage: extraEmailQuotaCharge / 100,
-    emailContentOverage: extraEmailContentQuotaCharge / 100,
-  };
+  return (total - extraEmailQuotaCharge - extraEmailContentQuotaCharge) / 100;
 };
 
 const generateImmediateChargeInvoice = async ({
