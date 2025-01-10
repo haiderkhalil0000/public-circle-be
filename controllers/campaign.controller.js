@@ -713,7 +713,8 @@ const validateCampaign = async ({ campaign }) => {
 
   if (emailSendingCharge || emailContentCharge)
     OverageConsumption.create({
-      company: campaign.company,
+      company: company._id,
+      customerId: company.stripe.id,
       description: getDescription({ emailSendingCharge, emailContentCharge }),
       previousBalance: companyBalance,
       currentBalance:

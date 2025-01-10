@@ -15,6 +15,10 @@ const schema = new mongoose.Schema(
       index: true,
       ref: COMPANY,
     },
+    customerId: {
+      type: String,
+      required: true,
+    },
     description: { type: String, required: true },
     previousBalance: {
       type: Number,
