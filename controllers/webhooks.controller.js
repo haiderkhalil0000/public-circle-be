@@ -7,7 +7,7 @@ const { EXTRA_CONTACTS_QUOTA, EXTRA_CONTACTS_CHARGE } = process.env;
 
 const recieveEmailEvents = () => {};
 
-const recieveCompanyUsersData = async ({ companyId, users }) => {
+const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
   const stripeController = require("./stripe.controller");
 
   const promises = [];

@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 // const sentry = require("@sentry/node");
 
-const { User, AccessToken } = require("../models");
+const { User, AccessToken, Company } = require("../models");
 const {
   constants: {
     MODELS: { ROLE },
@@ -92,7 +92,13 @@ const verifyWebhookToken = async (req, res, next) => {
   try {
     const decodedToken = decodeToken(token);
 
-    const accessTokenDoc = await AccessToken.findOne({ _id: decodedToken._id });
+    const accessTokenDoc = await AccessToken.findOne({
+      _id: decodedToken._id,
+    });
+
+    const companyDoc = await Company.findOne({
+      _id: accessTokenDoc.company,
+    }).populate("stripe");
 
     if (!accessTokenDoc) {
       return res.status(401).json({
@@ -101,7 +107,8 @@ const verifyWebhookToken = async (req, res, next) => {
       });
     }
 
-    req.companyId = accessTokenDoc.company;
+    req.companyId = companyDoc._id;
+    req.customerId = companyDoc.stripe.id;
 
     next();
   } catch (err) {

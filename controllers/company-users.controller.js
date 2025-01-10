@@ -205,6 +205,7 @@ const uploadCsv = async ({ companyId, file }) => {
           // Pass the parsed data to the controller
           await webhooksController.recieveCompanyUsersData({
             companyId,
+            customerId,
             users: results,
           });
         } catch (err) {

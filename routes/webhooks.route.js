@@ -70,6 +70,7 @@ router.post(
     try {
       await webhooksController.recieveCompanyUsersData({
         companyId: req.companyId,
+        customerId: req.customerId,
         ...req.body,
       });
 
