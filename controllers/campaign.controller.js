@@ -622,6 +622,25 @@ const getDescription = ({ emailSendingCharge, emailContentCharge }) => {
   }
 };
 
+const getEmailContentOverage = ({
+  companyBalance,
+  totalEmailContentSize,
+  campaign,
+  plan,
+  campaignRecipientsCount,
+}) => {
+  let emailContentOverage = "";
+
+  emailContentOverage =
+    companyBalance.emailContentOverage === 0
+      ? totalEmailContentSize +
+        campaign.emailTemplate.size -
+        plan.quota.emailContent * campaignRecipientsCount
+      : campaign.emailTemplate.size * campaignRecipientsCount;
+
+  return emailContentOverage / 1024;
+};
+
 const validateCampaign = async ({ campaign }) => {
   const populatedCampaign = await Campaign.findById(campaign._id).populate(
     "emailTemplate"
@@ -711,25 +730,30 @@ const validateCampaign = async ({ campaign }) => {
     }
   }
 
-  if (emailSendingCharge || emailContentCharge)
+  if (emailSendingCharge || emailContentCharge) {
+    emailSendingCharge = emailSendingCharge / 100;
+    emailContentCharge = emailContentCharge / 100;
+
     OverageConsumption.create({
       company: company._id,
       customerId: company.stripe.id,
       description: getDescription({ emailSendingCharge, emailContentCharge }),
       previousBalance: companyBalance,
-      currentBalance:
-        companyBalance - (emailSendingCharge - emailContentCharge) / 100,
-      emailOverage: `${campaignRecipientsCount}`,
-      emailContentOverage: `${
-        companyBalance.emailContentOverage === 0
-          ? totalEmailContentSize +
-            campaign.emailTemplate.size -
-            plan.quota.emailContent * campaignRecipientsCount
-          : campaign.emailTemplate.size * campaignRecipientsCount
+      currentBalance: companyBalance - emailSendingCharge - emailContentCharge,
+      emailOverage: `${campaignRecipientsCount} e-mail${
+        campaignRecipientsCount > 1 ? "s" : null
       }`,
+      emailContentOverage: `${getEmailContentOverage({
+        companyBalance,
+        totalEmailContentSize,
+        campaign,
+        plan,
+        campaignRecipientsCount,
+      })} KB`,
       emailOverageCharge: emailSendingCharge,
       emailContentOverageCharge: emailContentCharge,
     });
+  }
 };
 
 module.exports = {
