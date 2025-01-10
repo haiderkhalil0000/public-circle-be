@@ -741,7 +741,7 @@ const validateCampaign = async ({ campaign }) => {
       previousBalance: companyBalance,
       currentBalance: companyBalance - emailSendingCharge - emailContentCharge,
       emailOverage: `${campaignRecipientsCount} e-mail${
-        campaignRecipientsCount > 1 ? "s" : null
+        campaignRecipientsCount > 1 ? "s" : ""
       }`,
       emailContentOverage: `${getEmailContentOverage({
         companyBalance,
