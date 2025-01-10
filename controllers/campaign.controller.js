@@ -11,6 +11,7 @@ const {
   CampaignRun,
   Company,
   Plan,
+  OverageConsumption,
 } = require("../models");
 const {
   basicUtil,
