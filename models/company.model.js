@@ -19,7 +19,23 @@ const schema = new mongoose.Schema(
     country: { type: String },
     stripe: { type: Object, default: {} },
     contactsPrimaryKey: { type: String },
-    plan: { type: ObjectId, ref: PLAN },
+    extraQuota: {
+      email: {
+        type: Number,
+        required: true,
+        default: 0,
+      },
+      emailContent: {
+        type: Number,
+        required: true,
+        default: 0,
+      },
+      contacts: {
+        type: Number,
+        required: true,
+        default: 0,
+      },
+    },
   },
   { timestamps: true }
 );

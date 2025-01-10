@@ -595,27 +595,33 @@ const readCampaignRecipientsCount = async ({ campaign }) => {
   return filterCounts.reduce((total, current) => total + current);
 };
 
-const calculateEmailSendingCharge = ({ campaignRecipientsCount }) => {
+const calculateExtraEmailQuotaAndCharge = ({ campaignRecipientsCount }) => {
   const timesExceeded = Math.ceil(campaignRecipientsCount / EXTRA_EMAIL_QUOTA);
 
-  return timesExceeded * EXTRA_EMAIL_CHARGE;
+  return {
+    extraEmailQuota: timesExceeded * EXTRA_EMAIL_QUOTA,
+    extraEmailCharge: timesExceeded * EXTRA_EMAIL_CHARGE,
+  };
 };
 
-const calculateEmailContentCharge = ({ campaignEmailContentSize }) => {
+const calculateEmailContentQuotaAndCharge = ({ campaignEmailContentSize }) => {
   const timesExceeded = Math.ceil(
     campaignEmailContentSize / EXTRA_EMAIL_CONTENT_QUOTA
   );
 
-  return timesExceeded * EXTRA_EMAIL_CONTENT_CHARGE;
+  return {
+    extraEmailContentQuota: timesExceeded * EXTRA_EMAIL_CONTENT_QUOTA,
+    extraEmailContentCharge: timesExceeded * EXTRA_EMAIL_CONTENT_CHARGE,
+  };
 };
 
 const disableCampaign = ({ campaignId }) =>
   Campaign.findByIdAndUpdate(campaignId, { status: CAMPAIGN_STATUS.DISABLED });
 
-const getDescription = ({ emailSendingCharge, emailContentCharge }) => {
-  if ((emailSendingCharge, emailContentCharge)) {
+const getDescription = ({ extraEmailCharge, extraEmailContentCharge }) => {
+  if ((extraEmailCharge, extraEmailContentCharge)) {
     return `Consumed balance over extra email overage + email content overage.`;
-  } else if (emailSendingCharge) {
+  } else if (extraEmailCharge) {
     return `Consumed balance over extra email overage.`;
   } else {
     return `Consumed balance over extra email content overage.`;
@@ -690,15 +696,23 @@ const validateCampaign = async ({ campaign }) => {
 
   const plan = await Plan.findById(planIds[0].planId);
 
-  let emailSendingCharge = 0,
-    emailContentCharge = 0;
+  let extraEmailCharge = 0,
+    extraEmailQuota = 0,
+    extraEmailContentCharge = 0;
+  extraEmailContentQuota = 0;
 
-  if (plan.quota.email < campaignRecipientsCount + totalEmailsSentByCompany) {
-    emailSendingCharge = calculateEmailSendingCharge({
+  if (
+    plan.quota.email + company.extraQuota.email <
+    campaignRecipientsCount + totalEmailsSentByCompany
+  ) {
+    const result = calculateExtraEmailQuotaAndCharge({
       campaignRecipientsCount,
     });
 
-    if (companyBalance * 100 < emailSendingCharge * campaignRecipientsCount) {
+    extraEmailQuota = result.extraEmailQuota;
+    extraEmailCharge = result.extraEmailCharge;
+
+    if (companyBalance * 100 < extraEmailCharge * campaignRecipientsCount) {
       await disableCampaign({ campaignId: campaign._id });
 
       throw createHttpError(400, {
@@ -708,11 +722,11 @@ const validateCampaign = async ({ campaign }) => {
   }
 
   if (
-    plan.quota.emailContent <
+    plan.quota.emailContent + company.extraQuota.emailContent <
     totalEmailContentSize +
       campaign.emailTemplate.size * campaignRecipientsCount
   ) {
-    emailContentCharge = calculateEmailContentCharge({
+    result = calculateEmailContentQuotaAndCharge({
       campaignEmailContentSize:
         companyBalance.emailContentOverage === 0
           ? totalEmailContentSize +
@@ -721,7 +735,13 @@ const validateCampaign = async ({ campaign }) => {
           : campaign.emailTemplate.size * campaignRecipientsCount,
     });
 
-    if (companyBalance * 100 < emailContentCharge * campaignRecipientsCount) {
+    extraEmailContentQuota = result.extraEmailContentQuota;
+    extraEmailContentCharge = result.extraEmailContentCharge;
+
+    if (
+      companyBalance * 100 <
+      extraEmailContentCharge * campaignRecipientsCount
+    ) {
       await disableCampaign({ campaignId: campaign._id });
 
       throw createHttpError(400, {
@@ -730,29 +750,48 @@ const validateCampaign = async ({ campaign }) => {
     }
   }
 
-  if (emailSendingCharge || emailContentCharge) {
-    emailSendingCharge = emailSendingCharge / 100;
-    emailContentCharge = emailContentCharge / 100;
+  if (extraEmailCharge || extraEmailContentCharge) {
+    extraEmailCharge = extraEmailCharge / 100;
+    extraEmailContentCharge = extraEmailContentCharge / 100;
 
-    OverageConsumption.create({
-      company: company._id,
-      customerId: company.stripe.id,
-      description: getDescription({ emailSendingCharge, emailContentCharge }),
-      previousBalance: companyBalance,
-      currentBalance: companyBalance - emailSendingCharge - emailContentCharge,
-      emailOverage: `${campaignRecipientsCount} e-mail${
-        campaignRecipientsCount > 1 ? "s" : ""
-      }`,
-      emailContentOverage: `${getEmailContentOverage({
-        companyBalance,
-        totalEmailContentSize,
-        campaign,
-        plan,
-        campaignRecipientsCount,
-      })} KB`,
-      emailOverageCharge: emailSendingCharge,
-      emailContentOverageCharge: emailContentCharge,
-    });
+    await Promise.all([
+      OverageConsumption.create({
+        company: company._id,
+        customerId: company.stripe.id,
+        description: getDescription({
+          extraEmailCharge,
+          extraEmailContentCharge,
+        }),
+        previousBalance: companyBalance,
+        currentBalance:
+          companyBalance - extraEmailCharge - extraEmailContentCharge,
+        emailOverage: extraEmailCharge
+          ? `${campaignRecipientsCount} email${
+              campaignRecipientsCount > 1 ? "s" : ""
+            }`
+          : 0,
+        emailContentOverage: extraEmailContentCharge
+          ? `${getEmailContentOverage({
+              companyBalance,
+              totalEmailContentSize,
+              campaign,
+              plan,
+              campaignRecipientsCount,
+            })} KB`
+          : 0,
+        emailOverageCharge: extraEmailCharge,
+        emailContentOverageCharge: extraEmailContentCharge,
+      }),
+      Company.updateOne(
+        { _id: company._id },
+        {
+          $inc: {
+            "extraQuota.email": extraEmailQuota,
+            "extraQuota.emailContent": extraEmailContentQuota,
+          },
+        }
+      ),
+    ]);
   }
 };
 
