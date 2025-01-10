@@ -1,6 +1,6 @@
 const _ = require("lodash");
 
-const { CompanyUser, Plan } = require("../models");
+const { CompanyUser, Plan, Company } = require("../models");
 const { basicUtil } = require("../utils");
 
 const { EXTRA_CONTACTS_QUOTA, EXTRA_CONTACTS_CHARGE } = process.env;
