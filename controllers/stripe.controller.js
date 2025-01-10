@@ -452,6 +452,12 @@ const readCustomerUpcomingInvoices = async ({ customerId }) => {
   };
 };
 
+const getReceiptDescription = ({ description }) => {
+  if (description.includes("Subscription creation")) {
+    return "Subscription purchased.";
+  }
+};
+
 const readCustomerReceipts = async ({ customerId }) => {
   const charges = await stripe.charges.list({
     customer: customerId,
@@ -460,7 +466,14 @@ const readCustomerReceipts = async ({ customerId }) => {
 
   const receipts = charges.data;
 
-  return receipts;
+  return receipts.map((item) => ({
+    createdAt: moment.unix(item.created).format("YYYY-MM-DD h:mm:ss A"),
+    description: getReceiptDescription({ description: item.description }),
+    amount: item.amount / 100,
+    currency: item.currency,
+    receiptUrl: item.receipt_url,
+    status: item.status,
+  }));
 };
 
 const readDefaultPaymentMethod = async ({ customerId }) => {
