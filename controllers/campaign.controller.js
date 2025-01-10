@@ -91,8 +91,6 @@ const createCampaign = async ({
     basicUtil.validateObjectId({ inputString: segmentId });
   }
 
-  await validateCampaign({ campaign });
-
   const campaign = await Campaign.create({
     company: companyId,
     segments: segmentIds,
@@ -106,6 +104,7 @@ const createCampaign = async ({
   });
 
   if (runMode === RUN_MODE.INSTANT) {
+    await validateCampaign({ campaign });
     await runCampaign({ campaign });
   }
 };
