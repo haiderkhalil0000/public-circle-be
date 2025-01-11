@@ -8,6 +8,7 @@ const {
   Reward,
   Plan,
   OverageConsumption,
+  Company,
 } = require("../models");
 const {
   constants: { RESPONSE_MESSAGES },
@@ -320,10 +321,11 @@ const createATopUpInCustomerBalance = async ({
 };
 
 const readCustomerBalance = async ({ customerId, companyId }) => {
-  const [invoices, plans] = await Promise.all([
+  const [invoices, company, plans] = await Promise.all([
     stripe.invoices.list({
       customer: customerId,
     }),
+    Company.findById(companyId),
     readPlanIds({ customerId }),
   ]);
 
@@ -358,24 +360,13 @@ const readCustomerBalance = async ({ customerId, companyId }) => {
     return total / 100;
   }
 
-  const emailsAboveQuota =
-    totalEmailsSentByCompany > companyEmailQuota
-      ? totalEmailsSentByCompany - companyEmailQuota
-      : 0;
-
-  const emailsContentAboveQuota =
-    totalEmailContentConsumedByCompany > companyEmailContentQuota
-      ? totalEmailContentConsumedByCompany - companyEmailContentQuota
-      : 0;
-
-  const extraEmailQuotaCharge =
-    Math.ceil(emailsAboveQuota / EXTRA_EMAIL_QUOTA) * EXTRA_EMAIL_CHARGE;
-
-  const extraEmailContentQuotaCharge =
-    Math.ceil(emailsContentAboveQuota / EXTRA_EMAIL_CONTENT_QUOTA) *
+  const emailCharge =
+    (company.extraQuota.email / EXTRA_EMAIL_QUOTA) * EXTRA_EMAIL_CHARGE;
+  const emailContentCharge =
+    (company.extraQuota.emailContent / EXTRA_EMAIL_CONTENT_QUOTA) *
     EXTRA_EMAIL_CONTENT_CHARGE;
 
-  return (total - extraEmailQuotaCharge - extraEmailContentQuotaCharge) / 100;
+  return (total - emailCharge - emailContentCharge) / 100;
 };
 
 const generateImmediateChargeInvoice = async ({
