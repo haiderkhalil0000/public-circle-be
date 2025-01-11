@@ -604,9 +604,9 @@ const calculateExtraEmailQuotaAndCharge = ({ campaignRecipientsCount }) => {
   };
 };
 
-const calculateEmailContentQuotaAndCharge = ({ campaignEmailContentSize }) => {
+const calculateEmailContentQuotaAndCharge = ({ campaignEmailContent }) => {
   const timesExceeded = Math.ceil(
-    campaignEmailContentSize / EXTRA_EMAIL_CONTENT_QUOTA
+    campaignEmailContent / EXTRA_EMAIL_CONTENT_QUOTA
   );
 
   return {
@@ -727,7 +727,7 @@ const validateCampaign = async ({ campaign }) => {
       campaign.emailTemplate.size * campaignRecipientsCount
   ) {
     result = calculateEmailContentQuotaAndCharge({
-      campaignEmailContentSize:
+      campaignEmailContent:
         companyBalance.emailContentOverage === 0
           ? totalEmailContentSize +
             campaign.emailTemplate.size -
