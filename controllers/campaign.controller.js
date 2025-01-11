@@ -595,8 +595,8 @@ const readCampaignRecipientsCount = async ({ campaign }) => {
   return filterCounts.reduce((total, current) => total + current);
 };
 
-const calculateExtraEmailQuotaAndCharge = ({ campaignRecipientsCount }) => {
-  const timesExceeded = Math.ceil(campaignRecipientsCount / EXTRA_EMAIL_QUOTA);
+const calculateExtraEmailQuotaAndCharge = ({ unpaidEmailsCount }) => {
+  const timesExceeded = Math.ceil(unpaidEmailsCount / EXTRA_EMAIL_QUOTA);
 
   return {
     extraEmailQuota: timesExceeded * EXTRA_EMAIL_QUOTA,
@@ -706,7 +706,7 @@ const validateCampaign = async ({ campaign }) => {
     campaignRecipientsCount + totalEmailsSentByCompany
   ) {
     const result = calculateExtraEmailQuotaAndCharge({
-      campaignRecipientsCount,
+      unpaidEmailsCount: campaignRecipientsCount - plan.quota.email,
     });
 
     extraEmailQuota = result.extraEmailQuota;
@@ -728,11 +728,12 @@ const validateCampaign = async ({ campaign }) => {
   ) {
     result = calculateEmailContentQuotaAndCharge({
       campaignEmailContent:
-        companyBalance.emailContentOverage === 0
+        company.extraQuota.emailContent === 0
           ? totalEmailContentSize +
-            campaign.emailTemplate.size -
-            plan.quota.emailContent * campaignRecipientsCount
-          : campaign.emailTemplate.size * campaignRecipientsCount,
+            campaign.emailTemplate.size * campaignRecipientsCount -
+            plan.quota.emailContent
+          : campaign.emailTemplate.size * campaignRecipientsCount -
+            plan.quota.emailContent,
     });
 
     extraEmailContentQuota = result.extraEmailContentQuota;
