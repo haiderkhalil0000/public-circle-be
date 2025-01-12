@@ -26,6 +26,28 @@ const schema = new mongoose.Schema(
         default: 0,
       },
     },
+    bundles: {
+      email: {
+        emails: {
+          type: Number,
+          required: true,
+          default: 0,
+        },
+        priceInSmallestUnit: { type: Number, required: true, default: 0 },
+      },
+      emailContent: {
+        bandwidth: {
+          type: Number,
+          required: true,
+          default: 0,
+        },
+        priceInSmallestUnit: {
+          type: Number,
+          required: true,
+          default: 0,
+        },
+      },
+    },
     price: {
       type: Number,
       required: true,

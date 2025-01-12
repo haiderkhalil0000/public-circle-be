@@ -14,10 +14,6 @@ const {
   PUBLIC_CIRCLES_EMAIL_ADDRESS,
   S3BUCKET,
   ADMIN_ROLE_ID,
-  EXTRA_EMAIL_QUOTA,
-  EXTRA_EMAIL_CHARGE,
-  EXTRA_EMAIL_CONTENT_QUOTA,
-  EXTRA_EMAIL_CONTENT_CHARGE,
 } = process.env;
 
 module.exports = function (app) {
@@ -73,26 +69,6 @@ module.exports = function (app) {
 
   if (!ADMIN_ROLE_ID) {
     console.log("FATAL ERROR: ADMIN_ROLE_ID is not defined!");
-    process.exit(1);
-  }
-
-  if (!EXTRA_EMAIL_QUOTA) {
-    console.log("FATAL ERROR: EXTRA_EMAIL_QUOTA is not defined!");
-    process.exit(1);
-  }
-
-  if (!EXTRA_EMAIL_CHARGE) {
-    console.log("FATAL ERROR: EXTRA_EMAIL_CHARGE is not defined!");
-    process.exit(1);
-  }
-
-  if (!EXTRA_EMAIL_CONTENT_QUOTA) {
-    console.log("FATAL ERROR: EXTRA_EMAIL_CONTENT_QUOTA is not defined!");
-    process.exit(1);
-  }
-
-  if (!EXTRA_EMAIL_CONTENT_CHARGE) {
-    console.log("FATAL ERROR: EXTRA_EMAIL_CONTENT_CHARGE is not defined!");
     process.exit(1);
   }
 

@@ -3,8 +3,6 @@ const _ = require("lodash");
 const { CompanyUser, Plan, Company } = require("../models");
 const { basicUtil } = require("../utils");
 
-const { EXTRA_CONTACTS_QUOTA, EXTRA_CONTACTS_CHARGE } = process.env;
-
 const recieveEmailEvents = () => {};
 
 const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
@@ -92,9 +90,10 @@ const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
   if (plan.quota.contacts < users.length) {
     const emailsContactsAboveQuota = users.length - plan.quota.contacts;
 
+    const { contacts, priceInSmallestUnit } = plan.bundles.contact;
+
     const extraContactsQuotaCharge =
-      Math.ceil(emailsContactsAboveQuota / EXTRA_CONTACTS_QUOTA) *
-      EXTRA_CONTACTS_CHARGE;
+      Math.ceil(emailsContactsAboveQuota / contacts) * priceInSmallestUnit;
 
     await stripeController.chargeInUpcomingInvoice({
       customerId: company.stripe.id,

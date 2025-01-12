@@ -14,13 +14,7 @@ const {
   constants: { RESPONSE_MESSAGES },
 } = require("../utils");
 
-const {
-  STRIPE_KEY,
-  EXTRA_EMAIL_QUOTA,
-  EXTRA_EMAIL_CHARGE,
-  EXTRA_EMAIL_CONTENT_QUOTA,
-  EXTRA_EMAIL_CONTENT_CHARGE,
-} = process.env;
+const { STRIPE_KEY } = process.env;
 
 const stripe = require("stripe")(STRIPE_KEY);
 
@@ -267,29 +261,6 @@ const upgradeOrDowngradeSubscription = async ({ customerId, items }) => {
   }
 };
 
-const chargeCustomerThroughPaymentIntent = ({
-  customerId,
-  amountInSmallestUnit,
-  currency,
-  paymentMethodId,
-  description,
-}) =>
-  stripe.paymentIntents.create({
-    customer: customerId,
-    amount: amountInSmallestUnit,
-    currency,
-    payment_method: paymentMethodId,
-    off_session: true,
-    confirm: true,
-    description,
-  });
-
-const addCustomerBalance = ({ customerId, amountInSmallestUnit, currency }) =>
-  stripe.customers.createBalanceTransaction(customerId, {
-    amount: -amountInSmallestUnit,
-    currency,
-  });
-
 const createATopUpInCustomerBalance = async ({
   customerId,
   amountInSmallestUnit,
@@ -360,11 +331,16 @@ const readCustomerBalance = async ({ customerId, companyId }) => {
     return total / 100;
   }
 
+  const { emails, priceInSmallestUnit: emailsPriceInSmallestUnit } =
+    plan.bundles.email;
+  const { bandwidth, priceInSmallestUnit: emailContentPriceInSmallestUnit } =
+    plan.bundles.emailContent;
+
   const emailCharge =
-    (company.extraQuota.email / EXTRA_EMAIL_QUOTA) * EXTRA_EMAIL_CHARGE;
+    (company.extraQuota.email / emails) * emailsPriceInSmallestUnit;
   const emailContentCharge =
-    (company.extraQuota.emailContent / EXTRA_EMAIL_CONTENT_QUOTA) *
-    EXTRA_EMAIL_CONTENT_CHARGE;
+    (company.extraQuota.emailContent / bandwidth) *
+    emailContentPriceInSmallestUnit;
 
   return (total - emailCharge - emailContentCharge) / 100;
 };

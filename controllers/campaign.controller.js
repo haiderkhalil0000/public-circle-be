@@ -27,13 +27,6 @@ const {
   },
 } = require("../utils");
 
-const {
-  EXTRA_EMAIL_QUOTA,
-  EXTRA_EMAIL_CHARGE,
-  EXTRA_EMAIL_CONTENT_QUOTA,
-  EXTRA_EMAIL_CONTENT_CHARGE,
-} = process.env;
-
 const validateSourceEmailAddress = async ({
   companyId,
   sourceEmailAddress,
@@ -595,23 +588,28 @@ const readCampaignRecipientsCount = async ({ campaign }) => {
   return filterCounts.reduce((total, current) => total + current);
 };
 
-const calculateExtraEmailQuotaAndCharge = ({ unpaidEmailsCount }) => {
-  const timesExceeded = Math.ceil(unpaidEmailsCount / EXTRA_EMAIL_QUOTA);
+const calculateExtraEmailQuotaAndCharge = ({ unpaidEmailsCount, plan }) => {
+  const { emails, priceInSmallestUnit } = plan.bundles.email;
+
+  const timesExceeded = Math.ceil(unpaidEmailsCount / emails);
 
   return {
-    extraEmailQuota: timesExceeded * EXTRA_EMAIL_QUOTA,
-    extraEmailCharge: timesExceeded * EXTRA_EMAIL_CHARGE,
+    extraEmailQuota: timesExceeded * emails,
+    extraEmailCharge: timesExceeded * priceInSmallestUnit,
   };
 };
 
-const calculateEmailContentQuotaAndCharge = ({ campaignEmailContent }) => {
-  const timesExceeded = Math.ceil(
-    campaignEmailContent / EXTRA_EMAIL_CONTENT_QUOTA
-  );
+const calculateEmailContentQuotaAndCharge = ({
+  campaignEmailContent,
+  plan,
+}) => {
+  const { bandwidth, priceInSmallestUnit } = plan.bundles.emailContent;
+
+  const timesExceeded = Math.ceil(campaignEmailContent / bandwidth);
 
   return {
-    extraEmailContentQuota: timesExceeded * EXTRA_EMAIL_CONTENT_QUOTA,
-    extraEmailContentCharge: timesExceeded * EXTRA_EMAIL_CONTENT_CHARGE,
+    extraEmailContentQuota: timesExceeded * bandwidth,
+    extraEmailContentCharge: timesExceeded * priceInSmallestUnit,
   };
 };
 
@@ -707,6 +705,7 @@ const validateCampaign = async ({ campaign }) => {
   ) {
     const result = calculateExtraEmailQuotaAndCharge({
       unpaidEmailsCount: campaignRecipientsCount - plan.quota.email,
+      plan,
     });
 
     extraEmailQuota = result.extraEmailQuota;
@@ -734,6 +733,7 @@ const validateCampaign = async ({ campaign }) => {
             plan.quota.emailContent
           : campaign.emailTemplate.size * campaignRecipientsCount -
             plan.quota.emailContent,
+      plan,
     });
 
     extraEmailContentQuota = result.extraEmailContentQuota;
