@@ -90,7 +90,7 @@ router.patch(
   }),
   async (req, res, next) => {
     try {
-      await usersController.updateUser({
+      const updatedUser = await usersController.updateUser({
         ...req.body,
         profilePicture: req.file,
         currentUser: req.user,
@@ -98,7 +98,7 @@ router.patch(
 
       res.status(200).json({
         message: RESPONSE_MESSAGES.USER_UPDATED,
-        data: {},
+        data: updatedUser,
       });
     } catch (err) {
       // sendErrorReportToSentry(error);

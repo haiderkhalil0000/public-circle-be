@@ -112,9 +112,13 @@ const updateUser = async ({
     );
   }
 
-  promises.push(User.updateOne({ _id: currentUser._id }, userUpdates));
+  promises.push(
+    User.findByIdAndUpdate(currentUser._id, userUpdates, { new: true })
+  );
 
-  await Promise.all(promises);
+  const result = await Promise.all(promises);
+
+  return result[promises.length - 1];
 };
 
 const createUserUnderACompany = async ({
