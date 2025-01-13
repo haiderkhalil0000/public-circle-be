@@ -591,6 +591,8 @@ const readCampaignRecipientsCount = async ({ campaign }) => {
 const calculateExtraEmailQuotaAndCharge = ({ unpaidEmailsCount, plan }) => {
   const { emails, priceInSmallestUnit } = plan.bundles.email;
 
+  unpaidEmailsCount = unpaidEmailsCount || 1;
+
   const timesExceeded = Math.ceil(unpaidEmailsCount / emails);
 
   return {
@@ -617,7 +619,7 @@ const disableCampaign = ({ campaignId }) =>
   Campaign.findByIdAndUpdate(campaignId, { status: CAMPAIGN_STATUS.DISABLED });
 
 const getDescription = ({ extraEmailCharge, extraEmailContentCharge }) => {
-  if ((extraEmailCharge, extraEmailContentCharge)) {
+  if (extraEmailCharge && extraEmailContentCharge) {
     return `Consumed balance over extra email overage + email content overage.`;
   } else if (extraEmailCharge) {
     return `Consumed balance over extra email overage.`;
@@ -727,12 +729,12 @@ const validateCampaign = async ({ campaign }) => {
   ) {
     result = calculateEmailContentQuotaAndCharge({
       campaignEmailContent:
-        company.extraQuota.emailContent === 0
-          ? totalEmailContentSize +
-            campaign.emailTemplate.size * campaignRecipientsCount -
-            plan.quota.emailContent
-          : campaign.emailTemplate.size * campaignRecipientsCount -
-            plan.quota.emailContent,
+        // company.extraQuota.emailContent === 0?
+        totalEmailContentSize +
+        campaign.emailTemplate.size * campaignRecipientsCount -
+        plan.quota.emailContent,
+      // : campaign.emailTemplate.size * campaignRecipientsCount -
+      //   plan.quota.emailContent,
       plan,
     });
 
