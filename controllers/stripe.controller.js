@@ -511,6 +511,16 @@ const readPlanIds = async ({ customerId }) => {
   );
 };
 
+const readPendingInvoiceItems = ({ customerId }) =>
+  stripe.invoiceItems.list({
+    customer: customerId,
+    pending: true,
+  });
+
+const deleteInvoiceItem = async ({ invoiceItemId }) => {
+  await stripe.invoiceItems.del(invoiceItemId);
+};
+
 module.exports = {
   createStripeCustomer,
   readStripeCustomer,
@@ -533,4 +543,6 @@ module.exports = {
   chargeInUpcomingInvoice,
   chargeCustomerFromBalance,
   readPlanIds,
+  readPendingInvoiceItems,
+  deleteInvoiceItem,
 };

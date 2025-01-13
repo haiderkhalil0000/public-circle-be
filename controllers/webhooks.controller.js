@@ -14,9 +14,12 @@ const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
 
   const { getPossibleFilterKeys } = require("./company-users.controller");
 
-  const possibleFilterKeys = await getPossibleFilterKeys({
-    companyId,
-  });
+  const [possibleFilterKeys, existingContactsCount] = await Promise.all([
+    getPossibleFilterKeys({
+      companyId,
+    }),
+    CompanyUser.countDocuments({ company: companyId }),
+  ]);
 
   const filterKeys = {};
 
@@ -82,23 +85,38 @@ const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
 
   const planIds = results[results.length - 1];
 
-  const [company, plan] = await Promise.all([
+  const [company, plan, pendingInvoiceItems] = await Promise.all([
     Company.findById(companyId).populate("stripe"),
     Plan.findById(planIds[0].planId),
+    stripeController.readPendingInvoiceItems({ customerId }),
   ]);
 
-  if (plan.quota.contacts < users.length) {
-    const emailsContactsAboveQuota = users.length - plan.quota.contacts;
+  if (plan.quota.contacts < users.length + existingContactsCount) {
+    const contactsAboveQuota =
+      users.length + existingContactsCount - plan.quota.contacts;
 
     const { contacts, priceInSmallestUnit } = plan.bundles.contact;
 
     const extraContactsQuotaCharge =
-      Math.ceil(emailsContactsAboveQuota / contacts) * priceInSmallestUnit;
+      Math.ceil(contactsAboveQuota / contacts) * priceInSmallestUnit;
 
-    await stripeController.chargeInUpcomingInvoice({
-      customerId: company.stripe.id,
-      chargeAmountInSmallestUnit: extraContactsQuotaCharge,
-    });
+    const contactsOverageInvoiceItem = pendingInvoiceItems.data.find(
+      (item) => item.description === "Contacts import overage charges."
+    );
+
+    if (!contactsOverageInvoiceItem) {
+      await stripeController.chargeInUpcomingInvoice({
+        customerId: company.stripe.id,
+        chargeAmountInSmallestUnit: extraContactsQuotaCharge,
+      });
+    } else if (
+      contactsOverageInvoiceItem &&
+      contactsOverageInvoiceItem.amount < extraContactsQuotaCharge
+    ) {
+      await stripeController.deleteInvoiceItem({
+        invoiceItemId: contactsOverageInvoiceItem.id,
+      });
+    }
   }
 };
 
