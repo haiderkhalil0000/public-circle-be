@@ -604,7 +604,7 @@ const readStripeEvent = async ({ stripeSignature, body }) => {
 
     const [companyContactsCount, plan] = await Promise.all([
       companyContactsController.readCompanyContactsCount({
-        company: latestPrivateOverageConsumptionEntry.company,
+        companyId: latestPrivateOverageConsumptionEntry.company,
       }),
       Plan.findById(planIds[0].planId),
     ]);
