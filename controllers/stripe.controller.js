@@ -558,7 +558,13 @@ const readStripeEvent = async ({ stripeSignature, body }) => {
     endpointSecret
   );
 
-  console.log(event);
+  const invoiceId = event.data.object.id;
+
+  const invoice = await stripe.invoices.retrieve(invoiceId, {
+    expand: ["lines"],
+  });
+
+  console.log(invoice);
 };
 
 module.exports = {
