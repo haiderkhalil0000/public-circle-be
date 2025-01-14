@@ -550,7 +550,7 @@ const readInvoiceLineItems = ({ invoiceId }) =>
   stripe.invoices.listLineItems(invoiceId);
 
 const readStripeEvent = async ({ stripeSignature, body }) => {
-  const endpointSecret = "whsec_QOcJPlzrdkrHM2b18yPRJ1b6WLleUUG7";
+  const endpointSecret = "whsec_If7HK7wlpvmX6ig8eCdNf0ujOauA64GA";
 
   const event = await stripe.webhooks.constructEvent(
     body,
