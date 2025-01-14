@@ -20,7 +20,7 @@ app.post(
 
     webhooksController.receiveStripeEvents({
       stripeSignature,
-      body: req.rawBody,
+      body: req.body,
     });
 
     res.status(200).send("Success");
