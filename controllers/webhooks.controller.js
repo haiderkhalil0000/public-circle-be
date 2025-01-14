@@ -4,27 +4,9 @@ const { CompanyUser, Plan, Company, OverageConsumption } = require("../models");
 const { basicUtil } = require("../utils");
 const { OVERAGE_CONSUMPTION_KIND } = require("../utils/constants.util");
 
-const createOverageConsumptionEntry = async ({
-  companyId,
-  customerId,
-  description,
-  contactOverage,
-  contactOverageCharge,
-  stripeInvoiceItemId,
-}) => {
-  await OverageConsumption.create({
-    company: companyId,
-    customerId: customerId,
-    description,
-    contactOverage,
-    contactOverageCharge,
-    kind: OVERAGE_CONSUMPTION_KIND.PRIVATE,
-    stripeInvoiceItemId,
-  });
-};
-
 const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
   const stripeController = require("./stripe.controller");
+  const overageConsumptionController = require("./overage-consumption.controller");
 
   const promises = [];
 
@@ -173,7 +155,7 @@ const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
         chargeAmountInSmallestUnit: extraContactsQuotaCharge,
       });
 
-      createOverageConsumptionEntry({
+      overageConsumptionController.createOverageConsumption({
         companyId: company._id,
         customerId: company.stripe.id,
         description: "Overage charge for importing contacts above quota.",
@@ -191,7 +173,7 @@ const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
         chargeAmountInSmallestUnit: extraContactsQuotaCharge,
       });
 
-      createOverageConsumptionEntry({
+      overageConsumptionController.createOverageConsumption({
         companyId: company._id,
         customerId: company.stripe.id,
         description: "Overage charge for importing contacts above quota.",
@@ -206,7 +188,7 @@ const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
       chargeAmountInSmallestUnit: extraContactsQuotaCharge,
     });
 
-    createOverageConsumptionEntry({
+    overageConsumptionController.createOverageConsumption({
       companyId: company._id,
       customerId: company.stripe.id,
       description: "Overage charge for importing contacts above quota.",

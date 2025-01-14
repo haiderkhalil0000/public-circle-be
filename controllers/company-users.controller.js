@@ -280,6 +280,9 @@ const deletePrimaryKey = async ({ companyId }) =>
     contactsPrimaryKey: null,
   });
 
+const readCompanyContactsCount = ({ companyId }) =>
+  CompanyUser.countDocuments({ company: companyId });
+
 module.exports = {
   getPossibleFilterKeys,
   getPossibleFilterValues,
@@ -297,4 +300,5 @@ module.exports = {
   readPrimaryKey,
   updatePrimaryKey,
   deletePrimaryKey,
+  readCompanyContactsCount,
 };

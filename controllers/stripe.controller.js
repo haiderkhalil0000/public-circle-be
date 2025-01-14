@@ -564,11 +564,78 @@ const readStripeEvent = async ({ stripeSignature, body }) => {
     invoice: invoiceId,
   });
 
+  const invoiceItemIds = [];
+  let customerId = "";
+
   invoiceItems.data.forEach((invoiceItem) => {
-    console.log(
-      `InvoiceItem ID: ${invoiceItem.id} (${invoiceItem.description})`
-    );
+    if (invoiceItem.description === "Contacts import overage charges.") {
+      customerId = invoiceItem.customer;
+      invoiceItemIds.push(invoiceItem.id);
+    }
   });
+
+  const overageConsumptionController = require("./overage-consumption.controller");
+
+  const [latestPrivateOverageConsumptionEntry, planIds] = await Promise.all([
+    overageConsumptionController.readLatestPrivateOverageConsumption({
+      customerId,
+    }),
+    readPlanIds({ customerId }),
+  ]);
+
+  console.log("invoiceItemItds", invoiceItemIds);
+  console.log(
+    "latestPrivateOverageConsumptionEntry",
+    latestPrivateOverageConsumptionEntry
+  );
+  console.log(
+    "stripeInvoiceItemId",
+    latestPrivateOverageConsumptionEntry.stripeInvoiceItemId
+  );
+
+  if (
+    invoiceItemIds.includes(
+      latestPrivateOverageConsumptionEntry.stripeInvoiceItemId
+    )
+  ) {
+    console.log("invoiceItemId matched!");
+
+    const companyContactsController = require("./company-users.controller");
+
+    const [companyContactsCount, plan] = await Promise.all([
+      companyContactsController.readCompanyContactsCount({
+        company: latestPrivateOverageConsumptionEntry.company,
+      }),
+      Plan.findById(planIds[0].planId),
+    ]);
+
+    console.log("companyContactsCount", companyContactsCount);
+
+    const contactsAboveQuota = companyContactsCount - plan.quota.contacts;
+
+    console.log("contactsAboveQuota", contactsAboveQuota);
+
+    const { contacts, priceInSmallestUnit } = plan.bundles.contact;
+
+    const extraContactsQuotaCharge =
+      Math.ceil(contactsAboveQuota / contacts) * priceInSmallestUnit;
+
+    console.log("extraContactsQuotaCharge", extraContactsQuotaCharge);
+
+    const pendingInvoiceItem = await createPendingInvoiceItem({
+      customerId,
+      chargeAmountInSmallestUnit: extraContactsQuotaCharge,
+    });
+
+    overageConsumptionController.createOverageConsumption({
+      companyId: latestPrivateOverageConsumptionEntry.company,
+      customerId,
+      description: "Overage charge for importing contacts above quota.",
+      contactOverage: `${contactsAboveQuota} contacts`,
+      contactOverageCharge: extraContactsQuotaCharge,
+      stripeInvoiceItemId: pendingInvoiceItem.id,
+    });
+  }
 };
 
 module.exports = {
