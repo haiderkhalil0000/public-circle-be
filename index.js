@@ -22,6 +22,8 @@ app.post(
       stripeSignature,
       body: req.rawBody,
     });
+
+    res.status(200).send("Success");
   }
 );
 
