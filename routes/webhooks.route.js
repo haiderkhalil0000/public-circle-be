@@ -89,4 +89,26 @@ router.post(
   }
 );
 
+router.post(
+  "/stripe/events",
+  authenticate.verifyWebhookToken,
+  async (req, res, next) => {
+    const stripeSignature = req.headers["stripe-signature"];
+
+    try {
+      webhooksController.receiveStripeEvents({
+        stripeSignature,
+        body: req.rawBody,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      webhookDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 module.exports = router;

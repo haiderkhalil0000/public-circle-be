@@ -549,6 +549,18 @@ const readInvoiceById = ({ invoiceId }) => stripe.invoices.retrieve(invoiceId);
 const readInvoiceLineItems = ({ invoiceId }) =>
   stripe.invoices.listLineItems(invoiceId);
 
+const readStripeEvent = async ({ stripeSignature, body }) => {
+  const endpointSecret = "whsec_QOcJPlzrdkrHM2b18yPRJ1b6WLleUUG7";
+
+  const event = await stripe.webhooks.constructEvent(
+    body,
+    stripeSignature,
+    endpointSecret
+  );
+
+  console.log(event);
+};
+
 module.exports = {
   createStripeCustomer,
   readStripeCustomer,
@@ -577,4 +589,5 @@ module.exports = {
   readInvoiceById,
   readPaidInvoices,
   readInvoiceLineItems,
+  readStripeEvent,
 };

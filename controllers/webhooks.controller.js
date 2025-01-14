@@ -3,6 +3,7 @@ const _ = require("lodash");
 const { CompanyUser, Plan, Company, OverageConsumption } = require("../models");
 const { basicUtil } = require("../utils");
 const { OVERAGE_CONSUMPTION_KIND } = require("../utils/constants.util");
+const { stripeController } = require(".");
 
 const createOverageConsumptionEntry = async ({
   companyId,
@@ -103,11 +104,20 @@ const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
 
   const planIds = results[results.length - 1];
 
-  const [company, plan, pendingInvoiceItems, paidInvoices] = await Promise.all([
+  const [
+    company,
+    plan,
+    pendingInvoiceItems,
+    paidInvoices,
+    latestPrivateOverageConsumption,
+  ] = await Promise.all([
     Company.findById(companyId).populate("stripe"),
     Plan.findById(planIds[0].planId),
     stripeController.readPendingInvoiceItems({ customerId }),
     stripeController.readPaidInvoices({ customerId }),
+    overageConsumptionController.readLatestPrivateOverageConsumption({
+      companyId: company._id,
+    }),
   ]);
 
   if (plan.quota.contacts < users.length + existingContactsCount) {
@@ -132,7 +142,11 @@ const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
         });
 
         for (const item of lineItems.data) {
-          if (item.description === "Contacts import overage charges.") {
+          if (
+            item.description === "Contacts import overage charges." &&
+            item.invoice_item ===
+              latestPrivateOverageConsumption.stripeInvoiceItemId
+          ) {
             contactsOverageInvoiceItem = item;
             isItemFound = true;
             break;
@@ -170,46 +184,9 @@ const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
       });
     } else if (
       contactsOverageInvoiceItem &&
-      contactsOverageInvoiceItem.amount > extraContactsQuotaCharge
+      contactsOverageInvoiceItem.amount > extraContactsQuotaCharge &&
+      isItemFound
     ) {
-      const overageConsumptionController = require("./overage-consumption.controller");
-
-      const latestPrivateOverageConsumption =
-        await overageConsumptionController.readLatestPrivateOverageConsumption({
-          companyId: company._id,
-        });
-
-      if (!latestPrivateOverageConsumption) {
-        return;
-      }
-
-      const invoiceId =
-        latestPrivateOverageConsumption.stripeInvoiceItemId.invoice;
-
-      if (!invoiceId) {
-        return;
-      }
-
-      const invoice = await stripeController.readInvoiceById({
-        invoiceId,
-      });
-
-      if (invoice.status === "paid") {
-        pendingInvoiceItem = await stripeController.createPendingInvoiceItem({
-          customerId: company.stripe.id,
-          chargeAmountInSmallestUnit: extraContactsQuotaCharge,
-        });
-
-        createOverageConsumptionEntry({
-          companyId: company._id,
-          customerId: company.stripe.id,
-          description: "Overage charge for importing contacts above quota.",
-          contactOverage: `${contactsAboveQuota} contacts`,
-          contactOverageCharge: extraContactsQuotaCharge,
-          stripeInvoiceItemId: pendingInvoiceItem.id,
-        });
-      }
-    } else {
       pendingInvoiceItem = await stripeController.createPendingInvoiceItem({
         customerId: company.stripe.id,
         chargeAmountInSmallestUnit: extraContactsQuotaCharge,
@@ -224,7 +201,25 @@ const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
         stripeInvoiceItemId: pendingInvoiceItem.id,
       });
     }
+  } else {
+    pendingInvoiceItem = await stripeController.createPendingInvoiceItem({
+      customerId: company.stripe.id,
+      chargeAmountInSmallestUnit: extraContactsQuotaCharge,
+    });
+
+    createOverageConsumptionEntry({
+      companyId: company._id,
+      customerId: company.stripe.id,
+      description: "Overage charge for importing contacts above quota.",
+      contactOverage: `${contactsAboveQuota} contacts`,
+      contactOverageCharge: extraContactsQuotaCharge,
+      stripeInvoiceItemId: pendingInvoiceItem.id,
+    });
   }
 };
 
-module.exports = { recieveCompanyUsersData };
+const receiveStripeEvents = ({ stripeSignature, body }) => {
+  stripeController.readStripeEvent({ stripeSignature, body });
+};
+
+module.exports = { recieveCompanyUsersData, receiveStripeEvents };
