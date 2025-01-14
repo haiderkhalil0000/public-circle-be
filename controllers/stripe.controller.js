@@ -611,7 +611,9 @@ const readStripeEvent = async ({ stripeSignature, body }) => {
 
     console.log("companyContactsCount", companyContactsCount);
 
-    const contactsAboveQuota = companyContactsCount - plan.quota.contacts;
+    const contactsAboveQuota = Math.abs(
+      companyContactsCount - plan.quota.contacts
+    );
 
     console.log("contactsAboveQuota", contactsAboveQuota);
 
