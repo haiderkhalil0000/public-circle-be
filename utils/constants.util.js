@@ -381,4 +381,9 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
     FIXED_DISCOUNT: "FIXED_DISCOUNT",
     PERCENTAGE_DISCOUNT: "PERCENTAGE_DISCOUNT",
   },
+
+  OVERAGE_CONSUMPTION_KIND: {
+    PUBLIC: "PUBLIC",
+    PRIVATE: "PRIVATE",
+  },
 };

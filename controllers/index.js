@@ -17,4 +17,5 @@ module.exports = {
   assetsController: require("./assets.controller"),
   emailsSentController: require("./emails-sent.controller"),
   rewardsController: require("./rewards.controller"),
+  overageConsumptionController: require("./overage-consumption.controller"),
 };

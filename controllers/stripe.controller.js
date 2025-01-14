@@ -13,6 +13,7 @@ const {
 const {
   constants: { RESPONSE_MESSAGES },
 } = require("../utils");
+const { OVERAGE_CONSUMPTION_KIND } = require("../utils/constants.util");
 
 const { STRIPE_KEY } = process.env;
 
@@ -280,6 +281,7 @@ const createATopUpInCustomerBalance = async ({
     customer: customerId,
     price: price.id,
     invoice: draftInvoice.id,
+    description: "Top up",
   });
 
   const finalizedInvoice = await stripe.invoices.finalizeInvoice(
@@ -461,9 +463,12 @@ const readStripeCustomer = ({ customerId }) =>
   stripe.customers.retrieve(customerId);
 
 const readCustomerBalanceHistory = async ({ customerId }) =>
-  OverageConsumption.find({ customerId });
+  OverageConsumption.find({
+    customerId,
+    kind: OVERAGE_CONSUMPTION_KIND.PUBLIC,
+  });
 
-const chargeInUpcomingInvoice = async ({
+const createPendingInvoiceItem = async ({
   customerId,
   chargeAmountInSmallestUnit,
 }) =>
@@ -517,9 +522,32 @@ const readPendingInvoiceItems = ({ customerId }) =>
     pending: true,
   });
 
+const readPaidInvoices = ({ customerId }) =>
+  stripe.invoices.list({
+    customer: customerId,
+    status: "paid",
+    limit: 20,
+  });
+
 const deleteInvoiceItem = async ({ invoiceItemId }) => {
   await stripe.invoiceItems.del(invoiceItemId);
 };
+
+const readUpcomingBillingDate = async ({ customerId }) => {
+  let activeSubscription = await stripe.subscriptions.list({
+    customer: customerId,
+    status: "active",
+  });
+
+  activeSubscription = activeSubscription.data[0];
+
+  return moment.unix(activeSubscription.current_period_end);
+};
+
+const readInvoiceById = ({ invoiceId }) => stripe.invoices.retrieve(invoiceId);
+
+const readInvoiceLineItems = ({ invoiceId }) =>
+  stripe.invoices.listLineItems(invoiceId);
 
 module.exports = {
   createStripeCustomer,
@@ -540,9 +568,13 @@ module.exports = {
   readCustomerReceipts,
   readDefaultPaymentMethod,
   readCustomerBalanceHistory,
-  chargeInUpcomingInvoice,
+  createPendingInvoiceItem,
   chargeCustomerFromBalance,
   readPlanIds,
   readPendingInvoiceItems,
   deleteInvoiceItem,
+  readUpcomingBillingDate,
+  readInvoiceById,
+  readPaidInvoices,
+  readInvoiceLineItems,
 };

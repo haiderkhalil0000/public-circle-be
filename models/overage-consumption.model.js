@@ -6,6 +6,7 @@ const {
     MODELS: { OVERAGE_CONSUMPTION, COMPANY },
   },
 } = require("../utils");
+const { OVERAGE_CONSUMPTION_KIND } = require("../utils/constants.util");
 
 const schema = new mongoose.Schema(
   {
@@ -22,38 +23,41 @@ const schema = new mongoose.Schema(
     description: { type: String, required: true },
     previousBalance: {
       type: Number,
-      required: true,
-      default: 0,
     },
     currentBalance: {
       type: Number,
-      required: true,
-      default: 0,
     },
     emailOverage: {
       type: String,
-      required: true,
-      default: "",
-    },
-    emailContentOverage: {
-      type: String,
-      required: true,
-      default: "",
     },
     emailOverageCharge: {
       type: Number,
-      required: true,
-      default: 0,
+    },
+    emailContentOverage: {
+      type: String,
     },
     emailContentOverageCharge: {
       type: Number,
-      required: true,
-      default: 0,
+    },
+    contactOverage: {
+      type: String,
+    },
+    contactOverageCharge: {
+      type: Number,
     },
     currency: {
       type: String,
       required: true,
       default: "CAD",
+    },
+    kind: {
+      type: String,
+      required: true,
+      default: OVERAGE_CONSUMPTION_KIND.PUBLIC,
+      enum: Object.values(OVERAGE_CONSUMPTION_KIND),
+    },
+    stripeInvoiceItemId: {
+      type: String,
     },
   },
   { timestamps: true }

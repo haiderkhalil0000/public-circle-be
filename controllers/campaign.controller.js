@@ -588,12 +588,17 @@ const readCampaignRecipientsCount = async ({ campaign }) => {
   return filterCounts.reduce((total, current) => total + current);
 };
 
-const calculateExtraEmailQuotaAndCharge = ({ unpaidEmailsCount, plan }) => {
+const calculateExtraEmailQuotaAndCharge = ({
+  unpaidEmailsCount,
+  company,
+  plan,
+}) => {
+  const { email: extraEmailQuota } = company.extraQuota;
   const { emails, priceInSmallestUnit } = plan.bundles.email;
 
-  unpaidEmailsCount = unpaidEmailsCount || 1;
-
-  const timesExceeded = Math.ceil(unpaidEmailsCount / emails);
+  const timesExceeded = Math.ceil(
+    unpaidEmailsCount / (emails + extraEmailQuota)
+  );
 
   return {
     extraEmailQuota: timesExceeded * emails,
@@ -602,12 +607,16 @@ const calculateExtraEmailQuotaAndCharge = ({ unpaidEmailsCount, plan }) => {
 };
 
 const calculateEmailContentQuotaAndCharge = ({
-  campaignEmailContent,
+  unpaidEmailContent,
+  company,
   plan,
 }) => {
+  const { emailContent: extraEmailContentQuota } = company.extraQuota;
   const { bandwidth, priceInSmallestUnit } = plan.bundles.emailContent;
 
-  const timesExceeded = Math.ceil(campaignEmailContent / bandwidth);
+  const timesExceeded = Math.ceil(
+    unpaidEmailContent / (bandwidth + extraEmailContentQuota)
+  );
 
   return {
     extraEmailContentQuota: timesExceeded * bandwidth,
@@ -706,7 +715,9 @@ const validateCampaign = async ({ campaign }) => {
     campaignRecipientsCount + totalEmailsSentByCompany
   ) {
     const result = calculateExtraEmailQuotaAndCharge({
-      unpaidEmailsCount: campaignRecipientsCount - plan.quota.email,
+      unpaidEmailsCount:
+        campaignRecipientsCount + totalEmailsSentByCompany - plan.quota.email,
+      company,
       plan,
     });
 
@@ -728,13 +739,11 @@ const validateCampaign = async ({ campaign }) => {
       campaign.emailTemplate.size * campaignRecipientsCount
   ) {
     result = calculateEmailContentQuotaAndCharge({
-      campaignEmailContent:
-        // company.extraQuota.emailContent === 0?
+      unpaidEmailContent:
         totalEmailContentSize +
         campaign.emailTemplate.size * campaignRecipientsCount -
         plan.quota.emailContent,
-      // : campaign.emailTemplate.size * campaignRecipientsCount -
-      //   plan.quota.emailContent,
+      company,
       plan,
     });
 
