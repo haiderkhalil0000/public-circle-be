@@ -564,7 +564,11 @@ const readStripeEvent = async ({ stripeSignature, body }) => {
     expand: ["lines"],
   });
 
-  console.log(invoice);
+  const lineItems = invoice.lines.data;
+
+  lineItems.forEach((lineItem) => {
+    console.log(`Line Item ID: ${lineItem.id}`);
+  });
 };
 
 module.exports = {
