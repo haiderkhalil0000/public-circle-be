@@ -10,6 +10,21 @@ const { configure, database } = require("./startup");
 
 const app = express();
 
+app.post(
+  "/webhooks/stripe",
+  express.raw({ type: "application/json" }),
+  (req, res) => {
+    const webhooksController = require("./controllers/webhooks.controller");
+
+    const stripeSignature = req.headers["stripe-signature"];
+
+    webhooksController.receiveStripeEvents({
+      stripeSignature,
+      body: req.rawBody,
+    });
+  }
+);
+
 app.use(helmet());
 app.use(cookieParser());
 app.use(cors());

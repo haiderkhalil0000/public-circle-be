@@ -89,26 +89,26 @@ router.post(
   }
 );
 
-router.post(
-  "/stripe",
-  authenticate.verifyWebhookToken,
-  async (req, res, next) => {
-    const stripeSignature = req.headers["stripe-signature"];
+// router.post(
+//   "/stripe",
+//   authenticate.verifyWebhookToken,
+//   async (req, res, next) => {
+//     const stripeSignature = req.headers["stripe-signature"];
 
-    try {
-      webhooksController.receiveStripeEvents({
-        stripeSignature,
-        body: req.rawBody,
-      });
-    } catch (err) {
-      // sendErrorReportToSentry(error);
-      console.log(err);
+//     try {
+//       webhooksController.receiveStripeEvents({
+//         stripeSignature,
+//         body: req.rawBody,
+//       });
+//     } catch (err) {
+//       // sendErrorReportToSentry(error);
+//       console.log(err);
 
-      webhookDebugger(err);
+//       webhookDebugger(err);
 
-      next(err);
-    }
-  }
-);
+//       next(err);
+//     }
+//   }
+// );
 
 module.exports = router;
