@@ -85,20 +85,10 @@ const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
 
   const planIds = results[results.length - 1];
 
-  const [
-    company,
-    plan,
-    pendingInvoiceItems,
-    paidInvoices,
-    latestPrivateOverageConsumption,
-  ] = await Promise.all([
+  const [company, plan, pendingInvoiceItems] = await Promise.all([
     Company.findById(companyId).populate("stripe"),
     Plan.findById(planIds[0].planId),
     stripeController.readPendingInvoiceItems({ customerId }),
-    stripeController.readPaidInvoices({ customerId }),
-    overageConsumptionController.readLatestPrivateOverageConsumption({
-      companyId: company._id,
-    }),
   ]);
 
   if (plan.quota.contacts < users.length + existingContactsCount) {
@@ -153,21 +143,21 @@ const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
       //   contactOverageCharge: extraContactsQuotaCharge,
       //   stripeInvoiceItemId: pendingInvoiceItem.id,
       // });
-    }
-  } else {
-    pendingInvoiceItem = await stripeController.createPendingInvoiceItem({
-      customerId: company.stripe.id,
-      chargeAmountInSmallestUnit: extraContactsQuotaCharge,
-    });
+    } else {
+      pendingInvoiceItem = await stripeController.createPendingInvoiceItem({
+        customerId: company.stripe.id,
+        chargeAmountInSmallestUnit: extraContactsQuotaCharge,
+      });
 
-    overageConsumptionController.createOverageConsumption({
-      companyId: company._id,
-      customerId: company.stripe.id,
-      description: "Overage charge for importing contacts above quota.",
-      contactOverage: `${contactsAboveQuota} contacts`,
-      contactOverageCharge: extraContactsQuotaCharge,
-      stripeInvoiceItemId: pendingInvoiceItem.id,
-    });
+      overageConsumptionController.createOverageConsumption({
+        companyId: company._id,
+        customerId: company.stripe.id,
+        description: "Overage charge for importing contacts above quota.",
+        contactOverage: `${contactsAboveQuota} contacts`,
+        contactOverageCharge: extraContactsQuotaCharge,
+        stripeInvoiceItemId: pendingInvoiceItem.id,
+      });
+    }
   }
 };
 
