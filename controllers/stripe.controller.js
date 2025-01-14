@@ -560,14 +560,14 @@ const readStripeEvent = async ({ stripeSignature, body }) => {
 
   const invoiceId = event.data.object.id;
 
-  const invoice = await stripe.invoices.retrieve(invoiceId, {
-    expand: ["lines"],
+  const invoiceItems = await stripe.invoiceItems.list({
+    invoice: invoiceId,
   });
 
-  const lineItems = invoice.lines.data;
-
-  lineItems.forEach((lineItem) => {
-    console.log(`Line Item ID: ${lineItem.id}`);
+  invoiceItems.data.forEach((invoiceItem) => {
+    console.log(
+      `InvoiceItem ID: ${invoiceItem.id} (${invoiceItem.description})`
+    );
   });
 };
 
