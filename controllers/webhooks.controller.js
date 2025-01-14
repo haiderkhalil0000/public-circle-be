@@ -114,32 +114,6 @@ const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
       (item) => item.description === "Contacts import overage charges."
     );
 
-    let isItemFound = false;
-
-    if (!contactsOverageInvoiceItem) {
-      for (const invoice of paidInvoices.data) {
-        const lineItems = await stripeController.readInvoiceLineItems({
-          invoiceId: invoice.id,
-        });
-
-        for (const item of lineItems.data) {
-          if (
-            item.description === "Contacts import overage charges." &&
-            item.invoice_item ===
-              latestPrivateOverageConsumption.stripeInvoiceItemId
-          ) {
-            contactsOverageInvoiceItem = item;
-            isItemFound = true;
-            break;
-          }
-        }
-
-        if (isItemFound) {
-          break;
-        }
-      }
-    }
-
     let pendingInvoiceItem = {};
 
     if (
@@ -165,22 +139,20 @@ const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
       });
     } else if (
       contactsOverageInvoiceItem &&
-      contactsOverageInvoiceItem.amount > extraContactsQuotaCharge &&
-      isItemFound
+      contactsOverageInvoiceItem.amount > extraContactsQuotaCharge
     ) {
-      pendingInvoiceItem = await stripeController.createPendingInvoiceItem({
-        customerId: company.stripe.id,
-        chargeAmountInSmallestUnit: extraContactsQuotaCharge,
-      });
-
-      overageConsumptionController.createOverageConsumption({
-        companyId: company._id,
-        customerId: company.stripe.id,
-        description: "Overage charge for importing contacts above quota.",
-        contactOverage: `${contactsAboveQuota} contacts`,
-        contactOverageCharge: extraContactsQuotaCharge,
-        stripeInvoiceItemId: pendingInvoiceItem.id,
-      });
+      // pendingInvoiceItem = await stripeController.createPendingInvoiceItem({
+      //   customerId: company.stripe.id,
+      //   chargeAmountInSmallestUnit: extraContactsQuotaCharge,
+      // });
+      // overageConsumptionController.createOverageConsumption({
+      //   companyId: company._id,
+      //   customerId: company.stripe.id,
+      //   description: "Overage charge for importing contacts above quota.",
+      //   contactOverage: `${contactsAboveQuota} contacts`,
+      //   contactOverageCharge: extraContactsQuotaCharge,
+      //   stripeInvoiceItemId: pendingInvoiceItem.id,
+      // });
     }
   } else {
     pendingInvoiceItem = await stripeController.createPendingInvoiceItem({
