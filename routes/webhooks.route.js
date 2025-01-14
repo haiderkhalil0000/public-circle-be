@@ -90,7 +90,7 @@ router.post(
 );
 
 router.post(
-  "/stripe/events",
+  "/stripe",
   authenticate.verifyWebhookToken,
   async (req, res, next) => {
     const stripeSignature = req.headers["stripe-signature"];
