@@ -3,7 +3,6 @@ const _ = require("lodash");
 const { CompanyUser, Plan, Company, OverageConsumption } = require("../models");
 const { basicUtil } = require("../utils");
 const { OVERAGE_CONSUMPTION_KIND } = require("../utils/constants.util");
-const { stripeController } = require(".");
 
 const createOverageConsumptionEntry = async ({
   companyId,
@@ -219,6 +218,8 @@ const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
 };
 
 const receiveStripeEvents = ({ stripeSignature, body }) => {
+  const stripeController = require("./stripe.controller");
+
   stripeController.readStripeEvent({ stripeSignature, body });
 };
 
