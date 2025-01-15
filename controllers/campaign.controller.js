@@ -637,21 +637,13 @@ const getDescription = ({ extraEmailCharge, extraEmailContentCharge }) => {
   }
 };
 
-const getEmailContentOverage = ({
-  companyBalance,
-  totalEmailContentSize,
-  campaign,
-  plan,
-  campaignRecipientsCount,
-}) => {
+const getEmailContentOverage = ({ unpaidEmailContent, company, plan }) => {
   let emailContentOverage = "";
 
   emailContentOverage =
-    companyBalance.emailContentOverage === 0
-      ? totalEmailContentSize +
-        campaign.emailTemplate.size -
-        plan.quota.emailContent * campaignRecipientsCount
-      : campaign.emailTemplate.size * campaignRecipientsCount;
+    plan.bundles.emailContent.bandwidth +
+    company.extraQuota.emailContent -
+    unpaidEmailContent;
 
   return emailContentOverage / 1024;
 };
@@ -733,16 +725,18 @@ const validateCampaign = async ({ campaign }) => {
     }
   }
 
+  let unpaidEmailContent =
+    totalEmailContentSize +
+    campaign.emailTemplate.size * campaignRecipientsCount -
+    plan.quota.emailContent;
+
   if (
     plan.quota.emailContent + company.extraQuota.emailContent <
     totalEmailContentSize +
       campaign.emailTemplate.size * campaignRecipientsCount
   ) {
     result = calculateEmailContentQuotaAndCharge({
-      unpaidEmailContent:
-        totalEmailContentSize +
-        campaign.emailTemplate.size * campaignRecipientsCount -
-        plan.quota.emailContent,
+      unpaidEmailContent,
       company,
       plan,
     });
@@ -781,11 +775,9 @@ const validateCampaign = async ({ campaign }) => {
           : 0,
         emailContentOverage: extraEmailContentCharge
           ? `${getEmailContentOverage({
-              companyBalance,
-              totalEmailContentSize,
-              campaign,
+              unpaidEmailContent,
+              company,
               plan,
-              campaignRecipientsCount,
             })} KB`
           : 0,
         emailOverageCharge: extraEmailCharge,
