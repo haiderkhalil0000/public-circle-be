@@ -424,6 +424,8 @@ const readCustomerUpcomingInvoices = async ({ customerId }) => {
 const getReceiptDescription = ({ description }) => {
   if (description.includes("Subscription creation")) {
     return "Subscription purchased.";
+  } else {
+    return description;
   }
 };
 
