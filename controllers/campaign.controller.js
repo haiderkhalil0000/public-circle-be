@@ -724,7 +724,7 @@ const validateCampaign = async ({ campaign }) => {
     extraEmailQuota = result.extraEmailQuota;
     extraEmailCharge = result.extraEmailCharge;
 
-    if (companyBalance * 100 < extraEmailCharge * campaignRecipientsCount) {
+    if (companyBalance * 100 < extraEmailCharge) {
       await disableCampaign({ campaignId: campaign._id });
 
       throw createHttpError(400, {
@@ -750,10 +750,7 @@ const validateCampaign = async ({ campaign }) => {
     extraEmailContentQuota = result.extraEmailContentQuota;
     extraEmailContentCharge = result.extraEmailContentCharge;
 
-    if (
-      companyBalance * 100 <
-      extraEmailContentCharge * campaignRecipientsCount
-    ) {
+    if (companyBalance * 100 < extraEmailContentCharge) {
       await disableCampaign({ campaignId: campaign._id });
 
       throw createHttpError(400, {
