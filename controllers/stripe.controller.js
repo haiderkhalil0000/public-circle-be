@@ -250,10 +250,12 @@ const upgradeOrDowngradeSubscription = async ({ customerId, items }) => {
     });
 
     const paidInvoice = invoices.data.find((invoice) => {
-      if (invoice.charge && invoice.amount_paid > Math.abs(balance)) {
+      if (invoice.charge && invoice.amount_paid >= Math.abs(balance)) {
         return invoice;
       }
     });
+
+    console.log("paidInvoice.charge", paidInvoice.charge);
 
     await stripe.refunds.create({
       charge: paidInvoice.charge,
@@ -647,6 +649,10 @@ const readStripeEvent = async ({ stripeSignature, body }) => {
 };
 
 const readCustomerStripeBalance = async ({ customerId }) => {
+  // await stripe.customers.update(customerId, {
+  //   balance: 0,
+  // });
+
   const customer = await readStripeCustomer({ customerId });
 
   return customer.balance;
