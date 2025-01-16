@@ -212,6 +212,7 @@ module.exports = {
     PRIMARY_KEY_FETCHED: "Primary key fetched successfully.",
     PRIMARY_KEY_UPDATED: "Primary key updated successfully.",
     PRIMARY_KEY_DELETED: "Primary key deleted successfully.",
+    QUOTA_DETAILS_FETCHED: "Quota details fetched successully.",
   },
 
   INTERACTION_CHANNELS: {

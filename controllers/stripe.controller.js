@@ -9,6 +9,7 @@ const {
   Plan,
   OverageConsumption,
   Company,
+  EmailSent,
 } = require("../models");
 const {
   constants: { RESPONSE_MESSAGES },
@@ -660,6 +661,38 @@ const readCustomerStripeBalance = async ({ customerId }) => {
   return customer.balance;
 };
 
+const readQuotaDetails = async ({ companyId, customerId }) => {
+  const [planIds, company, emailsSentDocs] = await Promise.all([
+    readPlanIds({
+      customerId,
+    }),
+    Company.findById(companyId),
+    EmailSent.find({ company: companyId }, { size: 1 }),
+  ]);
+
+  const totalEmailContentSent = emailsSentDocs
+    .map((item) => item.size)
+    .reduce((total, current) => total + current, 0);
+
+  const plan = await Plan.findById(planIds[0].planId);
+
+  const communicationQuotaAllowed = plan.quota.email + company.extraQuota.email;
+
+  const communicationQuotaConsumed = emailsSentDocs.length;
+
+  const bandwidthQuotaAllowed =
+    (plan.quota.emailContent + company.extraQuota.emailContent) / 1024;
+
+  const bandwidthQuotaConsumed = totalEmailContentSent / 1024;
+
+  return {
+    communicationQuotaAllowed,
+    communicationQuotaConsumed,
+    bandwidthQuotaAllowed,
+    bandwidthQuotaConsumed,
+  };
+};
+
 module.exports = {
   createStripeCustomer,
   readSetupIntent,
@@ -689,4 +722,5 @@ module.exports = {
   readInvoiceLineItems,
   readStripeEvent,
   readCustomerStripeBalance,
+  readQuotaDetails,
 };
