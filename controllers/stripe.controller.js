@@ -646,9 +646,14 @@ const readStripeEvent = async ({ stripeSignature, body }) => {
   }
 };
 
+const readCustomerStripeBalance = async ({ customerId }) => {
+  const customer = await readStripeCustomer({ customerId });
+
+  return customer.balance;
+};
+
 module.exports = {
   createStripeCustomer,
-  readStripeCustomer,
   readSetupIntent,
   getSubscriptions,
   getActiveSubscriptionsOfACustomer,
@@ -675,4 +680,5 @@ module.exports = {
   readPaidInvoices,
   readInvoiceLineItems,
   readStripeEvent,
+  readCustomerStripeBalance,
 };
