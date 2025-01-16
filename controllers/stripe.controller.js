@@ -255,7 +255,8 @@ const upgradeOrDowngradeSubscription = async ({ customerId, items }) => {
       }
     });
 
-    console.log("paidInvoice.charge", paidInvoice.charge);
+    console.log("customer.balance", customer.balance);
+    console.log("paidInvoice.amount_paid", paidInvoice.amount_paid);
 
     await stripe.refunds.create({
       charge: paidInvoice.charge,
