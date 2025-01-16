@@ -685,7 +685,7 @@ const validateCampaign = async ({ campaign }) => {
 
   const stripeController = require("./stripe.controller");
 
-  const [companyBalance, planIds] = await Promise.all([
+  let [companyBalance, planIds] = await Promise.all([
     stripeController.readCustomerBalance({
       customerId: company.stripe.id,
       companyId: campaign.company,
@@ -757,32 +757,55 @@ const validateCampaign = async ({ campaign }) => {
     extraEmailCharge = extraEmailCharge / 100;
     extraEmailContentCharge = extraEmailContentCharge / 100;
 
-    await Promise.all([
-      OverageConsumption.create({
-        company: company._id,
-        customerId: company.stripe.id,
-        description: getDescription({
-          extraEmailCharge,
-          extraEmailContentCharge,
-        }),
-        previousBalance: companyBalance,
-        currentBalance:
-          companyBalance - extraEmailCharge - extraEmailContentCharge,
-        emailOverage: extraEmailCharge
-          ? `${campaignRecipientsCount} email${
-              campaignRecipientsCount > 1 ? "s" : ""
-            }`
-          : 0,
-        emailContentOverage: extraEmailContentCharge
-          ? `${getEmailContentOverage({
-              unpaidEmailContent,
-              company,
-              plan,
-            })} KB`
-          : 0,
-        emailOverageCharge: extraEmailCharge,
-        emailContentOverageCharge: extraEmailContentCharge,
-      }),
+    const promises = [];
+
+    if (extraEmailCharge) {
+      promises.push(
+        OverageConsumption.create({
+          company: company._id,
+          customerId: company.stripe.id,
+          description: getDescription({
+            extraEmailCharge,
+          }),
+          previousBalance: companyBalance,
+          currentBalance: companyBalance - extraEmailCharge,
+          emailOverage: extraEmailCharge
+            ? `${campaignRecipientsCount} email${
+                campaignRecipientsCount > 1 ? "s" : ""
+              }`
+            : 0,
+          emailOverageCharge: extraEmailCharge,
+        })
+      );
+
+      companyBalance = companyBalance - extraEmailCharge;
+    }
+
+    if (extraEmailContentCharge) {
+      promises.push(
+        OverageConsumption.create({
+          company: company._id,
+          customerId: company.stripe.id,
+          description: getDescription({
+            extraEmailContentCharge,
+          }),
+          previousBalance: companyBalance,
+          currentBalance: companyBalance - extraEmailContentCharge,
+          emailContentOverage: extraEmailContentCharge
+            ? `${getEmailContentOverage({
+                unpaidEmailContent,
+                company,
+                plan,
+              })} KB`
+            : 0,
+          emailContentOverageCharge: extraEmailContentCharge,
+        })
+      );
+
+      companyBalance = companyBalance - extraEmailCharge;
+    }
+
+    promises.push(
       Company.updateOne(
         { _id: company._id },
         {
@@ -791,8 +814,10 @@ const validateCampaign = async ({ campaign }) => {
             "extraQuota.emailContent": extraEmailContentQuota,
           },
         }
-      ),
-    ]);
+      )
+    );
+
+    await Promise.all(promises);
   }
 };
 
