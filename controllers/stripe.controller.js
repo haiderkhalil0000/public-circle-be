@@ -246,10 +246,14 @@ const upgradeOrDowngradeSubscription = async ({ customerId, items }) => {
   if (balance < 0) {
     const invoices = await stripe.invoices.list({
       subscription: subscription.id,
-      limit: 5,
+      status: "paid",
     });
 
-    const paidInvoice = invoices.data.find((invoice) => invoice.charge);
+    const paidInvoice = invoices.data.find((invoice) => {
+      if (invoice.charge && invoice.amount_paid > Math.abs(balance)) {
+        return invoice;
+      }
+    });
 
     await stripe.refunds.create({
       charge: paidInvoice.charge,
