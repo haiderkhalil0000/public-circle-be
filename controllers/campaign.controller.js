@@ -27,6 +27,8 @@ const {
   },
 } = require("../utils");
 
+const { PUBLIC_CIRCLES_EMAIL_ADDRESS } = process.env;
+
 const validateSourceEmailAddress = async ({
   companyId,
   sourceEmailAddress,
@@ -64,7 +66,7 @@ const validateSourceEmailAddress = async ({
 };
 
 const createCampaign = async ({
-  companyId,
+  currentUser,
   segmentIds = [],
   sourceEmailAddress,
   emailSubject,
@@ -74,6 +76,8 @@ const createCampaign = async ({
   isRecurring,
   recurringPeriod,
 }) => {
+  const companyId = currentUser.company._id;
+
   await validateSourceEmailAddress({
     companyId,
     sourceEmailAddress,
@@ -97,7 +101,7 @@ const createCampaign = async ({
   });
 
   if (runMode === RUN_MODE.INSTANT) {
-    await validateCampaign({ campaign });
+    await validateCampaign({ campaign, currentUser });
     await runCampaign({ campaign });
   }
 };
@@ -648,7 +652,7 @@ const getEmailContentOverage = ({ unpaidEmailContent, company, plan }) => {
   return emailContentOverage / 1024;
 };
 
-const validateCampaign = async ({ campaign }) => {
+const validateCampaign = async ({ campaign, currentUser }) => {
   const populatedCampaign = await Campaign.findById(campaign._id).populate(
     "emailTemplate"
   );
@@ -719,6 +723,18 @@ const validateCampaign = async ({ campaign }) => {
     if (companyBalance * 100 < extraEmailCharge) {
       await disableCampaign({ campaignId: campaign._id });
 
+      await sesUtil.sendEmail({
+        fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
+        toEmailAddress: currentUser.emailAddress,
+        subject: RESPONSE_MESSAGES.EMAIL_LIMIT_REACHED,
+        content: `Dear ${currentUser.firstName},
+        We have restricted your campaign from running because you don't have enough credits to pay for
+        the new campaign. As your quota for ${plan.name} is fully consumed. So we recommend you to top-up
+        into your account and try again.
+        `,
+        contentType: TEMPLATE_CONTENT_TYPE.TEXT,
+      });
+
       throw createHttpError(400, {
         errorMessage: RESPONSE_MESSAGES.EMAIL_LIMIT_REACHED,
       });
@@ -746,6 +762,18 @@ const validateCampaign = async ({ campaign }) => {
 
     if (companyBalance * 100 < extraEmailContentCharge) {
       await disableCampaign({ campaignId: campaign._id });
+
+      await sesUtil.sendEmail({
+        fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
+        toEmailAddress: currentUser.emailAddress,
+        subject: RESPONSE_MESSAGES.EMAIL_CONTENT_LIMIT_REACHED,
+        content: `Dear ${currentUser.firstName},
+        We have restricted your campaign from running because you don't have enough credits to pay for
+        the new campaign. As your quota for ${plan.name} is fully consumed. So we recommend you to top-up
+        into your account and try again.
+        `,
+        contentType: TEMPLATE_CONTENT_TYPE.TEXT,
+      });
 
       throw createHttpError(400, {
         errorMessage: RESPONSE_MESSAGES.EMAIL_CONTENT_LIMIT_REACHED,

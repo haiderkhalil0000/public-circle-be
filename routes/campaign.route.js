@@ -33,7 +33,7 @@ router.post(
     try {
       await campaignsController.createCampaign({
         ...req.body,
-        companyId: req.user.company._id,
+        currentUser: req.user,
       });
 
       res.status(200).json({
