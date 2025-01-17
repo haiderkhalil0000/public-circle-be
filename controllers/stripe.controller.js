@@ -278,7 +278,11 @@ const upgradeOrDowngradeSubscription = async ({ customerId, items }) => {
             })
           );
 
-          balance = Math.abs(balance) - invoice.amount_paid;
+          if (Math.abs(balance) - invoice.amount_paid > Math.abs(balance)) {
+            balance = 0;
+          } else {
+            balance = Math.abs(balance) - invoice.amount_paid;
+          }
         }
       });
     }
