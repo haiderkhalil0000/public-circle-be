@@ -383,8 +383,14 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
     PERCENTAGE_DISCOUNT: "PERCENTAGE_DISCOUNT",
   },
 
-  OVERAGE_CONSUMPTION_KIND: {
+  OVERAGE_CONSUMPTION_DOCUMENT_KIND: {
     PUBLIC: "PUBLIC",
     PRIVATE: "PRIVATE",
+  },
+
+  OVERAGE_KIND: {
+    COMMUNICATION: "COMMUNICATION",
+    BANDWIDTH: "BANDWIDTH",
+    CONTACT: "CONTACT",
   },
 };

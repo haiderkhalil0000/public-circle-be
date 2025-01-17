@@ -24,6 +24,7 @@ const {
     RUN_MODE,
     TEMPLATE_CONTENT_TYPE,
     EMAIL_KIND,
+    OVERAGE_KIND,
   },
 } = require("../utils");
 
@@ -689,9 +690,9 @@ const validateCampaign = async ({ campaign, primaryUser }) => {
       }).populate("stripe"),
     ]);
 
-  let totalEmailContentSize = emailContentSizeDocs;
+  let totalEmailContentSent = emailContentSizeDocs;
 
-  totalEmailContentSize = totalEmailContentSize
+  totalEmailContentSent = totalEmailContentSent
     .map((item) => item.size)
     .reduce((total, current) => total + current, 0);
 
@@ -750,13 +751,13 @@ const validateCampaign = async ({ campaign, primaryUser }) => {
   }
 
   let unpaidEmailContent =
-    totalEmailContentSize +
+    totalEmailContentSent +
     campaign.emailTemplate.size * campaignRecipientsCount -
     plan.quota.emailContent;
 
   if (
     plan.quota.emailContent + company.extraQuota.emailContent <
-    totalEmailContentSize +
+    totalEmailContentSent +
       campaign.emailTemplate.size * campaignRecipientsCount
   ) {
     result = calculateEmailContentQuotaAndCharge({
@@ -803,14 +804,13 @@ const validateCampaign = async ({ campaign, primaryUser }) => {
           description: getDescription({
             extraEmailCharge,
           }),
-          previousBalance: companyBalance,
-          currentBalance: companyBalance - extraEmailCharge,
-          emailOverage: extraEmailCharge
+          overage: extraEmailCharge
             ? `${campaignRecipientsCount} email${
                 campaignRecipientsCount > 1 ? "s" : ""
               }`
             : 0,
-          emailOverageCharge: extraEmailCharge,
+          overageCharge: extraEmailCharge,
+          overageKind: OVERAGE_KIND.COMMUNICATION,
         })
       );
 
@@ -825,16 +825,15 @@ const validateCampaign = async ({ campaign, primaryUser }) => {
           description: getDescription({
             extraEmailContentCharge,
           }),
-          previousBalance: companyBalance,
-          currentBalance: companyBalance - extraEmailContentCharge,
-          emailContentOverage: extraEmailContentCharge
+          overage: extraEmailContentCharge
             ? `${getEmailContentOverage({
                 unpaidEmailContent,
                 company,
                 plan,
               })} KB`
             : 0,
-          emailContentOverageCharge: extraEmailContentCharge,
+          overageCharge: extraEmailContentCharge,
+          overageKind: OVERAGE_KIND.BANDWIDTH,
         })
       );
 

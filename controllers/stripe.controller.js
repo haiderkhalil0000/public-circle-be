@@ -12,9 +12,8 @@ const {
   EmailSent,
 } = require("../models");
 const {
-  constants: { RESPONSE_MESSAGES },
+  constants: { RESPONSE_MESSAGES, OVERAGE_CONSUMPTION_DOCUMENT_KIND },
 } = require("../utils");
-const { OVERAGE_CONSUMPTION_KIND } = require("../utils/constants.util");
 
 const { STRIPE_KEY } = process.env;
 
@@ -504,7 +503,7 @@ const readStripeCustomer = ({ customerId }) =>
 const readCustomerBalanceHistory = async ({ customerId }) =>
   OverageConsumption.find({
     customerId,
-    kind: OVERAGE_CONSUMPTION_KIND.PUBLIC,
+    kind: OVERAGE_CONSUMPTION_DOCUMENT_KIND.PUBLIC,
   });
 
 const createPendingInvoiceItem = async ({

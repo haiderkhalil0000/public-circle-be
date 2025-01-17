@@ -4,9 +4,10 @@ const { ObjectId } = mongoose.Schema.Types;
 const {
   constants: {
     MODELS: { OVERAGE_CONSUMPTION, COMPANY },
+    OVERAGE_CONSUMPTION_DOCUMENT_KIND,
+    OVERAGE_KIND,
   },
 } = require("../utils");
-const { OVERAGE_CONSUMPTION_KIND } = require("../utils/constants.util");
 
 const schema = new mongoose.Schema(
   {
@@ -21,28 +22,10 @@ const schema = new mongoose.Schema(
       required: true,
     },
     description: { type: String, required: true },
-    previousBalance: {
-      type: Number,
-    },
-    currentBalance: {
-      type: Number,
-    },
-    emailOverage: {
+    overage: {
       type: String,
     },
-    emailOverageCharge: {
-      type: Number,
-    },
-    emailContentOverage: {
-      type: String,
-    },
-    emailContentOverageCharge: {
-      type: Number,
-    },
-    contactOverage: {
-      type: String,
-    },
-    contactOverageCharge: {
+    overageCharge: {
       type: Number,
     },
     currency: {
@@ -50,11 +33,16 @@ const schema = new mongoose.Schema(
       required: true,
       default: "CAD",
     },
-    kind: {
+    overageKind: {
       type: String,
       required: true,
-      default: OVERAGE_CONSUMPTION_KIND.PUBLIC,
-      enum: Object.values(OVERAGE_CONSUMPTION_KIND),
+      enum: Object.values(OVERAGE_KIND),
+    },
+    documentkind: {
+      type: String,
+      required: true,
+      enum: Object.values(OVERAGE_CONSUMPTION_DOCUMENT_KIND),
+      default: OVERAGE_CONSUMPTION_DOCUMENT_KIND.PUBLIC,
     },
     stripeInvoiceItemId: {
       type: String,

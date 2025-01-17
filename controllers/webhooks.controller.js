@@ -1,8 +1,7 @@
 const _ = require("lodash");
 
-const { CompanyUser, Plan, Company, OverageConsumption } = require("../models");
+const { CompanyUser, Plan, Company } = require("../models");
 const { basicUtil } = require("../utils");
-const { OVERAGE_CONSUMPTION_KIND } = require("../utils/constants.util");
 
 const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
   const stripeController = require("./stripe.controller");
@@ -131,18 +130,7 @@ const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
       contactsOverageInvoiceItem &&
       contactsOverageInvoiceItem.amount > extraContactsQuotaCharge
     ) {
-      // pendingInvoiceItem = await stripeController.createPendingInvoiceItem({
-      //   customerId: company.stripe.id,
-      //   chargeAmountInSmallestUnit: extraContactsQuotaCharge,
-      // });
-      // overageConsumptionController.createOverageConsumption({
-      //   companyId: company._id,
-      //   customerId: company.stripe.id,
-      //   description: "Overage charge for importing contacts above quota.",
-      //   contactOverage: `${contactsAboveQuota} contacts`,
-      //   contactOverageCharge: extraContactsQuotaCharge,
-      //   stripeInvoiceItemId: pendingInvoiceItem.id,
-      // });
+      //do nothing
     } else {
       pendingInvoiceItem = await stripeController.createPendingInvoiceItem({
         customerId: company.stripe.id,
