@@ -243,28 +243,52 @@ const upgradeOrDowngradeSubscription = async ({ customerId, items }) => {
   }
   console.log("customerId2", customerId);
   const customer = await stripe.customers.retrieve(customerId);
-  const balance = customer.balance;
+  let balance = customer.balance;
 
   if (balance < 0) {
-    const invoices = await stripe.invoices.list({
+    let invoices = await stripe.invoices.list({
       subscription: subscription.id,
       status: "paid",
     });
 
-    const paidInvoice = invoices.data.find((invoice) => {
-      if (invoice.charge && invoice.amount_paid >= Math.abs(balance)) {
+    invoices = invoices.data.filter((invoice) => invoice.charge);
+
+    let paidInvoice = invoices.find((invoice) => {
+      if (invoice.amount_paid >= Math.abs(balance)) {
         return invoice;
       }
     });
 
-    console.log("customer.balance", Math.abs(balance));
-    console.log("paidInvoice.amount_paid", paidInvoice.amount_paid);
+    const multipleRefunds = [];
 
-    await stripe.refunds.create({
-      charge: paidInvoice.charge,
-      amount: Math.abs(balance),
-    });
+    if (paidInvoice) {
+      multipleRefunds.push(
+        stripe.refunds.create({
+          charge: paidInvoice.charge,
+          amount: Math.abs(balance),
+        })
+      );
+    } else {
+      paidInvoice = invoices.forEach((invoice) => {
+        if (Math.abs(balance) > 0) {
+          multipleRefunds.push(
+            stripe.refunds.create({
+              charge: invoice.charge,
+              amount: invoice.amount_paid,
+            })
+          );
+
+          balance = Math.abs(balance) - invoice.amount_paid;
+        }
+      });
+    }
+
+    for (const refund of multipleRefunds) {
+      await refund;
+    }
+
     console.log("customerId3", customerId);
+
     await stripe.customers.update(customerId, {
       balance: 0,
     });
