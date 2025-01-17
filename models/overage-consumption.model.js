@@ -38,7 +38,7 @@ const schema = new mongoose.Schema(
       required: true,
       enum: Object.values(OVERAGE_KIND),
     },
-    documentkind: {
+    documentKind: {
       type: String,
       required: true,
       enum: Object.values(OVERAGE_CONSUMPTION_DOCUMENT_KIND),
