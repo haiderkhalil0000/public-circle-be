@@ -658,7 +658,7 @@ const getEmailContentOverage = ({ unpaidEmailContent, company, plan }) => {
     company.extraQuota.emailContent -
     unpaidEmailContent;
 
-  return emailContentOverage / 1024;
+  return `${emailContentOverage / 1000} KB`;
 };
 
 const validateCampaign = async ({ campaign, primaryUser }) => {
@@ -825,13 +825,11 @@ const validateCampaign = async ({ campaign, primaryUser }) => {
           description: getDescription({
             extraEmailContentCharge,
           }),
-          overage: extraEmailContentCharge
-            ? `${getEmailContentOverage({
-                unpaidEmailContent,
-                company,
-                plan,
-              })} KB`
-            : 0,
+          overage: getEmailContentOverage({
+            unpaidEmailContent,
+            company,
+            plan,
+          }),
           overageCharge: extraEmailContentCharge,
           overageKind: OVERAGE_KIND.BANDWIDTH,
         })

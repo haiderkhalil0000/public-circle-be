@@ -708,9 +708,9 @@ const readQuotaDetails = async ({ companyId, customerId }) => {
   const communicationQuotaConsumed = emailsSentDocs.length;
 
   const bandwidthQuotaAllowed =
-    (plan.quota.emailContent + company.extraQuota.emailContent) / 1024;
+    (plan.quota.emailContent + company.extraQuota.emailContent) / 1000;
 
-  const bandwidthQuotaConsumed = totalEmailContentSent / 1024;
+  const bandwidthQuotaConsumed = totalEmailContentSent / 1000;
 
   return {
     communicationQuotaAllowed,
