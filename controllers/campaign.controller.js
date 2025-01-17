@@ -651,14 +651,14 @@ const getDescription = ({ extraEmailCharge, extraEmailContentCharge }) => {
 };
 
 const getEmailContentOverage = ({ unpaidEmailContent, company, plan }) => {
-  let emailContentOverage = "";
+  let emailContentOverage = 0;
 
   emailContentOverage =
     plan.bundles.emailContent.bandwidth +
     company.extraQuota.emailContent -
     unpaidEmailContent;
 
-  return `${emailContentOverage / 1000} KB`;
+  return basicUtil.calculateByteUnit(emailContentOverage);
 };
 
 const validateCampaign = async ({ campaign, primaryUser }) => {

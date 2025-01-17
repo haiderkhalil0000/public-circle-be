@@ -24,10 +24,23 @@ const fiterUniqueStringsFromArray = (arrayOfStrings) => _.uniq(arrayOfStrings);
 const filterUniqueObjectsFromArrayByProperty = (arrayOfObjects, property) =>
   _.uniqBy(arrayOfObjects, property);
 
+const calculateByteUnit = (bytes) => {
+  const units = ["Bytes", "KB", "MB", "GB", "TB"];
+  let index = 0;
+
+  while (bytes >= 1000 && index < units.length - 1) {
+    bytes /= 1000;
+    index++;
+  }
+
+  return `${Math.round(bytes)} ${units[index]}`;
+};
+
 module.exports = {
   validateObjectId,
   decodeJwt,
   fiterUniqueObjectsFromArray,
   fiterUniqueStringsFromArray,
   filterUniqueObjectsFromArrayByProperty,
+  calculateByteUnit,
 };
