@@ -319,6 +319,7 @@ const readCustomerBalance = async ({ customerId, companyId }) => {
   const [invoices, company, plans] = await Promise.all([
     stripe.invoices.list({
       customer: customerId,
+      limit: 100,
     }),
     Company.findById(companyId),
     readPlanIds({ customerId }),
