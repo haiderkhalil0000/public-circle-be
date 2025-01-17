@@ -205,7 +205,6 @@ const createCoupon = async ({ id, name, amountOff, percentageOff }) => {
 };
 
 const upgradeOrDowngradeSubscription = async ({ customerId, items }) => {
-  console.log("customerId1", customerId);
   const activeSubscriptions = await stripe.subscriptions.list({
     customer: customerId,
     status: "active",
@@ -240,7 +239,7 @@ const upgradeOrDowngradeSubscription = async ({ customerId, items }) => {
   if (updatedSubscription.discount) {
     await stripe.subscriptions.deleteDiscount(subscription.id);
   }
-  console.log("customerId2", customerId);
+
   const customer = await stripe.customers.retrieve(customerId);
   let balance = customer.balance;
 
@@ -252,45 +251,32 @@ const upgradeOrDowngradeSubscription = async ({ customerId, items }) => {
 
     invoices = invoices.data.filter((invoice) => invoice.charge);
 
-    let paidInvoice = invoices.find((invoice) => {
-      if (invoice.amount_paid >= Math.abs(balance)) {
-        return invoice;
-      }
-    });
-
     const multipleRefunds = [];
 
-    if (paidInvoice) {
-      multipleRefunds.push(
-        stripe.refunds.create({
-          charge: paidInvoice.charge,
-          amount: Math.abs(balance),
-        })
-      );
-    } else {
-      paidInvoice = invoices.forEach((invoice) => {
-        if (Math.abs(balance) > 0) {
-          multipleRefunds.push(
-            stripe.refunds.create({
-              charge: invoice.charge,
-              amount: invoice.amount_paid,
-            })
-          );
+    for (const invoice of invoices) {
+      if (Math.abs(balance) <= 0) break; // Stop if balance is settled
 
-          if (Math.abs(balance) - invoice.amount_paid > Math.abs(balance)) {
-            balance = 0;
-          } else {
-            balance = Math.abs(balance) - invoice.amount_paid;
-          }
-        }
-      });
+      const charge = await stripe.charges.retrieve(invoice.charge);
+
+      // Calculate refundable amount
+      const refundableAmount = charge.amount - charge.amount_refunded;
+
+      if (refundableAmount > 0) {
+        const refundAmount = Math.min(refundableAmount, Math.abs(balance));
+
+        multipleRefunds.push(
+          stripe.refunds.create({
+            charge: invoice.charge,
+            amount: refundAmount,
+          })
+        );
+
+        balance += refundAmount; // Deduct refunded amount from balance
+      }
     }
 
-    for (const refund of multipleRefunds) {
-      await refund;
-    }
-
-    console.log("customerId3", customerId);
+    // Await all refunds
+    await Promise.all(multipleRefunds);
 
     await stripe.customers.update(customerId, {
       balance: 0,
