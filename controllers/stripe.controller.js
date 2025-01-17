@@ -489,7 +489,7 @@ const readStripeCustomer = ({ customerId }) =>
 const readCustomerBalanceHistory = async ({ customerId }) =>
   OverageConsumption.find({
     customerId,
-    kind: OVERAGE_CONSUMPTION_DOCUMENT_KIND.PUBLIC,
+    documentKind: OVERAGE_CONSUMPTION_DOCUMENT_KIND.PUBLIC,
   });
 
 const createPendingInvoiceItem = async ({
