@@ -322,6 +322,9 @@ const readCurrentUser = ({ currentUserId }) =>
     .populate("role")
     .populate("referralCode", "code");
 
+const readPrimaryUserByCompanyId = ({ companyId }) =>
+  User.findOne({ company: companyId, kind: USER_KIND.PRIMARY }).lean();
+
 module.exports = {
   updateUser,
   createUserUnderACompany,
@@ -333,4 +336,5 @@ module.exports = {
   readDashboardData,
   verifyReferralCode,
   readCurrentUser,
+  readPrimaryUserByCompanyId,
 };

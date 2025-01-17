@@ -66,7 +66,7 @@ const validateSourceEmailAddress = async ({
 };
 
 const createCampaign = async ({
-  currentUser,
+  companyId,
   segmentIds = [],
   sourceEmailAddress,
   emailSubject,
@@ -76,8 +76,6 @@ const createCampaign = async ({
   isRecurring,
   recurringPeriod,
 }) => {
-  const companyId = currentUser.company._id;
-
   await validateSourceEmailAddress({
     companyId,
     sourceEmailAddress,
@@ -88,20 +86,25 @@ const createCampaign = async ({
     basicUtil.validateObjectId({ inputString: segmentId });
   }
 
-  const campaign = await Campaign.create({
-    company: companyId,
-    segments: segmentIds,
-    sourceEmailAddress,
-    emailSubject,
-    emailTemplate: emailTemplateId,
-    runMode,
-    runSchedule,
-    isRecurring,
-    recurringPeriod,
-  });
+  const usersController = require("./users.controller");
+
+  const [campaign, primaryUser] = await Promise.all([
+    Campaign.create({
+      company: companyId,
+      segments: segmentIds,
+      sourceEmailAddress,
+      emailSubject,
+      emailTemplate: emailTemplateId,
+      runMode,
+      runSchedule,
+      isRecurring,
+      recurringPeriod,
+    }),
+    usersController.readPrimaryUserByCompanyId({ companyId }),
+  ]);
 
   if (runMode === RUN_MODE.INSTANT) {
-    await validateCampaign({ campaign, currentUser });
+    await validateCampaign({ campaign, primaryUser });
     await runCampaign({ campaign });
   }
 };
@@ -222,10 +225,15 @@ const readAllCampaigns = async ({ companyId }) => {
   return allCampaigns;
 };
 
-const updateCampaign = async ({ campaignId, campaignData }) => {
+const updateCampaign = async ({ companyId, campaignId, campaignData }) => {
   basicUtil.validateObjectId({ inputString: campaignId });
 
-  let campaign = await Campaign.findById(campaignId);
+  const usersController = require("./users.controller");
+
+  let [campaign, primaryUser] = await Promise.all([
+    Campaign.findById(campaignId),
+    usersController.readPrimaryUserByCompanyId({ companyId }),
+  ]);
 
   if (campaignData.segmentIds || campaignData.emailTemplateId) {
     basicUtil.validateObjectId({ inputString: campaignData.emailTemplateId });
@@ -260,7 +268,7 @@ const updateCampaign = async ({ campaignId, campaignData }) => {
   await campaign.save();
 
   if (campaignData.runMode === RUN_MODE.INSTANT) {
-    await validateCampaign({ campaign });
+    await validateCampaign({ campaign, primaryUser });
     await runCampaign({ campaign });
   }
 };
@@ -652,7 +660,7 @@ const getEmailContentOverage = ({ unpaidEmailContent, company, plan }) => {
   return emailContentOverage / 1024;
 };
 
-const validateCampaign = async ({ campaign, currentUser }) => {
+const validateCampaign = async ({ campaign, primaryUser }) => {
   const populatedCampaign = await Campaign.findById(campaign._id).populate(
     "emailTemplate"
   );
@@ -725,9 +733,9 @@ const validateCampaign = async ({ campaign, currentUser }) => {
 
       await sesUtil.sendEmail({
         fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
-        toEmailAddress: currentUser.emailAddress,
+        toEmailAddress: primaryUser.emailAddress,
         subject: RESPONSE_MESSAGES.EMAIL_LIMIT_REACHED,
-        content: `Dear ${currentUser.firstName},
+        content: `Dear ${primaryUser.firstName},
         We have restricted your campaign from running because you don't have enough credits to pay for
         the new campaign. As your quota for ${plan.name} is fully consumed. So we recommend you to top-up
         into your account and try again.
@@ -765,9 +773,9 @@ const validateCampaign = async ({ campaign, currentUser }) => {
 
       await sesUtil.sendEmail({
         fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
-        toEmailAddress: currentUser.emailAddress,
+        toEmailAddress: primaryUser.emailAddress,
         subject: RESPONSE_MESSAGES.EMAIL_CONTENT_LIMIT_REACHED,
-        content: `Dear ${currentUser.firstName},
+        content: `Dear ${primaryUser.firstName},
         We have restricted your campaign from running because you don't have enough credits to pay for
         the new campaign. As your quota for ${plan.name} is fully consumed. So we recommend you to top-up
         into your account and try again.

@@ -32,8 +32,8 @@ router.post(
   async (req, res, next) => {
     try {
       await campaignsController.createCampaign({
+        companyId: req.user.company._id,
         ...req.body,
-        currentUser: req.user,
       });
 
       res.status(200).json({
@@ -217,6 +217,7 @@ router.patch(
   async (req, res, next) => {
     try {
       await campaignsController.updateCampaign({
+        companyId: req.user.company._id,
         ...req.params,
         campaignData: req.body,
       });

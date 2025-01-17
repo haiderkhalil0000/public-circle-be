@@ -2,7 +2,7 @@ const moment = require("moment");
 const CronJob = require("cron").CronJob;
 
 const { Cron, Campaign } = require("../models");
-const { campaignsController } = require("../controllers");
+const { campaignsController, usersController } = require("../controllers");
 const {
   constants: {
     CRON_RECORD_LIMIT,
@@ -43,7 +43,19 @@ new CronJob(
         ],
       }).populate("segments");
 
-      for (const campaign of pendingCampaigns) {
+      let primaryUsers = [];
+
+      pendingCampaigns.forEach((campaign) =>
+        primaryUsers.push(
+          usersController.readPrimaryUserByCompanyId({
+            companyId: campaign.company,
+          })
+        )
+      );
+
+      primaryUsers = await Promise.all(primaryUsers);
+
+      pendingCampaigns.forEach(async (campaign, index) => {
         if (
           campaign.runMode === RUN_MODE.SCHEDULE &&
           campaign.processedCount < 1 &&
@@ -51,7 +63,10 @@ new CronJob(
         ) {
           recordsUpdated++;
 
-          await campaignsController.validateCampaign({ campaign });
+          await campaignsController.validateCampaign({
+            campaign,
+            primaryUser: primaryUsers[index],
+          });
 
           campaignsController.runCampaign({ campaign });
         } else if (campaign.isRecurring) {
@@ -69,12 +84,15 @@ new CronJob(
           if (moment().isSameOrAfter(lastProcessedTime.add(recurringPeriod))) {
             recordsUpdated++;
 
-            await campaignsController.validateCampaign({ campaign });
+            await campaignsController.validateCampaign({
+              campaign,
+              primaryUser: primaryUsers[index],
+            });
 
             campaignsController.runCampaign({ campaign });
           }
         }
-      }
+      });
 
       await Cron.create({
         cronName: CRON_JOBS.RUN_CAMPAIGN,
