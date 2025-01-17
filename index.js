@@ -10,22 +10,22 @@ const { configure, database } = require("./startup");
 
 const app = express();
 
-app.post(
-  "/webhooks/stripe",
-  express.raw({ type: "application/json" }),
-  (req, res) => {
-    const webhooksController = require("./controllers/webhooks.controller");
+// app.post(
+//   "/webhooks/stripe",
+//   express.raw({ type: "application/json" }),
+//   (req, res) => {
+//     const webhooksController = require("./controllers/webhooks.controller");
 
-    const stripeSignature = req.headers["stripe-signature"];
+//     const stripeSignature = req.headers["stripe-signature"];
 
-    webhooksController.receiveStripeEvents({
-      stripeSignature,
-      body: req.body,
-    });
+//     webhooksController.receiveStripeEvents({
+//       stripeSignature,
+//       body: req.body,
+//     });
 
-    res.status(200).send("Success");
-  }
-);
+//     res.status(200).send("Success");
+//   }
+// );
 
 app.use(helmet());
 app.use(cookieParser());
