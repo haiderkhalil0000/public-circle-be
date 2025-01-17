@@ -598,6 +598,10 @@ const readStripeEvent = async ({ stripeSignature, body }) => {
     }
   });
 
+  if (!customerId) {
+    return;
+  }
+
   const overageConsumptionController = require("./overage-consumption.controller");
 
   const [latestPrivateOverageConsumptionEntry, planIds] = await Promise.all([
