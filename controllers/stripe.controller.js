@@ -297,6 +297,11 @@ const createATopUpInCustomerBalance = async ({
   const draftInvoice = await stripe.invoices.create({
     customer: customerId,
     auto_advance: false,
+    description: "Top up",
+    metadata: {
+      customerId: customerId,
+      description: "Top up",
+    },
   });
 
   await stripe.invoiceItems.create({
