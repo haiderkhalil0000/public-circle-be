@@ -2,11 +2,9 @@ const mongoose = require("mongoose");
 
 const {
   constants: {
-    MODELS: { COMPANY, PLAN },
+    MODELS: { COMPANY },
   },
 } = require("../utils");
-
-const { ObjectId } = mongoose.Schema.Types;
 
 const schema = new mongoose.Schema(
   {
@@ -17,25 +15,8 @@ const schema = new mongoose.Schema(
     city: { type: String },
     province: { type: String },
     country: { type: String },
-    stripe: { type: Object, default: {} },
+    stripeCustomerId: { type: String },
     contactsPrimaryKey: { type: String },
-    extraQuota: {
-      email: {
-        type: Number,
-        required: true,
-        default: 0,
-      },
-      emailContent: {
-        type: Number,
-        required: true,
-        default: 0,
-      },
-      contacts: {
-        type: Number,
-        required: true,
-        default: 0,
-      },
-    },
   },
   { timestamps: true }
 );

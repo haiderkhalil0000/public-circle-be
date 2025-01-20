@@ -1,15 +1,14 @@
 const { OverageConsumption } = require("../models");
 const {
-  OVERAGE_CONSUMPTION_DOCUMENT_KIND,
-  OVERAGE_KIND,
-} = require("../utils/constants.util");
+  constants: { OVERAGE_KIND },
+} = require("../utils");
 
 const readLatestPrivateOverageConsumption = async ({
   companyId,
   customerId,
 }) => {
   const query = {
-    kind: OVERAGE_CONSUMPTION_DOCUMENT_KIND.PRIVATE,
+    kind: OVERAGE_KIND.CONTACT,
   };
   if (companyId) {
     query.companyId = companyId;
@@ -34,8 +33,7 @@ const createOverageConsumption = async ({
     description,
     overage: contactOverage,
     overageCharge: contactOverageCharge,
-    overageKind: OVERAGE_KIND.CONTACT,
-    documentKind: OVERAGE_CONSUMPTION_DOCUMENT_KIND.PRIVATE,
+    kind: OVERAGE_KIND.CONTACT,
     stripeInvoiceItemId,
   });
 };

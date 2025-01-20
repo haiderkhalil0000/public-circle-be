@@ -700,11 +700,11 @@ const validateCampaign = async ({ campaign, primaryUser }) => {
 
   let [companyBalance, planIds] = await Promise.all([
     stripeController.readCustomerBalance({
-      customerId: company.stripe.id,
+      customerId: company.stripeCustomerId,
       companyId: campaign.company,
     }),
     stripeController.readPlanIds({
-      customerId: company.stripe.id,
+      customerId: company.stripeCustomerId,
     }),
   ]);
 
@@ -800,7 +800,7 @@ const validateCampaign = async ({ campaign, primaryUser }) => {
       promises.push(
         OverageConsumption.create({
           company: company._id,
-          customerId: company.stripe.id,
+          customerId: company.stripeCustomerId,
           description: getDescription({
             extraEmailCharge,
           }),
@@ -810,7 +810,7 @@ const validateCampaign = async ({ campaign, primaryUser }) => {
               }`
             : 0,
           overageCharge: extraEmailCharge,
-          overageKind: OVERAGE_KIND.COMMUNICATION,
+          kind: OVERAGE_KIND.COMMUNICATION,
         })
       );
 
@@ -821,7 +821,7 @@ const validateCampaign = async ({ campaign, primaryUser }) => {
       promises.push(
         OverageConsumption.create({
           company: company._id,
-          customerId: company.stripe.id,
+          customerId: company.stripeCustomerId,
           description: getDescription({
             extraEmailContentCharge,
           }),
@@ -831,7 +831,7 @@ const validateCampaign = async ({ campaign, primaryUser }) => {
             plan,
           }),
           overageCharge: extraEmailContentCharge,
-          overageKind: OVERAGE_KIND.BANDWIDTH,
+          kind: OVERAGE_KIND.BANDWIDTH,
         })
       );
 

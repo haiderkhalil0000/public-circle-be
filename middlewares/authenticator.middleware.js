@@ -108,7 +108,7 @@ const verifyWebhookToken = async (req, res, next) => {
     }
 
     req.companyId = companyDoc._id;
-    req.customerId = companyDoc.stripe.id;
+    req.customerId = companyDoc.stripeCustomerId;
 
     next();
   } catch (err) {

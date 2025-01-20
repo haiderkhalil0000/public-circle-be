@@ -12,7 +12,7 @@ const {
   EmailSent,
 } = require("../models");
 const {
-  constants: { RESPONSE_MESSAGES, OVERAGE_CONSUMPTION_DOCUMENT_KIND },
+  constants: { RESPONSE_MESSAGES, OVERAGE_KIND },
 } = require("../utils");
 
 const { STRIPE_KEY } = process.env;
@@ -320,59 +320,61 @@ const createATopUpInCustomerBalance = async ({
   }
 };
 
-const readCustomerBalance = async ({ customerId, companyId }) => {
-  const [invoices, company, plans] = await Promise.all([
-    stripe.invoices.list({
-      customer: customerId,
-      limit: 100,
-    }),
+const syncCustomerBalance = async ({ companyId, customerId }) => {
+  let invoices = [];
+  let hasMore = true;
+  let nextPage = null;
+
+  while (hasMore) {
+    const params = {
+      query: `metadata['customerId']:'${customerId}' AND metadata['description']:'Top up'`,
+    };
+
+    if (nextPage) {
+      params.page = nextPage; // Add the next page cursor if available
+    }
+
+    const response = await stripe.invoices.search(params);
+
+    // Collect the current batch of invoices
+    invoices = invoices.concat(response.data);
+
+    // Update pagination variables
+    hasMore = response.has_more;
+    nextPage = response.next_page; // Use the next_page cursor for the next request
+  }
+
+  const [company, overage] = await Promise.all([
     Company.findById(companyId),
-    readPlanIds({ customerId }),
+    OverageConsumption.find({
+      company: companyId,
+      kind: { $not: OVERAGE_KIND.CONTACT },
+    }),
   ]);
 
   let total = 0;
 
-  for (const invoice of invoices.data) {
-    const lineItems = await stripe.invoices.listLineItems(invoice.id);
-
-    for (const item of lineItems.data) {
-      if (item.price.product === "prod_RXLIDbemHmqlfQ" && item.price) {
-        total = total + item.price.unit_amount;
-      }
-    }
+  for (const invoice of invoices) {
+    total = total + invoice.amount_paid;
   }
 
-  const emailsSentController = require("./emails-sent.controller");
+  total = total / 100;
 
-  const [totalEmailsSentByCompany, totalEmailContentConsumedByCompany, plan] =
-    await Promise.all([
-      emailsSentController.readEmailSentCount({ companyId }),
-      emailsSentController.readEmailContentConsumed({ companyId }),
-      Plan.findById(plans[0].planId),
-    ]);
+  const overageTotal = overage
+    .map((item) => item.overageCharge)
+    .reduce((total, item) => total + item);
 
-  const companyEmailQuota = plan.quota.email;
-  const companyEmailContentQuota = plan.quota.emailContent;
+  company.balance.amount = total - overageTotal;
 
-  if (
-    totalEmailsSentByCompany <= companyEmailQuota &&
-    totalEmailContentConsumedByCompany <= companyEmailContentQuota
-  ) {
-    return total / 100;
-  }
+  await company.save();
+};
 
-  const { emails, priceInSmallestUnit: emailsPriceInSmallestUnit } =
-    plan.bundles.email;
-  const { bandwidth, priceInSmallestUnit: emailContentPriceInSmallestUnit } =
-    plan.bundles.emailContent;
+const readCustomerBalance = async ({ companyId, customerId }) => {
+  const balance = await syncCustomerBalance({ companyId, customerId });
 
-  const emailCharge =
-    (company.extraQuota.email / emails) * emailsPriceInSmallestUnit;
-  const emailContentCharge =
-    (company.extraQuota.emailContent / bandwidth) *
-    emailContentPriceInSmallestUnit;
+  const companyDoc = await Company.findById(companyId, { balance: 1 });
 
-  return (total - emailCharge - emailContentCharge) / 100;
+  return companyDoc.balance;
 };
 
 const generateImmediateChargeInvoice = async ({
@@ -495,7 +497,7 @@ const readStripeCustomer = ({ customerId }) =>
 const readCustomerBalanceHistory = async ({ customerId }) =>
   OverageConsumption.find({
     customerId,
-    documentKind: OVERAGE_CONSUMPTION_DOCUMENT_KIND.PUBLIC,
+    kind: { $not: OVERAGE_KIND.CONTACT },
   });
 
 const createPendingInvoiceItem = async ({

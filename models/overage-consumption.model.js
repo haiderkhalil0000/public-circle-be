@@ -4,7 +4,6 @@ const { ObjectId } = mongoose.Schema.Types;
 const {
   constants: {
     MODELS: { OVERAGE_CONSUMPTION, COMPANY },
-    OVERAGE_CONSUMPTION_DOCUMENT_KIND,
     OVERAGE_KIND,
   },
 } = require("../utils");
@@ -17,15 +16,11 @@ const schema = new mongoose.Schema(
       index: true,
       ref: COMPANY,
     },
-    customerId: {
-      type: String,
-      required: true,
-    },
     description: { type: String, required: true },
-    overage: {
-      type: String,
+    overageCount: {
+      type: Number,
     },
-    overageCharge: {
+    overagePrice: {
       type: Number,
     },
     currency: {
@@ -33,16 +28,10 @@ const schema = new mongoose.Schema(
       required: true,
       default: "CAD",
     },
-    overageKind: {
+    kind: {
       type: String,
       required: true,
       enum: Object.values(OVERAGE_KIND),
-    },
-    documentKind: {
-      type: String,
-      required: true,
-      enum: Object.values(OVERAGE_CONSUMPTION_DOCUMENT_KIND),
-      default: OVERAGE_CONSUMPTION_DOCUMENT_KIND.PUBLIC,
     },
     stripeInvoiceItemId: {
       type: String,

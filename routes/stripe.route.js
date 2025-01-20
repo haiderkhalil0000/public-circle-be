@@ -43,7 +43,7 @@ router.get(
   async (req, res, next) => {
     try {
       const setupIntent = await stripeController.readSetupIntent({
-        customerId: req.user.company.stripe.id,
+        customerId: req.user.company.stripeCustomerId,
       });
 
       res.status(200).json({
@@ -72,7 +72,7 @@ router.post(
   async (req, res, next) => {
     try {
       await stripeController.attachPaymentMethod({
-        customerId: req.user.company.stripe.id,
+        customerId: req.user.company.stripeCustomerId,
         ...req.body,
       });
 
@@ -109,7 +109,7 @@ router.post(
     try {
       await stripeController.createSubscription({
         currentUserId: req.user._id,
-        customerId: req.user.company.stripe.id,
+        customerId: req.user.company.stripeCustomerId,
         ...req.body,
       });
 
@@ -162,7 +162,7 @@ router.get(
     try {
       const subscriptions =
         await stripeController.getActiveSubscriptionsOfACustomer({
-          customerId: req.user.company.stripe.id,
+          customerId: req.user.company.stripeCustomerId,
         });
 
       res.status(200).json({
@@ -197,7 +197,7 @@ router.patch(
   async (req, res, next) => {
     try {
       await stripeController.upgradeOrDowngradeSubscription({
-        customerId: req.user.company.stripe.id,
+        customerId: req.user.company.stripeCustomerId,
         ...req.body,
       });
 
@@ -227,7 +227,7 @@ router.post(
   async (req, res, next) => {
     try {
       await stripeController.createATopUpInCustomerBalance({
-        customerId: req.user.company.stripe.id,
+        customerId: req.user.company.stripeCustomerId,
         ...req.body,
       });
 
@@ -252,7 +252,7 @@ router.get(
   async (req, res, next) => {
     try {
       const customerBalance = await stripeController.readCustomerBalance({
-        customerId: req.user.company.stripe.id,
+        customerId: req.user.company.stripeCustomerId,
         companyId: req.user.company._id,
       });
 
@@ -277,7 +277,7 @@ router.get(
   async (req, res, next) => {
     try {
       const customerBalance = await stripeController.readCustomerStripeBalance({
-        customerId: req.user.company.stripe.id,
+        customerId: req.user.company.stripeCustomerId,
       });
 
       res.status(200).json({
@@ -302,7 +302,7 @@ router.get(
     try {
       const customerBalanceHistory =
         await stripeController.readCustomerBalanceHistory({
-          customerId: req.user.company.stripe.id,
+          customerId: req.user.company.stripeCustomerId,
         });
 
       res.status(200).json({
@@ -331,7 +331,7 @@ router.get(
   async (req, res, next) => {
     try {
       const customerInvoices = await stripeController.readCustomerPaidInvoices({
-        customerId: req.user.company.stripe.id,
+        customerId: req.user.company.stripeCustomerId,
         ...req.query,
       });
 
@@ -362,7 +362,7 @@ router.get(
     try {
       const upcomingInvoice =
         await stripeController.readCustomerUpcomingInvoices({
-          customerId: req.user.company.stripe.id,
+          customerId: req.user.company.stripeCustomerId,
           ...req.query,
         });
 
@@ -392,7 +392,7 @@ router.get(
   async (req, res, next) => {
     try {
       const customerReceipts = await stripeController.readCustomerReceipts({
-        customerId: req.user.company.stripe.id,
+        customerId: req.user.company.stripeCustomerId,
         ...req.query,
       });
 
@@ -418,7 +418,7 @@ router.get(
     try {
       const defaultPaymentMethod =
         await stripeController.readDefaultPaymentMethod({
-          customerId: req.user.company.stripe.id,
+          customerId: req.user.company.stripeCustomerId,
         });
 
       res.status(200).json({
@@ -443,7 +443,7 @@ router.get(
     try {
       const quotaDetails = await stripeController.readQuotaDetails({
         companyId: req.user.company,
-        customerId: req.user.company.stripe.id,
+        customerId: req.user.company.stripeCustomerId,
       });
 
       res.status(200).json({
