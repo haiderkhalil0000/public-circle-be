@@ -47,27 +47,25 @@ const readActivePlansByCustomerId = async ({ stripeCustomerId }) => {
     status: "active",
   });
 
-  activeSubscription = activeSubscription[0];
+  activeSubscription = activeSubscription.data[0];
 
   const activePlans = [];
 
-  if (activeSubscription.data.length > 0) {
-    for (const subscription of activeSubscription.data) {
-      for (const item of subscription.items.data) {
-        const price = item.price;
-        const productId = price.product;
+  if (activeSubscription) {
+    for (const item of activeSubscription.items.data) {
+      const price = item.price;
+      const productId = price.product;
 
-        const product = await stripe.products.retrieve(productId);
+      const product = await stripe.products.retrieve(productId);
 
-        const priceAmount = price.unit_amount / 100;
-        const priceCurrency = price.currency.toUpperCase();
+      const priceAmount = price.unit_amount / 100;
+      const priceCurrency = price.currency.toUpperCase();
 
-        activePlans.push({
-          productId,
-          productName: product.name,
-          productPrice: `${priceAmount} ${priceCurrency}`,
-        });
-      }
+      activePlans.push({
+        productId,
+        productName: product.name,
+        productPrice: `${priceAmount} ${priceCurrency}`,
+      });
     }
 
     return activePlans;
