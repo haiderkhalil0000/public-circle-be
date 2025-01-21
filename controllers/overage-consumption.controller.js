@@ -42,29 +42,41 @@ const readEmailOverage = ({
   companyId,
   billingCycleStartDate,
   billingCycleEndDate,
-}) =>
-  OverageConsumption.find({
+}) => {
+  const query = {
     company: companyId,
     kind: OVERAGE_KIND.COMMUNICATION,
-    createdAt: {
+  };
+
+  if (billingCycleStartDate && billingCycleEndDate) {
+    query.createdAt = {
       $gte: billingCycleStartDate,
       $lt: billingCycleEndDate,
-    },
-  });
+    };
+  }
+
+  return OverageConsumption.find(query);
+};
 
 const readEmailContentOverage = ({
   companyId,
   billingCycleStartDate,
   billingCycleEndDate,
-}) =>
-  OverageConsumption.find({
+}) => {
+  const query = {
     company: companyId,
     kind: OVERAGE_KIND.BANDWIDTH,
-    createdAt: {
+  };
+
+  if (billingCycleStartDate && billingCycleEndDate) {
+    query.createdAt = {
       $gte: billingCycleStartDate,
       $lt: billingCycleEndDate,
-    },
-  });
+    };
+  }
+
+  return OverageConsumption.find(query);
+};
 
 module.exports = {
   createOverageConsumption,

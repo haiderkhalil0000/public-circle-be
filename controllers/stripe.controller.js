@@ -705,13 +705,25 @@ const readCustomerStripeBalance = async ({ stripeCustomerId }) => {
 };
 
 const readQuotaDetails = async ({ companyId, stripeCustomerId }) => {
-  const [planIds, company, emailsSentDocs] = await Promise.all([
-    readPlanIds({
-      stripeCustomerId,
-    }),
-    Company.findById(companyId),
-    EmailSent.find({ company: companyId }, { size: 1 }),
-  ]);
+  const overageConsumptionController = require("./overage-consumption.controller");
+
+  const [planIds, emailOverageDocs, emailContentOverageDocs, emailsSentDocs] =
+    await Promise.all([
+      readPlanIds({
+        stripeCustomerId,
+      }),
+      overageConsumptionController.readEmailOverage({ companyId }),
+      overageConsumptionController.readEmailContentOverage({ companyId }),
+      EmailSent.find({ company: companyId }, { size: 1 }),
+    ]);
+
+  const companyExtraEmailQuota = emailOverageDocs
+    .map((item) => item.overageCount)
+    .reduce((totalValue, currentValue) => totalValue + currentValue, 0);
+
+  const companyExtraEmailContentQuota = emailContentOverageDocs
+    .map((item) => item.overageCount)
+    .reduce((totalValue, currentValue) => totalValue + currentValue, 0);
 
   const totalEmailContentSent = emailsSentDocs
     .map((item) => item.size)
@@ -719,12 +731,12 @@ const readQuotaDetails = async ({ companyId, stripeCustomerId }) => {
 
   const plan = await Plan.findById(planIds[0].planId);
 
-  const communicationQuotaAllowed = plan.quota.email + company.extraQuota.email;
+  const communicationQuotaAllowed = plan.quota.email + companyExtraEmailQuota;
 
   const communicationQuotaConsumed = emailsSentDocs.length;
 
   const bandwidthQuotaAllowed =
-    (plan.quota.emailContent + company.extraQuota.emailContent) / 1000;
+    (plan.quota.emailContent + companyExtraEmailContentQuota) / 1000;
 
   const bandwidthQuotaConsumed = totalEmailContentSent / 1000;
 
