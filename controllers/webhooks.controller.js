@@ -89,7 +89,7 @@ const recieveCompanyUsersData = async ({
   const planIds = results[results.length - 1];
 
   const [company, plan, pendingInvoiceItems] = await Promise.all([
-    Company.findById(companyId).populate("stripe"),
+    Company.findById(companyId),
     Plan.findById(planIds[0].planId),
     stripeController.readPendingInvoiceItems({ stripeCustomerId }),
   ]);
