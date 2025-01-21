@@ -341,9 +341,7 @@ const createATopUpInCustomerBalance = async ({
 
   const topupController = require("./topup.controller");
 
-  setTimeout(() => {
-    topupController.syncTopups({ companyId, stripeCustomerId });
-  }, 20000);
+  await topupController.syncTopups({ companyId, stripeCustomerId });
 };
 
 const readCustomerBalance = async ({ companyId }) => {
@@ -751,26 +749,40 @@ const readQuotaDetails = async ({ companyId, stripeCustomerId }) => {
 const readTopupInvoices = async ({ stripeCustomerId }) => {
   let invoices = [];
   let hasMore = true;
-  let nextPage = null;
+  let startingAfter = null;
 
   while (hasMore) {
     const params = {
-      query: `metadata['customerId']:'${stripeCustomerId}' AND metadata['description']:'Top up'`,
-      limit: 100,
+      customer: stripeCustomerId,
+      limit: 100, // Adjust as needed
     };
 
-    if (nextPage) {
-      params.page = nextPage; // Add the next page cursor if available
+    if (startingAfter) {
+      params.starting_after = startingAfter; // Use Stripe's pagination method
     }
 
-    const response = await stripe.invoices.search(params);
+    try {
+      const response = await stripe.invoices.list(params);
 
-    // Collect the current batch of invoices
-    invoices = invoices.concat(response.data);
+      // Manually filter invoices based on metadata description
+      const topupInvoices = response.data.filter(
+        (invoice) =>
+          invoice.metadata && invoice.metadata.description === "Top up"
+      );
 
-    // Update pagination variables
-    hasMore = response.has_more;
-    nextPage = response.next_page; // Use the next_page cursor for the next request
+      // Collect the current batch of invoices
+      invoices = invoices.concat(topupInvoices);
+
+      // Update pagination variables
+      hasMore = response.has_more;
+
+      if (response.data.length > 0) {
+        startingAfter = response.data[response.data.length - 1].id;
+      }
+    } catch (error) {
+      console.error("Error fetching invoices:", error);
+      break; // Stop further requests in case of an error
+    }
   }
 
   return invoices;
