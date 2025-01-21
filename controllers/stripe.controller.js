@@ -512,9 +512,9 @@ const readDefaultPaymentMethod = async ({ stripeCustomerId }) => {
 const readStripeCustomer = ({ stripeCustomerId }) =>
   stripe.customers.retrieve(stripeCustomerId);
 
-const readCustomerBalanceHistory = async ({ stripeCustomerId }) =>
+const readCustomerBalanceHistory = async ({ companyId }) =>
   OverageConsumption.find({
-    stripeCustomerId,
+    company: companyId,
     kind: { $ne: OVERAGE_KIND.CONTACT },
   });
 
