@@ -98,10 +98,10 @@ const recieveCompanyUsersData = async ({
     const contactsAboveQuota =
       users.length + existingContactsCount - plan.quota.contacts;
 
-    const { contacts, priceInSmallestUnit } = plan.bundles.contact;
+    const { contacts, price } = plan.bundles.contact;
 
     const extraContactsQuotaCharge =
-      Math.ceil(contactsAboveQuota / contacts) * priceInSmallestUnit;
+      Math.ceil(contactsAboveQuota / contacts) * price;
 
     let contactsOverageInvoiceItem = pendingInvoiceItems.data.find(
       (item) => item.description === "Contacts import overage charges."
