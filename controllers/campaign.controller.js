@@ -844,7 +844,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
           description: getDescription({
             extraEmailContentCharge,
           }),
-          overageCount: extraEmailContentQuota,
+          overageCount: extraEmailContentQuota / 1000,
           overagePrice: extraEmailContentCharge,
           kind: OVERAGE_KIND.BANDWIDTH,
         })
