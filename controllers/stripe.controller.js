@@ -635,6 +635,10 @@ const readStripeEvent = async ({ stripeSignature, body }) => {
     readPlanIds({ stripeCustomerId }),
   ]);
 
+  if (!latestPrivateOverageConsumptionEntry) {
+    return;
+  }
+
   console.log("invoiceItemItds", invoiceItemIds);
   console.log(
     "latestPrivateOverageConsumptionEntry",
@@ -669,10 +673,10 @@ const readStripeEvent = async ({ stripeSignature, body }) => {
 
     console.log("contactsAboveQuota", contactsAboveQuota);
 
-    const { contacts, priceInSmallestUnit } = plan.bundles.contact;
+    const { contacts, price } = plan.bundles.contact;
 
     const extraContactsQuotaCharge =
-      Math.ceil(contactsAboveQuota / contacts) * priceInSmallestUnit;
+      Math.ceil(contactsAboveQuota / contacts) * price;
 
     console.log("extraContactsQuotaCharge", extraContactsQuotaCharge);
 
