@@ -808,4 +808,5 @@ module.exports = {
   readQuotaDetails,
   readActiveBillingCycleDates,
   readTopupInvoices,
+  readUpdatedBalance,
 };
