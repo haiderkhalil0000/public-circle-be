@@ -377,7 +377,7 @@ const readUpdatedBalance = async ({ companyId, stripeCustomerId }) => {
     topupController.readTopupsByCompanyId({ companyId }),
     OverageConsumption.find({
       company: companyId,
-      kind: { $not: OVERAGE_KIND.CONTACT },
+      kind: { $ne: OVERAGE_KIND.CONTACT },
     }),
   ]);
 
