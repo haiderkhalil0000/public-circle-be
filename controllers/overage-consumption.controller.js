@@ -5,7 +5,7 @@ const {
 
 const readLatestPrivateOverageConsumption = async ({
   companyId,
-  customerId,
+  stripeCustomerId,
 }) => {
   const query = {
     kind: OVERAGE_KIND.CONTACT,
@@ -13,7 +13,7 @@ const readLatestPrivateOverageConsumption = async ({
   if (companyId) {
     query.companyId = companyId;
   } else {
-    query.customerId = customerId;
+    query.stripeCustomerId = stripeCustomerId;
   }
 
   return OverageConsumption.findOne(query).sort({ createdAt: -1 }).lean();
@@ -21,7 +21,7 @@ const readLatestPrivateOverageConsumption = async ({
 
 const createOverageConsumption = async ({
   companyId,
-  customerId,
+  stripeCustomerId,
   description,
   contactOverage,
   contactOverageCharge,
@@ -29,7 +29,7 @@ const createOverageConsumption = async ({
 }) => {
   await OverageConsumption.create({
     company: companyId,
-    customerId: customerId,
+    stripeCustomerId: stripeCustomerId,
     description,
     overage: contactOverage,
     overageCharge: contactOverageCharge,
@@ -37,7 +37,38 @@ const createOverageConsumption = async ({
     stripeInvoiceItemId,
   });
 };
+
+const readEmailOverage = ({
+  companyId,
+  billingCycleStartDate,
+  billingCycleEndDate,
+}) =>
+  OverageConsumption.find({
+    company: companyId,
+    kind: OVERAGE_KIND.COMMUNICATION,
+    createdAt: {
+      $gte: billingCycleStartDate,
+      $lt: billingCycleEndDate,
+    },
+  });
+
+const readEmailContentOverage = ({
+  companyId,
+  billingCycleStartDate,
+  billingCycleEndDate,
+}) =>
+  OverageConsumption.find({
+    company: companyId,
+    kind: OVERAGE_KIND.BANDWIDTH,
+    createdAt: {
+      $gte: billingCycleStartDate,
+      $lt: billingCycleEndDate,
+    },
+  });
+
 module.exports = {
   createOverageConsumption,
   readLatestPrivateOverageConsumption,
+  readEmailOverage,
+  readEmailContentOverage,
 };

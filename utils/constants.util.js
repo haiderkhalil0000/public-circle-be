@@ -22,6 +22,7 @@ module.exports = {
     REWARD: "reward",
     PLAN: "plan",
     OVERAGE_CONSUMPTION: "overage-comsumption",
+    TOPUP: "topup",
   },
 
   RESPONSE_MESSAGES: {
@@ -172,7 +173,8 @@ module.exports = {
     PASSWORD_RESET_REQUEST_SENT:
       "Password reset request has been sent. Please check your email to respond.",
     PASSWORD_DID_NOT_RESET: "Password did not reset, user not found!",
-    NO_SUBSCRIPTION_FOUND: "No active subscriptions found for this customer.",
+    ACTIVE_SUBSCRIPTION_NOT_FOUND:
+      "No active subscription found for this customer!",
     DASHBOARD_DATA_FETCHED: "Dashboard data fetched successfully.",
     PAYMENT_METHOD_ATTACHED: "Payment method attached successfully.",
     INVITATION_EMAIL_SENT: "Invitation email sent successfully.",
@@ -213,6 +215,8 @@ module.exports = {
     PRIMARY_KEY_UPDATED: "Primary key updated successfully.",
     PRIMARY_KEY_DELETED: "Primary key deleted successfully.",
     QUOTA_DETAILS_FETCHED: "Quota details fetched successully.",
+    PLANS_FETCHED: "Plans fetched successfully.",
+    ACTIVE_PLAN_NOT_FOUND: "No active plan found!",
   },
 
   INTERACTION_CHANNELS: {

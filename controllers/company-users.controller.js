@@ -179,7 +179,7 @@ const deleteCompanyUser = async ({ userId }) => {
   }
 };
 
-const uploadCsv = async ({ companyId, customerId, file }) => {
+const uploadCsv = async ({ companyId, stripeCustomerId, file }) => {
   const results = [];
 
   if (!file) {
@@ -205,7 +205,7 @@ const uploadCsv = async ({ companyId, customerId, file }) => {
           // Pass the parsed data to the controller
           await webhooksController.recieveCompanyUsersData({
             companyId,
-            customerId,
+            stripeCustomerId,
             users: results,
           });
         } catch (err) {

@@ -98,7 +98,7 @@ const verifyWebhookToken = async (req, res, next) => {
 
     const companyDoc = await Company.findOne({
       _id: accessTokenDoc.company,
-    }).populate("stripe");
+    });
 
     if (!accessTokenDoc) {
       return res.status(401).json({
@@ -108,7 +108,7 @@ const verifyWebhookToken = async (req, res, next) => {
     }
 
     req.companyId = companyDoc._id;
-    req.customerId = companyDoc.stripeCustomerId;
+    req.stripeCustomerId = companyDoc.stripeCustomerId;
 
     next();
   } catch (err) {

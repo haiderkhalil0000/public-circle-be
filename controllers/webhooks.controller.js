@@ -3,7 +3,11 @@ const _ = require("lodash");
 const { CompanyUser, Plan, Company } = require("../models");
 const { basicUtil } = require("../utils");
 
-const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
+const recieveCompanyUsersData = async ({
+  companyId,
+  stripeCustomerId,
+  users,
+}) => {
   const stripeController = require("./stripe.controller");
   const overageConsumptionController = require("./overage-consumption.controller");
 
@@ -78,7 +82,7 @@ const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
     }
   });
 
-  promises.push(stripeController.readPlanIds({ customerId }));
+  promises.push(stripeController.readPlanIds({ stripeCustomerId }));
 
   const results = await Promise.all(promises);
 
@@ -87,7 +91,7 @@ const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
   const [company, plan, pendingInvoiceItems] = await Promise.all([
     Company.findById(companyId).populate("stripe"),
     Plan.findById(planIds[0].planId),
-    stripeController.readPendingInvoiceItems({ customerId }),
+    stripeController.readPendingInvoiceItems({ stripeCustomerId }),
   ]);
 
   if (plan.quota.contacts < users.length + existingContactsCount) {
@@ -114,13 +118,13 @@ const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
       });
 
       pendingInvoiceItem = await stripeController.createPendingInvoiceItem({
-        customerId: company.stripeCustomerId,
+        stripeCustomerId: company.stripeCustomerId,
         chargeAmountInSmallestUnit: extraContactsQuotaCharge,
       });
 
       overageConsumptionController.createOverageConsumption({
         companyId: company._id,
-        customerId: company.stripeCustomerId,
+        stripeCustomerId: company.stripeCustomerId,
         description: "Overage charge for importing contacts above quota.",
         contactOverage: `${contactsAboveQuota} contacts`,
         contactOverageCharge: extraContactsQuotaCharge,
@@ -133,13 +137,13 @@ const recieveCompanyUsersData = async ({ companyId, customerId, users }) => {
       //do nothing
     } else {
       pendingInvoiceItem = await stripeController.createPendingInvoiceItem({
-        customerId: company.stripeCustomerId,
+        stripeCustomerId: company.stripeCustomerId,
         chargeAmountInSmallestUnit: extraContactsQuotaCharge,
       });
 
       overageConsumptionController.createOverageConsumption({
         companyId: company._id,
-        customerId: company.stripeCustomerId,
+        stripeCustomerId: company.stripeCustomerId,
         description: "Overage charge for importing contacts above quota.",
         contactOverage: `${contactsAboveQuota} contacts`,
         contactOverageCharge: extraContactsQuotaCharge,

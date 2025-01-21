@@ -70,7 +70,7 @@ router.post(
     try {
       await webhooksController.recieveCompanyUsersData({
         companyId: req.companyId,
-        customerId: req.customerId,
+        stripeCustomerId: req.stripeCustomerId,
         ...req.body,
       });
 

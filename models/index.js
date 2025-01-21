@@ -19,4 +19,5 @@ module.exports = {
   Plan: require("./plan.model"),
   TemplateCategory: require("./template-category.model"),
   OverageConsumption: require("./overage-consumption.model"),
+  Topup: require("./topup.model"),
 };

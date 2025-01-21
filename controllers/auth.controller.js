@@ -43,7 +43,7 @@ const register = async ({ emailAddress, password }) => {
 const login = async ({ emailAddress, password }) => {
   const user = await User.findOne({
     emailAddress,
-  });
+  }).populate("company");
 
   if (!user) {
     throw createHttpError(400, {
@@ -76,6 +76,13 @@ const login = async ({ emailAddress, password }) => {
   user.lastLoginAt = moment().format();
 
   user.save();
+
+  const topupController = require("./topup.controller");
+
+  topupController.syncTopups({
+    companyId: user.company._id,
+    stripeCustomerId: user.company.stripeCustomerId,
+  });
 
   return user;
 };

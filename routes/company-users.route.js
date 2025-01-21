@@ -286,7 +286,7 @@ router.post(
     try {
       await companyUsersController.uploadCsv({
         companyId: req.user.company._id,
-        customerId: req.user.company.stripeCustomerId,
+        stripeCustomerId: req.user.company.stripeCustomerId,
         file: req.file,
       });
 

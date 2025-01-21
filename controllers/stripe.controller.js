@@ -27,9 +27,9 @@ const createStripeCustomer = async ({ companyName, companyId }) =>
     },
   });
 
-const readSetupIntent = async ({ customerId }) =>
+const readSetupIntent = async ({ stripeCustomerId }) =>
   stripe.setupIntents.create({
-    customer: customerId,
+    customer: stripeCustomerId,
     payment_method_types: ["card"],
   });
 
@@ -41,18 +41,18 @@ const getSubscriptions = async ({ pageSize }) => {
   return data;
 };
 
-const getActiveSubscriptionsOfACustomer = async ({ customerId }) => {
-  const subscriptions = await stripe.subscriptions.list({
-    customer: customerId,
+const readActivePlansByCustomerId = async ({ stripeCustomerId }) => {
+  let activeSubscription = await stripe.subscriptions.list({
+    customer: stripeCustomerId,
     status: "active",
   });
 
-  const subscriptionsLimited = [];
+  activeSubscription = activeSubscription[0];
 
-  if (subscriptions.data.length > 0) {
-    // return subscriptions.data;
+  const activePlans = [];
 
-    for (const subscription of subscriptions.data) {
+  if (activeSubscription.data.length > 0) {
+    for (const subscription of activeSubscription.data) {
       for (const item of subscription.items.data) {
         const price = item.price;
         const productId = price.product;
@@ -62,7 +62,7 @@ const getActiveSubscriptionsOfACustomer = async ({ customerId }) => {
         const priceAmount = price.unit_amount / 100;
         const priceCurrency = price.currency.toUpperCase();
 
-        subscriptionsLimited.push({
+        activePlans.push({
           productId,
           productName: product.name,
           productPrice: `${priceAmount} ${priceCurrency}`,
@@ -70,12 +70,27 @@ const getActiveSubscriptionsOfACustomer = async ({ customerId }) => {
       }
     }
 
-    return subscriptionsLimited;
+    return activePlans;
   } else {
     throw createHttpError(400, {
-      errorMessage: RESPONSE_MESSAGES.NO_SUBSCRIPTION_FOUND,
+      errorMessage: RESPONSE_MESSAGES.ACTIVE_PLAN_NOT_FOUND,
     });
   }
+};
+
+const readActiveBillingCycleDates = async ({ stripeCustomerId }) => {
+  let activeSubscription = await stripe.subscriptions.list({
+    customer: stripeCustomerId,
+    status: "active",
+    limit: 1,
+  });
+
+  activeSubscription = activeSubscription.data[0];
+
+  return {
+    startDate: moment.unix(activeSubscription.current_period_start).utc(),
+    endDate: moment.unix(activeSubscription.current_period_end).utc(),
+  };
 };
 
 const getPlans = async ({ pageSize }) => {
@@ -101,14 +116,18 @@ const getPlans = async ({ pageSize }) => {
   return filteredPlans;
 };
 
-const createSubscription = async ({ currentUserId, customerId, items }) => {
+const createSubscription = async ({
+  currentUserId,
+  stripeCustomerId,
+  items,
+}) => {
   const currentUserDoc = await User.findById(currentUserId, {
     referralCodeConsumed: 1,
   }).populate("referralCodeConsumed");
 
   if (!currentUserDoc.referralCodeConsumed) {
     return await stripe.subscriptions.create({
-      customer: customerId,
+      customer: stripeCustomerId,
       items,
     });
   }
@@ -135,7 +154,7 @@ const createSubscription = async ({ currentUserId, customerId, items }) => {
     (reward.trialInDays || reward.discountInDays || 1) * 24 * 60 * 60;
 
   await stripe.subscriptionSchedules.create({
-    customer: customerId,
+    customer: stripeCustomerId,
     start_date: Math.floor(Date.now() / 1000), // Start immediately
     end_behavior: "release", // Continue the subscription after the schedule ends
     phases: [
@@ -152,7 +171,7 @@ const createSubscription = async ({ currentUserId, customerId, items }) => {
 
   // Retrieve the first invoice created for this customer
   const invoices = await stripe.invoices.list({
-    customer: customerId,
+    customer: stripeCustomerId,
     limit: 1,
   });
 
@@ -176,12 +195,12 @@ const createSubscription = async ({ currentUserId, customerId, items }) => {
   }
 };
 
-const attachPaymentMethod = async ({ customerId, paymentMethodId }) => {
+const attachPaymentMethod = async ({ stripeCustomerId, paymentMethodId }) => {
   const paymentMethod = await stripe.paymentMethods.attach(paymentMethodId, {
-    customer: customerId,
+    customer: stripeCustomerId,
   });
 
-  await stripe.customers.update(customerId, {
+  await stripe.customers.update(stripeCustomerId, {
     invoice_settings: {
       default_payment_method: paymentMethod.id,
     },
@@ -204,9 +223,9 @@ const createCoupon = async ({ id, name, amountOff, percentageOff }) => {
   await stripe.coupons.create(query);
 };
 
-const upgradeOrDowngradeSubscription = async ({ customerId, items }) => {
+const upgradeOrDowngradeSubscription = async ({ stripeCustomerId, items }) => {
   const activeSubscriptions = await stripe.subscriptions.list({
-    customer: customerId,
+    customer: stripeCustomerId,
     status: "active",
   });
 
@@ -240,7 +259,7 @@ const upgradeOrDowngradeSubscription = async ({ customerId, items }) => {
     await stripe.subscriptions.deleteDiscount(subscription.id);
   }
 
-  const customer = await stripe.customers.retrieve(customerId);
+  const customer = await stripe.customers.retrieve(stripeCustomerId);
   let balance = customer.balance;
 
   if (balance < 0) {
@@ -278,34 +297,37 @@ const upgradeOrDowngradeSubscription = async ({ customerId, items }) => {
     // Await all refunds
     await Promise.all(multipleRefunds);
 
-    await stripe.customers.update(customerId, {
+    await stripe.customers.update(stripeCustomerId, {
       balance: 0,
     });
   }
 };
 
 const createATopUpInCustomerBalance = async ({
-  customerId,
-  amountInSmallestUnit,
+  companyId,
+  stripeCustomerId,
+  amount,
 }) => {
+  amount = amount * 100;
+
   const price = await stripe.prices.create({
     product: "prod_RXLIDbemHmqlfQ",
-    unit_amount: amountInSmallestUnit,
+    unit_amount: amount,
     currency: "cad",
   });
 
   const draftInvoice = await stripe.invoices.create({
-    customer: customerId,
+    customer: stripeCustomerId,
     auto_advance: false,
     description: "Top up",
     metadata: {
-      customerId: customerId,
+      customerId: stripeCustomerId,
       description: "Top up",
     },
   });
 
   await stripe.invoiceItems.create({
-    customer: customerId,
+    customer: stripeCustomerId,
     price: price.id,
     invoice: draftInvoice.id,
     description: "Top up",
@@ -318,77 +340,72 @@ const createATopUpInCustomerBalance = async ({
   if (finalizedInvoice.status !== "paid") {
     await stripe.invoices.pay(finalizedInvoice.id);
   }
+
+  const topupController = require("./topup.controller");
+
+  setTimeout(() => {
+    topupController.syncTopups({ companyId, stripeCustomerId });
+  }, 20000);
 };
 
-const syncCustomerBalance = async ({ companyId, customerId }) => {
-  let invoices = [];
-  let hasMore = true;
-  let nextPage = null;
+const readCustomerBalance = async ({ companyId }) => {
+  const topupController = require("./topup.controller");
 
-  while (hasMore) {
-    const params = {
-      query: `metadata['customerId']:'${customerId}' AND metadata['description']:'Top up'`,
-    };
+  const [topupDocs, overageConsuptionDocs] = await Promise.all([
+    topupController.readTopupsByCompanyId({ companyId }),
+    OverageConsumption.find({
+      company: companyId,
+      kind: { $ne: OVERAGE_KIND.CONTACT },
+    }),
+  ]);
 
-    if (nextPage) {
-      params.page = nextPage; // Add the next page cursor if available
-    }
+  const totalTopup = topupDocs
+    .map((item) => item.price)
+    .reduce((totalValue, currentValue) => totalValue + currentValue, 0);
 
-    const response = await stripe.invoices.search(params);
+  const totalOverage = overageConsuptionDocs
+    .map((item) => item.overagePrice)
+    .reduce((totalValue, currentValue) => totalValue + currentValue, 0);
 
-    // Collect the current batch of invoices
-    invoices = invoices.concat(response.data);
+  return totalTopup - totalOverage;
+};
 
-    // Update pagination variables
-    hasMore = response.has_more;
-    nextPage = response.next_page; // Use the next_page cursor for the next request
-  }
+const readUpdatedBalance = async ({ companyId, stripeCustomerId }) => {
+  const topupController = require("./topup.controller");
 
-  const [company, overage] = await Promise.all([
-    Company.findById(companyId),
+  await topupController.syncTopups({ companyId, stripeCustomerId });
+
+  const [topupDocs, overageConsuptionDocs] = await Promise.all([
+    topupController.readTopupsByCompanyId({ companyId }),
     OverageConsumption.find({
       company: companyId,
       kind: { $not: OVERAGE_KIND.CONTACT },
     }),
   ]);
 
-  let total = 0;
+  const totalTopup = topupDocs
+    .map((item) => item.price)
+    .reduce((totalValue, currentValue) => totalValue + currentValue);
 
-  for (const invoice of invoices) {
-    total = total + invoice.amount_paid;
-  }
+  const totalOverage = overageConsuptionDocs
+    .map((item) => item.overagePrice)
+    .reduce((totalValue, currentValue) => totalValue + currentValue);
 
-  total = total / 100;
-
-  const overageTotal = overage
-    .map((item) => item.overageCharge)
-    .reduce((total, item) => total + item);
-
-  company.balance.amount = total - overageTotal;
-
-  await company.save();
-};
-
-const readCustomerBalance = async ({ companyId, customerId }) => {
-  const balance = await syncCustomerBalance({ companyId, customerId });
-
-  const companyDoc = await Company.findById(companyId, { balance: 1 });
-
-  return companyDoc.balance;
+  return totalTopup - totalOverage;
 };
 
 const generateImmediateChargeInvoice = async ({
-  customerId,
+  stripeCustomerId,
   amountInCents,
 }) => {
   const invoice = await stripe.invoices.create({
-    customer: customerId,
+    customer: stripeCustomerId,
     collection_method: "charge_automatically",
     auto_advance: false,
   });
 
   await stripe.invoiceItems.create({
-    customer: customerId,
+    customer: stripeCustomerId,
     invoice: invoice.id,
     amount: amountInCents,
     currency: "cad",
@@ -402,9 +419,12 @@ const generateImmediateChargeInvoice = async ({
   }
 };
 
-const readCustomerPaidInvoices = async ({ customerId, pageSize = 10 }) => {
+const readCustomerPaidInvoices = async ({
+  stripeCustomerId,
+  pageSize = 10,
+}) => {
   const invoices = await stripe.invoices.list({
-    customer: customerId,
+    customer: stripeCustomerId,
     limit: pageSize,
   });
 
@@ -426,9 +446,9 @@ const readCustomerPaidInvoices = async ({ customerId, pageSize = 10 }) => {
   }));
 };
 
-const readCustomerUpcomingInvoices = async ({ customerId }) => {
+const readCustomerUpcomingInvoices = async ({ stripeCustomerId }) => {
   const upcomingInvoice = await stripe.invoices.retrieveUpcoming({
-    customer: customerId,
+    customer: stripeCustomerId,
   });
 
   return {
@@ -459,9 +479,9 @@ const getReceiptDescription = ({ description }) => {
   return description;
 };
 
-const readCustomerReceipts = async ({ customerId }) => {
+const readCustomerReceipts = async ({ stripeCustomerId }) => {
   const charges = await stripe.charges.list({
-    customer: customerId,
+    customer: stripeCustomerId,
     limit: 100,
   });
 
@@ -477,8 +497,8 @@ const readCustomerReceipts = async ({ customerId }) => {
   }));
 };
 
-const readDefaultPaymentMethod = async ({ customerId }) => {
-  const customer = await stripe.customers.retrieve(customerId);
+const readDefaultPaymentMethod = async ({ stripeCustomerId }) => {
+  const customer = await stripe.customers.retrieve(stripeCustomerId);
   const defaultPaymentMethodId =
     customer.invoice_settings.default_payment_method;
 
@@ -491,28 +511,28 @@ const readDefaultPaymentMethod = async ({ customerId }) => {
   }
 };
 
-const readStripeCustomer = ({ customerId }) =>
-  stripe.customers.retrieve(customerId);
+const readStripeCustomer = ({ stripeCustomerId }) =>
+  stripe.customers.retrieve(stripeCustomerId);
 
-const readCustomerBalanceHistory = async ({ customerId }) =>
+const readCustomerBalanceHistory = async ({ stripeCustomerId }) =>
   OverageConsumption.find({
-    customerId,
-    kind: { $not: OVERAGE_KIND.CONTACT },
+    stripeCustomerId,
+    kind: { $ne: OVERAGE_KIND.CONTACT },
   });
 
 const createPendingInvoiceItem = async ({
-  customerId,
+  stripeCustomerId,
   chargeAmountInSmallestUnit,
 }) =>
   stripe.invoiceItems.create({
-    customer: customerId,
+    customer: stripeCustomerId,
     amount: chargeAmountInSmallestUnit,
     currency: "cad",
     description: "Contacts import overage charges.",
   });
 
 const chargeCustomerFromBalance = ({
-  customerId,
+  stripeCustomerId,
   amountInSmallestUnit,
   updatedBalance,
 }) => {
@@ -520,14 +540,14 @@ const chargeCustomerFromBalance = ({
     amountInSmallestUnit = 0;
   }
 
-  return stripe.customers.update(customerId, {
+  return stripe.customers.update(stripeCustomerId, {
     balance: updatedBalance,
   });
 };
 
-const readPlanIds = async ({ customerId }) => {
+const readPlanIds = async ({ stripeCustomerId }) => {
   const subscriptions = await stripe.subscriptions.list({
-    customer: customerId,
+    customer: stripeCustomerId,
     status: "active",
   });
 
@@ -548,15 +568,15 @@ const readPlanIds = async ({ customerId }) => {
   );
 };
 
-const readPendingInvoiceItems = ({ customerId }) =>
+const readPendingInvoiceItems = ({ stripeCustomerId }) =>
   stripe.invoiceItems.list({
-    customer: customerId,
+    customer: stripeCustomerId,
     pending: true,
   });
 
-const readPaidInvoices = ({ customerId }) =>
+const readPaidInvoices = ({ stripeCustomerId }) =>
   stripe.invoices.list({
-    customer: customerId,
+    customer: stripeCustomerId,
     status: "paid",
     limit: 20,
   });
@@ -565,9 +585,9 @@ const deleteInvoiceItem = async ({ invoiceItemId }) => {
   await stripe.invoiceItems.del(invoiceItemId);
 };
 
-const readUpcomingBillingDate = async ({ customerId }) => {
+const readUpcomingBillingDate = async ({ stripeCustomerId }) => {
   let activeSubscription = await stripe.subscriptions.list({
-    customer: customerId,
+    customer: stripeCustomerId,
     status: "active",
   });
 
@@ -597,16 +617,16 @@ const readStripeEvent = async ({ stripeSignature, body }) => {
   });
 
   const invoiceItemIds = [];
-  let customerId = "";
+  let stripeCustomerId = "";
 
   invoiceItems.data.forEach((invoiceItem) => {
     if (invoiceItem.description === "Contacts import overage charges.") {
-      customerId = invoiceItem.customer;
+      stripeCustomerId = invoiceItem.customer;
       invoiceItemIds.push(invoiceItem.id);
     }
   });
 
-  if (!customerId) {
+  if (!stripeCustomerId) {
     return;
   }
 
@@ -614,9 +634,9 @@ const readStripeEvent = async ({ stripeSignature, body }) => {
 
   const [latestPrivateOverageConsumptionEntry, planIds] = await Promise.all([
     overageConsumptionController.readLatestPrivateOverageConsumption({
-      customerId,
+      stripeCustomerId,
     }),
-    readPlanIds({ customerId }),
+    readPlanIds({ stripeCustomerId }),
   ]);
 
   console.log("invoiceItemItds", invoiceItemIds);
@@ -661,13 +681,13 @@ const readStripeEvent = async ({ stripeSignature, body }) => {
     console.log("extraContactsQuotaCharge", extraContactsQuotaCharge);
 
     const pendingInvoiceItem = await createPendingInvoiceItem({
-      customerId,
+      stripeCustomerId,
       chargeAmountInSmallestUnit: extraContactsQuotaCharge,
     });
 
     overageConsumptionController.createOverageConsumption({
       companyId: latestPrivateOverageConsumptionEntry.company,
-      customerId,
+      stripeCustomerId,
       description: "Overage charge for importing contacts above quota.",
       contactOverage: `${contactsAboveQuota} contacts`,
       contactOverageCharge: extraContactsQuotaCharge,
@@ -676,20 +696,20 @@ const readStripeEvent = async ({ stripeSignature, body }) => {
   }
 };
 
-const readCustomerStripeBalance = async ({ customerId }) => {
-  // await stripe.customers.update(customerId, {
+const readCustomerStripeBalance = async ({ stripeCustomerId }) => {
+  // await stripe.customers.update(stripeCustomerId, {
   //   balance: 0,
   // });
 
-  const customer = await readStripeCustomer({ customerId });
+  const customer = await readStripeCustomer({ stripeCustomerId });
 
   return customer.balance;
 };
 
-const readQuotaDetails = async ({ companyId, customerId }) => {
+const readQuotaDetails = async ({ companyId, stripeCustomerId }) => {
   const [planIds, company, emailsSentDocs] = await Promise.all([
     readPlanIds({
-      customerId,
+      stripeCustomerId,
     }),
     Company.findById(companyId),
     EmailSent.find({ company: companyId }, { size: 1 }),
@@ -718,11 +738,39 @@ const readQuotaDetails = async ({ companyId, customerId }) => {
   };
 };
 
+const readTopupInvoices = async ({ stripeCustomerId }) => {
+  let invoices = [];
+  let hasMore = true;
+  let nextPage = null;
+
+  while (hasMore) {
+    const params = {
+      query: `metadata['customerId']:'${stripeCustomerId}' AND metadata['description']:'Top up'`,
+      limit: 100,
+    };
+
+    if (nextPage) {
+      params.page = nextPage; // Add the next page cursor if available
+    }
+
+    const response = await stripe.invoices.search(params);
+
+    // Collect the current batch of invoices
+    invoices = invoices.concat(response.data);
+
+    // Update pagination variables
+    hasMore = response.has_more;
+    nextPage = response.next_page; // Use the next_page cursor for the next request
+  }
+
+  return invoices;
+};
+
 module.exports = {
   createStripeCustomer,
   readSetupIntent,
   getSubscriptions,
-  getActiveSubscriptionsOfACustomer,
+  readActivePlansByCustomerId,
   getPlans,
   createSubscription,
   attachPaymentMethod,
@@ -748,4 +796,6 @@ module.exports = {
   readStripeEvent,
   readCustomerStripeBalance,
   readQuotaDetails,
+  readActiveBillingCycleDates,
+  readTopupInvoices,
 };
