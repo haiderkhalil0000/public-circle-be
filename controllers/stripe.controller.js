@@ -516,13 +516,10 @@ const readCustomerBalanceHistory = async ({ companyId }) =>
     kind: { $ne: OVERAGE_KIND.CONTACT },
   });
 
-const createPendingInvoiceItem = async ({
-  stripeCustomerId,
-  chargeAmountInSmallestUnit,
-}) =>
+const createPendingInvoiceItem = async ({ stripeCustomerId, price }) =>
   stripe.invoiceItems.create({
     customer: stripeCustomerId,
-    amount: chargeAmountInSmallestUnit,
+    amount: price * 100,
     currency: "cad",
     description: "Contacts import overage charges.",
   });

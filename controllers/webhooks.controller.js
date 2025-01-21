@@ -119,15 +119,15 @@ const recieveCompanyUsersData = async ({
 
       pendingInvoiceItem = await stripeController.createPendingInvoiceItem({
         stripeCustomerId: company.stripeCustomerId,
-        chargeAmountInSmallestUnit: extraContactsQuotaCharge,
+        price: extraContactsQuotaCharge,
       });
 
       overageConsumptionController.createOverageConsumption({
         companyId: company._id,
         stripeCustomerId: company.stripeCustomerId,
         description: "Overage charge for importing contacts above quota.",
-        contactOverage: `${contactsAboveQuota} contacts`,
-        contactOverageCharge: extraContactsQuotaCharge,
+        overageCount: `${contactsAboveQuota} contacts`,
+        overagePrice: extraContactsQuotaCharge,
         stripeInvoiceItemId: pendingInvoiceItem.id,
       });
     } else if (
@@ -138,7 +138,7 @@ const recieveCompanyUsersData = async ({
     } else {
       pendingInvoiceItem = await stripeController.createPendingInvoiceItem({
         stripeCustomerId: company.stripeCustomerId,
-        chargeAmountInSmallestUnit: extraContactsQuotaCharge,
+        price: extraContactsQuotaCharge,
       });
 
       overageConsumptionController.createOverageConsumption({
