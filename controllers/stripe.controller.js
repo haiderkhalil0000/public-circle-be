@@ -533,11 +533,15 @@ const readCustomerBalanceHistory = async ({ companyId }) => {
       companyId,
     });
 
-  return overageConsumptionDocs.forEach((doc) => {
+  overageConsumptionDocs.forEach((doc) => {
     if (doc.kind === OVERAGE_KIND.BANDWIDTH) {
-      doc.overageCount = doc.overageCount / 1000;
+      doc.overageCount = basicUtil.calculateByteUnit({
+        bytes: doc.overageCount,
+      });
     }
   });
+
+  return overageConsumptionDocs;
 };
 
 const createPendingInvoiceItem = async ({ stripeCustomerId, price }) =>
