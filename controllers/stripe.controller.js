@@ -525,11 +525,20 @@ const readDefaultPaymentMethod = async ({ stripeCustomerId }) => {
 const readStripeCustomer = ({ stripeCustomerId }) =>
   stripe.customers.retrieve(stripeCustomerId);
 
-const readCustomerBalanceHistory = async ({ companyId }) =>
-  OverageConsumption.find({
-    company: companyId,
-    kind: { $ne: OVERAGE_KIND.CONTACT },
+const readCustomerBalanceHistory = async ({ companyId }) => {
+  const overageConsumptionController = require("./overage-consumption.controller");
+
+  const overageConsumptionDocs =
+    await overageConsumptionController.readEmailAndContentOverageConsumptions({
+      companyId,
+    });
+
+  return overageConsumptionDocs.forEach((doc) => {
+    if (doc.kind === OVERAGE_KIND.BANDWIDTH) {
+      doc.overageCount = doc.overageCount / 1000;
+    }
   });
+};
 
 const createPendingInvoiceItem = async ({ stripeCustomerId, price }) =>
   stripe.invoiceItems.create({

@@ -78,9 +78,16 @@ const readEmailContentOverage = ({
   return OverageConsumption.find(query);
 };
 
+const readEmailAndContentOverageConsumptions = ({ companyId }) =>
+  OverageConsumption.find({
+    company: companyId,
+    kind: { $ne: OVERAGE_KIND.CONTACT },
+  }).lean();
+
 module.exports = {
   createOverageConsumption,
   readLatestPrivateOverageConsumption,
   readEmailOverage,
   readEmailContentOverage,
+  readEmailAndContentOverageConsumptions,
 };
