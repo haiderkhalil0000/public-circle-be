@@ -747,16 +747,14 @@ const readQuotaDetails = async ({ companyId, stripeCustomerId }) => {
 
   const communicationQuotaAllowed = companyExtraEmailQuota;
 
-  const communicationQuotaConsumed = emailsSentDocs.length - plan.quota.email;
+  const communicationQuotaConsumed =
+    communicationQuotaAllowed - emailsSentDocs.length;
 
-  const bandwidthQuotaAllowed = (companyExtraEmailContentQuota * 1000) / 1000;
+  const bandwidthQuotaAllowed = companyExtraEmailContentQuota * 1000;
 
-  const bandwidthQuotaConsumed =
-    (totalEmailContentSent -
-      (plan.quota.emailContent > totalEmailContentSent
-        ? totalEmailContentSent
-        : 0)) /
-    1000;
+  const bandwidthQuotaConsumed = Math.abs(
+    bandwidthQuotaAllowed - totalEmailContentSent
+  );
 
   return {
     communicationQuotaAllowed,
@@ -765,13 +763,13 @@ const readQuotaDetails = async ({ companyId, stripeCustomerId }) => {
       communicationQuotaAllowed === 1 ? "email" : "emails",
     communicationQuotaConsumedUnit:
       communicationQuotaConsumed === 1 ? "email" : "emails",
-    bandwidthQuotaAllowed: bandwidthQuotaAllowed.toFixed(2),
-    bandwidthQuotaConsumed: bandwidthQuotaConsumed.toFixed(2),
+    bandwidthQuotaAllowed: parseFloat(bandwidthQuotaAllowed.toFixed(2)),
+    bandwidthQuotaConsumed: parseFloat(bandwidthQuotaConsumed.toFixed(2)),
     bandwidthQuotaAllowedUnit: basicUtil.calculateByteUnit({
-      bytes: bandwidthQuotaAllowed * 1000,
+      bytes: bandwidthQuotaAllowed,
     }),
     bandwidthQuotaConsumedUnit: basicUtil.calculateByteUnit({
-      bytes: bandwidthQuotaConsumed * 1000,
+      bytes: bandwidthQuotaConsumed,
     }),
   };
 };

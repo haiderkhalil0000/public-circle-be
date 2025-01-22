@@ -25,7 +25,7 @@ const filterUniqueObjectsFromArrayByProperty = (arrayOfObjects, property) =>
   _.uniqBy(arrayOfObjects, property);
 
 const calculateByteUnit = ({ bytes }) => {
-  const units = ["Bytes", "KB", "MB", "GB", "TB"];
+  const units = ["Bytes", "KB", "MB", "GB", "TB", "PB"];
   let index = 0;
 
   while (bytes >= 1000 && index < units.length - 1) {
@@ -33,7 +33,7 @@ const calculateByteUnit = ({ bytes }) => {
     index++;
   }
 
-  return `${Math.round(bytes)} ${units[index]}`;
+  return `${bytes.toFixed(2)} ${units[index]}`;
 };
 
 module.exports = {
