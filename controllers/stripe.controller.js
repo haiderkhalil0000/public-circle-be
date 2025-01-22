@@ -1,7 +1,7 @@
 const createHttpError = require("http-errors");
 const _ = require("lodash");
 const moment = require("moment");
-const momentTz = require("moment");
+const momentTz = require("moment-timezone");
 
 const {
   ReferralCode,
@@ -422,21 +422,22 @@ const readCustomerPaidInvoices = async ({
 }) => {
   const invoices = await stripe.invoices.list({
     customer: stripeCustomerId,
+    status: "paid",
     limit: pageSize,
   });
 
   return invoices.data.map((item) => ({
-    createdAt: moment.unix(item.created).format("YYYY-MM-DD h:mm:ss A"),
+    createdAt: momentTz
+      .unix(item.created)
+      .tz("Etc/GMT-5")
+      .format("YYYY-MM-DD h:mm:ss A"),
     description: item.lines.data
       .reduce((description, item) => {
         return `${description}${item.description}\n`;
       }, "")
       .trimStart(),
-    totalCost: Math.abs(item.total) / 100,
-    paidWithCustomerBalance:
-      Math.abs(item.starting_balance - item.ending_balance) / 100,
-    paidWithCard: Math.abs(item.amount_due) / 100,
-    status: item.status,
+    totalCost: item.total / 100,
+    status: item.total > 0 ? item.status : "Refunded",
     currency: item.currency,
     hostedInvoiceUrl: item.hosted_invoice_url,
     invoicePdf: item.invoice_pdf,
@@ -495,7 +496,6 @@ const readCustomerReceipts = async ({ stripeCustomerId }) => {
   return receipts.map((item) => ({
     createdAt: momentTz
       .unix(item.created)
-      .format("YYYY-MM-DD h:mm:ss A")
       .tz("Etc/GMT-5")
       .format("YYYY-MM-DD h:mm:ss A"),
     description: getReceiptDescription({ description: item.description }),
