@@ -765,7 +765,9 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
         content: `Dear ${primaryUser.firstName},
         We have restricted your campaign from running because you don't have enough credits to pay for
         the new campaign. As your quota for ${plan.name} is fully consumed. So we recommend you to top-up
-        into your account and try again.
+        into your account by visiting the link below and try again.
+
+        https://publiccircles.netlify.app/dashboard/subscription
         `,
         contentType: TEMPLATE_CONTENT_TYPE.TEXT,
       });
@@ -805,7 +807,9 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
         content: `Dear ${primaryUser.firstName},
         We have restricted your campaign from running because you don't have enough credits to pay for
         the new campaign. As your quota for ${plan.name} is fully consumed. So we recommend you to top-up
-        into your account and try again.
+        into your account by visiting the link below and try again.
+
+        https://publiccircles.netlify.app/dashboard/subscription
         `,
         contentType: TEMPLATE_CONTENT_TYPE.TEXT,
       });
@@ -829,7 +833,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
           }),
           overageCount: extraEmailQuota,
           overagePrice: extraEmailCharge,
-          kind: OVERAGE_KIND.COMMUNICATION,
+          kind: OVERAGE_KIND.EMAIL,
         })
       );
 

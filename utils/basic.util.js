@@ -24,7 +24,7 @@ const fiterUniqueStringsFromArray = (arrayOfStrings) => _.uniq(arrayOfStrings);
 const filterUniqueObjectsFromArrayByProperty = (arrayOfObjects, property) =>
   _.uniqBy(arrayOfObjects, property);
 
-const calculateByteUnit = (bytes) => {
+const calculateByteUnit = ({ bytes }) => {
   const units = ["Bytes", "KB", "MB", "GB", "TB"];
   let index = 0;
 

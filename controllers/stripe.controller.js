@@ -1,6 +1,7 @@
 const createHttpError = require("http-errors");
 const _ = require("lodash");
 const moment = require("moment");
+const momentTz = require("moment");
 
 const {
   ReferralCode,
@@ -13,6 +14,7 @@ const {
 } = require("../models");
 const {
   constants: { RESPONSE_MESSAGES, OVERAGE_KIND },
+  basicUtil,
 } = require("../utils");
 
 const { STRIPE_KEY } = process.env;
@@ -475,6 +477,14 @@ const getReceiptDescription = ({ description }) => {
   return description;
 };
 
+const getReceiptKind = ({ description }) => {
+  if (description.includes("Subscription creation")) {
+    return "Subscription purchased.";
+  }
+
+  return description;
+};
+
 const readCustomerReceipts = async ({ stripeCustomerId }) => {
   const charges = await stripe.charges.list({
     customer: stripeCustomerId,
@@ -484,8 +494,13 @@ const readCustomerReceipts = async ({ stripeCustomerId }) => {
   const receipts = charges.data;
 
   return receipts.map((item) => ({
-    createdAt: moment.unix(item.created).format("YYYY-MM-DD h:mm:ss A"),
+    createdAt: momentTz
+      .unix(item.created)
+      .format("YYYY-MM-DD h:mm:ss A")
+      .tz("Etc/GMT-5")
+      .format("YYYY-MM-DD h:mm:ss A"),
     description: getReceiptDescription({ description: item.description }),
+    // kind: getReceiptKind({ description: item.description }),
     amount: item.amount / 100,
     currency: item.currency,
     receiptUrl: item.receipt_url,
@@ -730,20 +745,34 @@ const readQuotaDetails = async ({ companyId, stripeCustomerId }) => {
 
   const plan = await Plan.findById(planIds[0].planId);
 
-  const communicationQuotaAllowed = plan.quota.email + companyExtraEmailQuota;
+  const communicationQuotaAllowed = companyExtraEmailQuota;
 
-  const communicationQuotaConsumed = emailsSentDocs.length;
+  const communicationQuotaConsumed = emailsSentDocs.length - plan.quota.email;
 
-  const bandwidthQuotaAllowed =
-    (plan.quota.emailContent + companyExtraEmailContentQuota) / 1000;
+  const bandwidthQuotaAllowed = (companyExtraEmailContentQuota * 1000) / 1000;
 
-  const bandwidthQuotaConsumed = totalEmailContentSent / 1000;
+  const bandwidthQuotaConsumed =
+    (totalEmailContentSent -
+      (plan.quota.emailContent > totalEmailContentSent
+        ? totalEmailContentSent
+        : 0)) /
+    1000;
 
   return {
     communicationQuotaAllowed,
     communicationQuotaConsumed,
-    bandwidthQuotaAllowed,
-    bandwidthQuotaConsumed,
+    communicationQuotaAllowedUnit:
+      communicationQuotaAllowed === 1 ? "email" : "emails",
+    communicationQuotaConsumedUnit:
+      communicationQuotaConsumed === 1 ? "email" : "emails",
+    bandwidthQuotaAllowed: bandwidthQuotaAllowed.toFixed(2),
+    bandwidthQuotaConsumed: bandwidthQuotaConsumed.toFixed(2),
+    bandwidthQuotaAllowedUnit: basicUtil.calculateByteUnit({
+      bytes: bandwidthQuotaAllowed * 1000,
+    }),
+    bandwidthQuotaConsumedUnit: basicUtil.calculateByteUnit({
+      bytes: bandwidthQuotaConsumed * 1000,
+    }),
   };
 };
 

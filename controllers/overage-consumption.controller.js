@@ -45,7 +45,7 @@ const readEmailOverage = ({
 }) => {
   const query = {
     company: companyId,
-    kind: OVERAGE_KIND.COMMUNICATION,
+    kind: OVERAGE_KIND.EMAIL,
   };
 
   if (billingCycleStartDate && billingCycleEndDate) {
