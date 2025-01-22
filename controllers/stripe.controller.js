@@ -778,12 +778,12 @@ const readQuotaDetails = async ({ companyId, stripeCustomerId }) => {
     bandwidthQuotaConsumed,
     bandwidthQuotaAllowedUnit: basicUtil
       .calculateByteUnit({
-        bytes: bandwidthQuotaAllowed,
+        bytes: bandwidthQuotaAllowed * 1000,
       })
       .split(" ")[1],
     bandwidthQuotaConsumedUnit: basicUtil
       .calculateByteUnit({
-        bytes: bandwidthQuotaConsumed,
+        bytes: bandwidthQuotaConsumed * 1000,
       })
       .split(" ")[1],
   };
