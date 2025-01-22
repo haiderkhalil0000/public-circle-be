@@ -41,7 +41,9 @@ new CronJob(
             status: CAMPAIGN_STATUS.ACTIVE,
           },
         ],
-      }).populate("segments");
+      })
+        .populate("company")
+        .populate("segments");
 
       let primaryUsers = [];
 
@@ -65,6 +67,7 @@ new CronJob(
 
           await campaignsController.validateCampaign({
             campaign,
+            company: campaign.company,
             primaryUser: primaryUsers[index],
           });
 
@@ -86,6 +89,7 @@ new CronJob(
 
             await campaignsController.validateCampaign({
               campaign,
+              company: campaign.company,
               primaryUser: primaryUsers[index],
             });
 

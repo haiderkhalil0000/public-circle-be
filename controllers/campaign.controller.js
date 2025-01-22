@@ -233,8 +233,9 @@ const updateCampaign = async ({ companyId, campaignId, campaignData }) => {
 
   const usersController = require("./users.controller");
 
-  let [campaign, primaryUser] = await Promise.all([
+  let [campaign, company, primaryUser] = await Promise.all([
     Campaign.findById(campaignId),
+    Company.findById(companyId),
     usersController.readPrimaryUserByCompanyId({ companyId }),
   ]);
 
@@ -271,7 +272,7 @@ const updateCampaign = async ({ companyId, campaignId, campaignData }) => {
   await campaign.save();
 
   if (campaignData.runMode === RUN_MODE.INSTANT) {
-    await validateCampaign({ campaign, primaryUser });
+    await validateCampaign({ campaign, company, primaryUser });
     await runCampaign({ campaign });
   }
 };
