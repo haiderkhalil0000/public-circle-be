@@ -453,7 +453,7 @@ const readCustomerUpcomingInvoices = async ({ stripeCustomerId }) => {
     createdAt: momentTz
       .unix(upcomingInvoice.created)
       .tz("Etc/GMT-5")
-      .format("YYYY-MM-DD h:mm:ss A"),,
+      .format("YYYY-MM-DD h:mm:ss A"),
     description: upcomingInvoice.lines.data
       .reduce((description, item) => {
         return `${description}${item.description}\n`;
