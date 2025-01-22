@@ -9,7 +9,6 @@ const {
   Reward,
   Plan,
   OverageConsumption,
-  Company,
   EmailSent,
 } = require("../models");
 const {
