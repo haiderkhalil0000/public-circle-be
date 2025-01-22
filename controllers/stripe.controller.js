@@ -731,6 +731,8 @@ const readQuotaDetails = async ({ companyId, stripeCustomerId }) => {
       EmailSent.find({ company: companyId }, { size: 1 }),
     ]);
 
+  const plan = await Plan.findById(planIds[0].planId);
+
   const companyExtraEmailQuota = emailOverageDocs
     .map((item) => item.overageCount)
     .reduce((totalValue, currentValue) => totalValue + currentValue, 0);
@@ -743,17 +745,26 @@ const readQuotaDetails = async ({ companyId, stripeCustomerId }) => {
     .map((item) => item.size)
     .reduce((total, current) => total + current, 0);
 
-  const plan = await Plan.findById(planIds[0].planId);
-
   const communicationQuotaAllowed = companyExtraEmailQuota;
 
-  const communicationQuotaConsumed =
-    communicationQuotaAllowed - emailsSentDocs.length;
+  const communicationQuotaConsumed = communicationQuotaAllowed
+    ? emailsSentDocs.length - plan.quota.email
+    : 0;
 
-  const bandwidthQuotaAllowed = companyExtraEmailContentQuota * 1000;
+  const bandwidthQuotaAllowed = parseFloat(
+    basicUtil
+      .calculateByteUnit({
+        bytes: companyExtraEmailContentQuota * 1000,
+      })
+      .split(" ")[0]
+  );
 
-  const bandwidthQuotaConsumed = Math.abs(
-    bandwidthQuotaAllowed - totalEmailContentSent
+  const bandwidthQuotaConsumed = parseFloat(
+    basicUtil.calculateByteUnit({
+      bytes: bandwidthQuotaAllowed
+        ? totalEmailContentSent - plan.quota.emailContent
+        : 0,
+    })
   );
 
   return {
@@ -763,14 +774,18 @@ const readQuotaDetails = async ({ companyId, stripeCustomerId }) => {
       communicationQuotaAllowed === 1 ? "email" : "emails",
     communicationQuotaConsumedUnit:
       communicationQuotaConsumed === 1 ? "email" : "emails",
-    bandwidthQuotaAllowed: parseFloat(bandwidthQuotaAllowed.toFixed(2)),
-    bandwidthQuotaConsumed: parseFloat(bandwidthQuotaConsumed.toFixed(2)),
-    bandwidthQuotaAllowedUnit: basicUtil.calculateByteUnit({
-      bytes: bandwidthQuotaAllowed,
-    }),
-    bandwidthQuotaConsumedUnit: basicUtil.calculateByteUnit({
-      bytes: bandwidthQuotaConsumed,
-    }),
+    bandwidthQuotaAllowed,
+    bandwidthQuotaConsumed,
+    bandwidthQuotaAllowedUnit: basicUtil
+      .calculateByteUnit({
+        bytes: bandwidthQuotaAllowed,
+      })
+      .split(" ")[1],
+    bandwidthQuotaConsumedUnit: basicUtil
+      .calculateByteUnit({
+        bytes: bandwidthQuotaConsumed,
+      })
+      .split(" ")[1],
   };
 };
 

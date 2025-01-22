@@ -33,7 +33,7 @@ const calculateByteUnit = ({ bytes }) => {
     index++;
   }
 
-  return `${bytes.toFixed(2)} ${units[index]}`;
+  return `${bytes} ${units[index]}`;
 };
 
 module.exports = {
