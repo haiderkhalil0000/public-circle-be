@@ -542,6 +542,11 @@ const readCustomerBalanceHistory = async ({ companyId }) => {
     });
 
   overageConsumptionDocs.forEach((doc) => {
+    if (doc.kind === OVERAGE_KIND.EMAIL) {
+      doc.overageCount = `${doc.overageCount} ${
+        doc.overageCount > 1 ? "emails" : "email"
+      }`;
+    }
     if (doc.kind === OVERAGE_KIND.BANDWIDTH) {
       doc.overageCount = basicUtil.calculateByteUnit({
         bytes: doc.overageCount,
