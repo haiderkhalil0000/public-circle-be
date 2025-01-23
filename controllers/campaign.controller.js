@@ -604,16 +604,10 @@ const readCampaignRecipientsCount = async ({ campaign }) => {
   return filterCounts.reduce((total, current) => total + current);
 };
 
-const calculateExtraEmailQuotaAndCharge = ({
-  unpaidEmailsCount,
-  companyExtraEmailQuota,
-  plan,
-}) => {
+const calculateExtraEmailQuotaAndCharge = ({ unpaidEmailsCount, plan }) => {
   const { emails, price } = plan.bundles.email;
 
-  const timesExceeded = Math.ceil(
-    unpaidEmailsCount / (emails + companyExtraEmailQuota)
-  );
+  const timesExceeded = Math.ceil(unpaidEmailsCount / emails);
 
   return {
     extraEmailQuota: timesExceeded * emails,
@@ -621,16 +615,10 @@ const calculateExtraEmailQuotaAndCharge = ({
   };
 };
 
-const calculateEmailContentQuotaAndCharge = ({
-  unpaidEmailContent,
-  companyExtraEmailContentQuota,
-  plan,
-}) => {
+const calculateEmailContentQuotaAndCharge = ({ unpaidEmailContent, plan }) => {
   const { bandwidth, price } = plan.bundles.emailContent;
 
-  const timesExceeded = Math.ceil(
-    unpaidEmailContent / (bandwidth + companyExtraEmailContentQuota)
-  );
+  const timesExceeded = Math.ceil(unpaidEmailContent / bandwidth);
 
   return {
     extraEmailContentQuota: timesExceeded * bandwidth,
@@ -651,17 +639,6 @@ const getDescription = ({ extraEmailCharge, extraEmailContentCharge }) => {
   }
 };
 
-const getEmailContentOverage = ({ unpaidEmailContent, company, plan }) => {
-  let emailContentOverage = 0;
-
-  emailContentOverage =
-    plan.bundles.emailContent.bandwidth +
-    company.extraQuota.emailContent -
-    unpaidEmailContent;
-
-  return basicUtil.calculateByteUnit(emailContentOverage);
-};
-
 const validateCampaign = async ({ campaign, company, primaryUser }) => {
   const stripeController = require("./stripe.controller");
   //adding email template details in the campaign parameter
@@ -679,29 +656,20 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
   const billingCycleStartDate = activeBillingCycleDates.startDate;
   const billingCycleEndDate = activeBillingCycleDates.endDate;
 
-  const [emailsSentByCompany, emailContentSizeDocs] = await Promise.all([
-    EmailSent.countDocuments({
+  const emailsSentByCompany = await EmailSent.find(
+    {
       company: campaign.company,
       createdAt: {
         $gte: billingCycleStartDate,
         $lt: billingCycleEndDate,
       },
-    }),
-    EmailSent.find(
-      {
-        company: campaign.company,
-        createdAt: {
-          $gte: billingCycleStartDate,
-          $lt: billingCycleEndDate,
-        },
-      },
-      {
-        size: 1,
-      }
-    ),
-  ]);
+    },
+    {
+      size: 1,
+    }
+  );
 
-  let emailContentSentByCompany = emailContentSizeDocs
+  let emailContentSentByCompany = emailsSentByCompany
     .map((item) => item.size)
     .reduce((totalValue, currentValue) => totalValue + currentValue, 0);
 
@@ -744,11 +712,17 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
 
   if (
     plan.quota.email + companyExtraEmailQuota <
-    campaignRecipientsCount + emailsSentByCompany
+    campaignRecipientsCount + emailsSentByCompany.length
   ) {
+    const totalEmailsCount =
+      campaignRecipientsCount + emailsSentByCompany.length; // emails to be sent + emails already sent
+
+    const totalPaidEmailsCount = plan.quota.email + companyExtraEmailQuota; // emails from plan + emails from extra purchase
+
+    const unpaidEmailsCount = totalEmailsCount - totalPaidEmailsCount;
+
     const result = calculateExtraEmailQuotaAndCharge({
-      unpaidEmailsCount:
-        campaignRecipientsCount + emailsSentByCompany - plan.quota.email,
+      unpaidEmailsCount,
       companyExtraEmailQuota,
       plan,
     });
@@ -779,16 +753,21 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
     }
   }
 
-  let unpaidEmailContent =
-    emailContentSentByCompany +
-    campaign.emailTemplate.size * campaignRecipientsCount -
-    plan.quota.emailContent;
-
   if (
     plan.quota.emailContent + companyExtraEmailContentQuota <
     emailContentSentByCompany +
       campaign.emailTemplate.size * campaignRecipientsCount
   ) {
+    const totalEmailContentCount =
+      campaign.emailTemplate.size * campaignRecipientsCount +
+      emailContentSentByCompany;
+
+    const totalPaidEmailContentCount =
+      plan.quota.emailContent + companyExtraEmailContentQuota;
+
+    const unpaidEmailContent =
+      totalEmailContentCount - totalPaidEmailContentCount;
+
     result = calculateEmailContentQuotaAndCharge({
       unpaidEmailContent,
       companyExtraEmailContentQuota,
@@ -855,7 +834,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
         })
       );
 
-      companyBalance = companyBalance - extraEmailCharge;
+      companyBalance = companyBalance - extraEmailContentCharge;
     }
 
     await Promise.all(promises);

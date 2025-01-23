@@ -87,8 +87,16 @@ const readActiveBillingCycleDates = async ({ stripeCustomerId }) => {
   activeSubscription = activeSubscription.data[0];
 
   return {
-    startDate: moment.unix(activeSubscription.current_period_start).utc(),
-    endDate: moment.unix(activeSubscription.current_period_end).utc(),
+    startDate: moment
+      .unix(activeSubscription.current_period_start)
+      .utc()
+      .startOf("day")
+      .format(),
+    endDate: moment
+      .unix(activeSubscription.current_period_end)
+      .utc()
+      .startOf("day")
+      .format(),
   };
 };
 
@@ -767,17 +775,19 @@ const readQuotaDetails = async ({ companyId, stripeCustomerId }) => {
   const bandwidthQuotaAllowed = parseFloat(
     basicUtil
       .calculateByteUnit({
-        bytes: companyExtraEmailContentQuota * 1000,
+        bytes: companyExtraEmailContentQuota,
       })
       .split(" ")[0]
   );
 
   const bandwidthQuotaConsumed = parseFloat(
-    basicUtil.calculateByteUnit({
-      bytes: bandwidthQuotaAllowed
-        ? totalEmailContentSent - plan.quota.emailContent
-        : 0,
-    })
+    basicUtil
+      .calculateByteUnit({
+        bytes: companyExtraEmailContentQuota
+          ? totalEmailContentSent - plan.quota.emailContent
+          : 0,
+      })
+      .split(" ")[0]
   );
 
   return {
@@ -791,12 +801,12 @@ const readQuotaDetails = async ({ companyId, stripeCustomerId }) => {
     bandwidthQuotaConsumed,
     bandwidthQuotaAllowedUnit: basicUtil
       .calculateByteUnit({
-        bytes: bandwidthQuotaAllowed * 1000,
+        bytes: companyExtraEmailContentQuota,
       })
       .split(" ")[1],
     bandwidthQuotaConsumedUnit: basicUtil
       .calculateByteUnit({
-        bytes: bandwidthQuotaConsumed * 1000,
+        bytes: totalEmailContentSent - plan.quota.emailContent,
       })
       .split(" ")[1],
   };
