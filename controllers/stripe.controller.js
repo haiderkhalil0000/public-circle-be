@@ -87,8 +87,16 @@ const readActiveBillingCycleDates = async ({ stripeCustomerId }) => {
   activeSubscription = activeSubscription.data[0];
 
   return {
-    startDate: moment.unix(activeSubscription.current_period_start).utc(),
-    endDate: moment.unix(activeSubscription.current_period_end).utc(),
+    startDate: moment
+      .unix(activeSubscription.current_period_start)
+      .utc()
+      .startOf("day")
+      .format(),
+    endDate: moment
+      .unix(activeSubscription.current_period_end)
+      .utc()
+      .startOf("day")
+      .format(),
   };
 };
 
@@ -525,11 +533,29 @@ const readDefaultPaymentMethod = async ({ stripeCustomerId }) => {
 const readStripeCustomer = ({ stripeCustomerId }) =>
   stripe.customers.retrieve(stripeCustomerId);
 
-const readCustomerBalanceHistory = async ({ companyId }) =>
-  OverageConsumption.find({
-    company: companyId,
-    kind: { $ne: OVERAGE_KIND.CONTACT },
+const readCustomerBalanceHistory = async ({ companyId }) => {
+  const overageConsumptionController = require("./overage-consumption.controller");
+
+  const overageConsumptionDocs =
+    await overageConsumptionController.readEmailAndContentOverageConsumptions({
+      companyId,
+    });
+
+  overageConsumptionDocs.forEach((doc) => {
+    if (doc.kind === OVERAGE_KIND.EMAIL) {
+      doc.overageCount = `${doc.overageCount} ${
+        doc.overageCount > 1 ? "emails" : "email"
+      }`;
+    }
+    if (doc.kind === OVERAGE_KIND.BANDWIDTH) {
+      doc.overageCount = basicUtil.calculateByteUnit({
+        bytes: doc.overageCount,
+      });
+    }
   });
+
+  return overageConsumptionDocs;
+};
 
 const createPendingInvoiceItem = async ({ stripeCustomerId, price }) =>
   stripe.invoiceItems.create({
@@ -819,17 +845,19 @@ const readOverageQuotaDetails = async ({ companyId, stripeCustomerId }) => {
   const bandwidthQuotaAllowed = parseFloat(
     basicUtil
       .calculateByteUnit({
-        bytes: companyExtraEmailContentQuota * 1000,
+        bytes: companyExtraEmailContentQuota,
       })
       .split(" ")[0]
   );
 
   const bandwidthQuotaConsumed = parseFloat(
-    basicUtil.calculateByteUnit({
-      bytes: bandwidthQuotaAllowed
-        ? totalEmailContentSent - plan.quota.emailContent
-        : 0,
-    })
+    basicUtil
+      .calculateByteUnit({
+        bytes: companyExtraEmailContentQuota
+          ? totalEmailContentSent - plan.quota.emailContent
+          : 0,
+      })
+      .split(" ")[0]
   );
 
   return {
@@ -843,12 +871,12 @@ const readOverageQuotaDetails = async ({ companyId, stripeCustomerId }) => {
     bandwidthQuotaConsumed,
     bandwidthQuotaAllowedUnit: basicUtil
       .calculateByteUnit({
-        bytes: bandwidthQuotaAllowed * 1000,
+        bytes: companyExtraEmailContentQuota,
       })
       .split(" ")[1],
     bandwidthQuotaConsumedUnit: basicUtil
       .calculateByteUnit({
-        bytes: bandwidthQuotaConsumed * 1000,
+        bytes: totalEmailContentSent - plan.quota.emailContent,
       })
       .split(" ")[1],
   };
