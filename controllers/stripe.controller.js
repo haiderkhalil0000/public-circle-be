@@ -95,7 +95,7 @@ const readActiveBillingCycleDates = async ({ stripeCustomerId }) => {
     endDate: moment
       .unix(activeSubscription.current_period_end)
       .utc()
-      .startOf("day")
+      .endOf("day")
       .format(),
   };
 };
