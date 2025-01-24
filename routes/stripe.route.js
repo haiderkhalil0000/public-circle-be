@@ -461,11 +461,36 @@ router.get(
 );
 
 router.get(
-  "/quota-details",
+  "/plan-quota-details",
   authenticate.verifyToken,
   async (req, res, next) => {
     try {
-      const quotaDetails = await stripeController.readQuotaDetails({
+      const quotaDetails = await stripeController.readPlanQuotaDetails({
+        companyId: req.user.company,
+        stripeCustomerId: req.user.company.stripeCustomerId,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.QUOTA_DETAILS_FETCHED,
+        data: quotaDetails,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      stripeDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.get(
+  "/overage-quota-details",
+  authenticate.verifyToken,
+  async (req, res, next) => {
+    try {
+      const quotaDetails = await stripeController.readOverageQuotaDetails({
         companyId: req.user.company,
         stripeCustomerId: req.user.company.stripeCustomerId,
       });
