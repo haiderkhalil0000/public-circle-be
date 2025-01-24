@@ -718,7 +718,72 @@ const readCustomerStripeBalance = async ({ stripeCustomerId }) => {
   return customer.balance;
 };
 
-const readQuotaDetails = async ({ companyId, stripeCustomerId }) => {
+const readPlanQuotaDetails = async ({ companyId, stripeCustomerId }) => {
+  const [planIds, emailSentDocs] = await Promise.all([
+    readPlanIds({
+      stripeCustomerId,
+    }),
+    EmailSent.find({ company: companyId }, { size: 1 }),
+  ]);
+
+  const plan = await Plan.findById(planIds[0].planId);
+
+  const totalEmailContentSent = emailSentDocs
+    .map((item) => item.size)
+    .reduce((total, current) => total + current, 0);
+
+  const communicationQuotaAllowed = plan.quota.email;
+
+  const communicationQuotaConsumed =
+    plan.quota.email - emailSentDocs.length > 0
+      ? emailSentDocs.length
+      : plan.quota.email;
+
+  const bandwidthQuotaAllowed = parseFloat(
+    basicUtil
+      .calculateByteUnit({
+        bytes: plan.quota.emailContent,
+      })
+      .split(" ")[0]
+  );
+
+  const bandwidthQuotaConsumed = parseFloat(
+    basicUtil
+      .calculateByteUnit({
+        bytes:
+          plan.quota.emailContent - totalEmailContentSent > 0
+            ? totalEmailContentSent
+            : plan.quota.emailContent,
+      })
+      .split(" ")[0]
+  );
+
+  return {
+    communicationQuotaAllowed,
+    communicationQuotaConsumed,
+    communicationQuotaAllowedUnit:
+      communicationQuotaAllowed === 1 ? "email" : "emails",
+    communicationQuotaConsumedUnit:
+      communicationQuotaConsumed === 1 ? "email" : "emails",
+    bandwidthQuotaAllowed,
+    bandwidthQuotaConsumed,
+    bandwidthQuotaAllowedUnit: basicUtil
+      .calculateByteUnit({
+        bytes: plan.quota.emailContent,
+      })
+      .split(" ")[1],
+    bandwidthQuotaConsumedUnit: basicUtil
+      .calculateByteUnit({
+        bytes:
+          plan.quota.emailContent - totalEmailContentSent > 0
+            ? totalEmailContentSent
+            : plan.quota.emailContent,
+      })
+      .split(" ")[1],
+  };
+};
+
+const readOverageQuotaDetails = async ({ companyId, stripeCustomerId }) => {
   const overageConsumptionController = require("./overage-consumption.controller");
 
   const [planIds, emailOverageDocs, emailContentOverageDocs, emailsSentDocs] =
@@ -860,7 +925,8 @@ module.exports = {
   readInvoiceLineItems,
   readStripeEvent,
   readCustomerStripeBalance,
-  readQuotaDetails,
+  readPlanQuotaDetails,
+  readOverageQuotaDetails,
   readActiveBillingCycleDates,
   readTopupInvoices,
   readUpdatedBalance,
