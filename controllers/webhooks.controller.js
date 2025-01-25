@@ -3,7 +3,7 @@ const _ = require("lodash");
 const { CompanyContact, Plan, Company } = require("../models");
 const { basicUtil } = require("../utils");
 
-const recieveCompanyUsersData = async ({
+const recieveCompanyContacts = async ({
   companyId,
   stripeCustomerId,
   users,
@@ -159,4 +159,4 @@ const receiveStripeEvents = ({ stripeSignature, body }) => {
   stripeController.readStripeEvent({ stripeSignature, body });
 };
 
-module.exports = { recieveCompanyUsersData, receiveStripeEvents };
+module.exports = { recieveCompanyContacts, receiveStripeEvents };

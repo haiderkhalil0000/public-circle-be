@@ -33,7 +33,7 @@ router.get(
     } catch (err) {
       // sendErrorReportToSentry(error);
 
-      companyUsersDebugger(err);
+      filterDebugger(err);
 
       next(err);
     }
@@ -61,7 +61,7 @@ router.get(
     } catch (err) {
       // sendErrorReportToSentry(error);
 
-      companyUsersDebugger(err);
+      filterDebugger(err);
 
       next(err);
     }

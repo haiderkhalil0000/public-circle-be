@@ -109,7 +109,7 @@ const readPaginatedCompanyContacts = async ({
   pageNumber = 1,
   pageSize = 10,
 }) => {
-  const [totalRecords, companyUsers] = await Promise.all([
+  const [totalRecords, companyContacts] = await Promise.all([
     CompanyContact.countDocuments({ company: companyId }),
     CompanyContact.find({ company: companyId })
       .skip((parseInt(pageNumber) - 1) * pageSize)
@@ -118,7 +118,7 @@ const readPaginatedCompanyContacts = async ({
 
   return {
     totalRecords,
-    companyUsers,
+    companyContacts,
   };
 };
 
@@ -134,18 +134,18 @@ const readCompanyContact = async ({ companyId, userId }) => {
     inputString: userId,
   });
 
-  const companyUser = await CompanyContact.findOne({
+  const companyContact = await CompanyContact.findOne({
     _id: userId,
     company: companyId,
   });
 
-  if (!companyUser) {
+  if (!companyContact) {
     throw createHttpError(404, {
-      errorMessage: RESPONSE_MESSAGES.COMPANY_USER_NOT_FOUND,
+      errorMessage: RESPONSE_MESSAGES.COMPANY_CONTACT_NOT_FOUND,
     });
   }
 
-  return companyUser;
+  return companyContact;
 };
 
 const updateCompanyContact = async ({ companyId, userId, companyUserData }) => {
@@ -160,7 +160,7 @@ const updateCompanyContact = async ({ companyId, userId, companyUserData }) => {
 
   if (!result.matchedCount) {
     throw createHttpError(404, {
-      errorMessage: RESPONSE_MESSAGES.COMPANY_USER_NOT_FOUND,
+      errorMessage: RESPONSE_MESSAGES.COMPANY_CONTACT_NOT_FOUND,
     });
   }
 };
@@ -173,7 +173,7 @@ const deleteCompanyContact = async ({ companyId, userId }) => {
 
   if (!result.deletedCount) {
     throw createHttpError(404, {
-      errorMessage: RESPONSE_MESSAGES.COMPANY_USER_DELETED_ALREADY,
+      errorMessage: RESPONSE_MESSAGES.COMPANY_CONTACT_DELETED_ALREADY,
     });
   }
 };
@@ -202,7 +202,7 @@ const uploadCsv = async ({ companyId, stripeCustomerId, file }) => {
       .on("end", async () => {
         try {
           // Pass the parsed data to the controller
-          await webhooksController.recieveCompanyUsersData({
+          await webhooksController.recieveCompanyContacts({
             companyId,
             stripeCustomerId,
             users: results,
