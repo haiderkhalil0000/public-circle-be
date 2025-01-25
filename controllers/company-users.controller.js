@@ -7,7 +7,7 @@ const { Readable } = require("stream");
 
 const { CompanyUser, Company } = require("../models");
 const {
-  constants: { RESPONSE_MESSAGES },
+  constants: { RESPONSE_MESSAGES, USER_KIND },
   basicUtil,
 } = require("../utils");
 
@@ -167,9 +167,19 @@ const updateCompanyUser = async ({ companyId, userId, companyUserData }) => {
   }
 };
 
-const deleteCompanyUser = async ({ userId }) => {
+const deleteCompanyUser = async ({ companyId, currentUser, userId }) => {
+  if (
+    currentUser.kind !== USER_KIND.PRIMARY ||
+    currentUser._id.toString() === userId
+  ) {
+    throw createHttpError(403, {
+      errorMessage: RESPONSE_MESSAGES.NO_RIGHTS,
+    });
+  }
+
   const result = await CompanyUser.deleteOne({
     _id: userId,
+    company: companyId,
   });
 
   if (!result.deletedCount) {

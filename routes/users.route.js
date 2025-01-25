@@ -146,7 +146,6 @@ router.get("/all", authenticate.verifyToken, async (req, res, next) => {
   try {
     const users = await usersController.readAllUsersUnderACompany({
       companyId: req.user.company._id,
-      currentUserId: req.user._id,
     });
 
     res.status(200).json({

@@ -14,6 +14,7 @@ const {
     PASSWORD_RESET_SUBJECT,
     PASSWORD_RESET_CONTENT,
     EMAIL_KIND,
+    USER_STATUS,
   },
   sesUtil,
 } = require("../utils");
@@ -43,6 +44,7 @@ const register = async ({ emailAddress, password }) => {
 const login = async ({ emailAddress, password }) => {
   const user = await User.findOne({
     emailAddress,
+    status: USER_STATUS.ACTIVE,
   }).populate("company");
 
   if (!user) {
