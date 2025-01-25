@@ -44,7 +44,7 @@ const readSegment = async ({ segmentId }) => {
 
 const readPaginatedSegments = async ({ companyId, pageNumber, pageSize }) => {
   const promises = [];
-  const companyUsersController = require("./company-users.controller");
+  const companyContactsController = require("./company-contacts.controller");
 
   let [totalRecords, segments] = await Promise.all([
     Segment.countDocuments({
@@ -62,7 +62,7 @@ const readPaginatedSegments = async ({ companyId, pageNumber, pageSize }) => {
 
   for (const segment of segments) {
     promises.push(
-      companyUsersController.getFiltersCount({
+      companyContactsController.readFiltersCount({
         filters: segment.filters,
         companyId,
       })
@@ -86,7 +86,7 @@ const readPaginatedSegments = async ({ companyId, pageNumber, pageSize }) => {
 
 const readAllSegments = async ({ companyId }) => {
   const promises = [];
-  const companyUsersController = require("./company-users.controller");
+  const companyContactsController = require("./company-contacts.controller");
 
   const allSegments = await Segment.find({
     company: companyId,
@@ -95,7 +95,7 @@ const readAllSegments = async ({ companyId }) => {
 
   for (const segment of allSegments) {
     promises.push(
-      companyUsersController.getFiltersCount({
+      companyContactsController.readFiltersCount({
         filters: segment.filters,
         companyId,
       })

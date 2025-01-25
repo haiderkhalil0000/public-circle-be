@@ -692,9 +692,7 @@ const readStripeEvent = async ({ stripeSignature, body }) => {
       latestPrivateOverageConsumptionEntry.stripeInvoiceItemId
     )
   ) {
-    console.log("invoiceItemId matched!");
-
-    const companyContactsController = require("./company-users.controller");
+    const companyContactsController = require("./company-contacts.controller");
 
     const [companyContactsCount, plan] = await Promise.all([
       companyContactsController.readCompanyContactsCount({
@@ -703,20 +701,14 @@ const readStripeEvent = async ({ stripeSignature, body }) => {
       Plan.findById(planIds[0].planId),
     ]);
 
-    console.log("companyContactsCount", companyContactsCount);
-
     const contactsAboveQuota = Math.abs(
       companyContactsCount - plan.quota.contacts
     );
-
-    console.log("contactsAboveQuota", contactsAboveQuota);
 
     const { contacts, price } = plan.bundles.contact;
 
     const extraContactsQuotaCharge =
       Math.ceil(contactsAboveQuota / contacts) * price;
-
-    console.log("extraContactsQuotaCharge", extraContactsQuotaCharge);
 
     const pendingInvoiceItem = await createPendingInvoiceItem({
       stripeCustomerId,
@@ -735,10 +727,6 @@ const readStripeEvent = async ({ stripeSignature, body }) => {
 };
 
 const readCustomerStripeBalance = async ({ stripeCustomerId }) => {
-  // await stripe.customers.update(stripeCustomerId, {
-  //   balance: 0,
-  // });
-
   const customer = await readStripeCustomer({ stripeCustomerId });
 
   return customer.balance;

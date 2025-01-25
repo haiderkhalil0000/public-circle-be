@@ -1,7 +1,7 @@
 module.exports = {
   MODELS: {
     USER: "user",
-    COMPANY_USER: "company-user",
+    COMPANY_CONTACT: "company-contact",
     FILTER: "filter",
     CONFIGURATION: "configuration",
     EMAILS_SENT: "emails-sent",

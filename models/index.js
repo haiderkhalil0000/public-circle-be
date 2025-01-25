@@ -1,7 +1,7 @@
 module.exports = {
   User: require("./user.model"),
   Filter: require("./filter.model"),
-  CompanyUser: require("./company-user.model"),
+  CompanyContact: require("./company-contact.model"),
   Configuration: require("./configuration.model"),
   Campaign: require("./campaign.model"),
   CampaignRun: require("./campaign-run.model"),

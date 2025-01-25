@@ -15,7 +15,7 @@ router.use(function (req, res, next) {
 router.use("/auth", require("./auth.route"));
 router.use("/users", require("./users.route"));
 router.use("/filters", require("./filters.route"));
-router.use("/company-users", require("./company-users.route"));
+router.use("/company-contacts", require("./company-contacts.route"));
 router.use("/configuration", require("./configuration.route"));
 router.use("/webhooks", require("./webhooks.route"));
 router.use("/campaigns", require("./campaign.route"));
