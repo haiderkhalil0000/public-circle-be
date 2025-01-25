@@ -217,6 +217,7 @@ module.exports = {
     QUOTA_DETAILS_FETCHED: "Quota details fetched successully.",
     PLANS_FETCHED: "Plans fetched successfully.",
     ACTIVE_PLAN_NOT_FOUND: "No active plan found!",
+    NO_RIGHTS: "You don't have rights to perform this action!",
   },
 
   INTERACTION_CHANNELS: {

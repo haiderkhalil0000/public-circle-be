@@ -395,6 +395,7 @@ router.delete(
     try {
       await companyUsersController.deleteCompanyUser({
         companyId: req.user.company._id,
+        currentUser: req.user,
         userId: req.params.userId,
       });
 
