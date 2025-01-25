@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema.Types;
 const {
   constants: {
-    MODELS: { COMPANY_USER, COMPANY },
+    MODELS: { COMPANY_CONTACT, COMPANY },
   },
 } = require("../utils");
 
@@ -19,6 +19,6 @@ const schema = new mongoose.Schema(
   { timestamps: true, strict: false }
 );
 
-const model = mongoose.model(COMPANY_USER, schema);
+const model = mongoose.model(COMPANY_CONTACT, schema);
 
 module.exports = model;

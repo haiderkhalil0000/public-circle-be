@@ -59,7 +59,7 @@ router.post("/email-events", async (req, res, next) => {
 });
 
 router.post(
-  "/company-users",
+  "/company-contacts",
   authenticate.verifyWebhookToken,
   validate({
     body: Joi.object({
@@ -68,7 +68,7 @@ router.post(
   }),
   async (req, res, next) => {
     try {
-      await webhooksController.recieveCompanyUsersData({
+      await webhooksController.recieveCompanyContacts({
         companyId: req.companyId,
         stripeCustomerId: req.stripeCustomerId,
         ...req.body,

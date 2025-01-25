@@ -1,13 +1,13 @@
 const express = require("express");
 const Joi = require("joi");
-const companyUsersDebugger = require("debug")("debug:company-users");
+const companyContactsDebugger = require("debug")("debug:company-contacts");
 
 const { upload } = require("../startup/multer.config");
 const {
   constants: { RESPONSE_MESSAGES },
 } = require("../utils");
 const { authenticate, validate } = require("../middlewares");
-const { companyUsersController } = require("../controllers");
+const { companyContactsController } = require("../controllers");
 
 const router = express.Router();
 
@@ -15,7 +15,7 @@ Joi.objectId = require("joi-objectid")(Joi);
 
 router.get("/primary-key", authenticate.verifyToken, async (req, res, next) => {
   try {
-    const primaryKey = await companyUsersController.readPrimaryKey({
+    const primaryKey = await companyContactsController.readPrimaryKey({
       companyId: req.user.company._id,
     });
 
@@ -26,7 +26,7 @@ router.get("/primary-key", authenticate.verifyToken, async (req, res, next) => {
   } catch (err) {
     // sendErrorReportToSentry(error);
 
-    companyUsersDebugger(err);
+    companyContactsDebugger(err);
 
     next(err);
   }
@@ -42,7 +42,7 @@ router.post(
   }),
   async (req, res, next) => {
     try {
-      await companyUsersController.createPrimaryKey({
+      await companyContactsController.createPrimaryKey({
         companyId: req.user.company._id,
         ...req.body,
       });
@@ -54,7 +54,7 @@ router.post(
     } catch (err) {
       // sendErrorReportToSentry(error);
 
-      companyUsersDebugger(err);
+      companyContactsDebugger(err);
 
       next(err);
     }
@@ -71,7 +71,7 @@ router.patch(
   }),
   async (req, res, next) => {
     try {
-      await companyUsersController.updatePrimaryKey({
+      await companyContactsController.updatePrimaryKey({
         companyId: req.user.company._id,
         ...req.body,
       });
@@ -83,7 +83,7 @@ router.patch(
     } catch (err) {
       // sendErrorReportToSentry(error);
 
-      companyUsersDebugger(err);
+      companyContactsDebugger(err);
 
       next(err);
     }
@@ -95,7 +95,7 @@ router.delete(
   authenticate.verifyToken,
   async (req, res, next) => {
     try {
-      await companyUsersController.deletePrimaryKey({
+      await companyContactsController.deletePrimaryKey({
         companyId: req.user.company._id,
       });
 
@@ -106,7 +106,7 @@ router.delete(
     } catch (err) {
       // sendErrorReportToSentry(error);
 
-      companyUsersDebugger(err);
+      companyContactsDebugger(err);
 
       next(err);
     }
@@ -119,7 +119,7 @@ router.get(
   async (req, res, next) => {
     try {
       const possibleFilterKeys =
-        await companyUsersController.getPossibleFilterKeys({
+        await companyContactsController.readContactKeys({
           companyId: req.user.company._id,
         });
 
@@ -130,7 +130,7 @@ router.get(
     } catch (err) {
       // sendErrorReportToSentry(error);
 
-      companyUsersDebugger(err);
+      companyContactsDebugger(err);
 
       next(err);
     }
@@ -148,7 +148,7 @@ router.get(
   async (req, res, next) => {
     try {
       const possibleFilterValues =
-        await companyUsersController.getPossibleFilterValues({
+        await companyContactsController.readContactValues({
           companyId: req.user.company._id,
           key: req.query.key,
         });
@@ -160,7 +160,7 @@ router.get(
     } catch (err) {
       // sendErrorReportToSentry(error);
 
-      companyUsersDebugger(err);
+      companyContactsDebugger(err);
 
       next(err);
     }
@@ -177,7 +177,7 @@ router.post(
   }),
   async (req, res, next) => {
     try {
-      const filterCount = await companyUsersController.getFiltersCount({
+      const filterCount = await companyContactsController.readFiltersCount({
         ...req.body,
         companyId: req.user.company._id,
       });
@@ -189,7 +189,7 @@ router.post(
     } catch (err) {
       // sendErrorReportToSentry(error);
 
-      companyUsersDebugger(err);
+      companyContactsDebugger(err);
 
       next(err);
     }
@@ -207,7 +207,7 @@ router.post(
   }),
   async (req, res, next) => {
     try {
-      const autoCompleteData = await companyUsersController.search({
+      const autoCompleteData = await companyContactsController.search({
         companyId: req.user.company._id,
         searchString: req.body.searchString,
         searchFields: req.body.searchFields,
@@ -220,7 +220,7 @@ router.post(
     } catch (err) {
       // sendErrorReportToSentry(error);
 
-      companyUsersDebugger(err);
+      companyContactsDebugger(err);
 
       next(err);
     }
@@ -229,18 +229,19 @@ router.post(
 
 router.get("/all", authenticate.verifyToken, async (req, res, next) => {
   try {
-    const companyUsers = await companyUsersController.readAllCompanyUsers({
-      companyId: req.user.company._id,
-    });
+    const companyContacts =
+      await companyContactsController.readAllCompanyContacts({
+        companyId: req.user.company._id,
+      });
 
     res.status(200).json({
-      message: RESPONSE_MESSAGES.FETCHED_ALL_COMPANY_USERS,
-      data: companyUsers,
+      message: RESPONSE_MESSAGES.FETCHED_ALL_COMPANY_CONTACTS,
+      data: companyContacts,
     });
   } catch (err) {
     // sendErrorReportToSentry(error);
 
-    companyUsersDebugger(err);
+    companyContactsDebugger(err);
 
     next(err);
   }
@@ -257,21 +258,21 @@ router.get(
   }),
   async (req, res, next) => {
     try {
-      const companyUsers =
-        await companyUsersController.readPaginatedCompanyUsers({
+      const companyContacts =
+        await companyContactsController.readPaginatedCompanyContacts({
           companyId: req.user.company._id,
           pageNumber: req.query.pageNumber,
           pageSize: req.query.pageSize,
         });
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.COMPANY_USER_FETCHEDS,
-        data: companyUsers,
+        message: RESPONSE_MESSAGES.COMPANY_CONTACTS_FETCHED,
+        data: companyContacts,
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
 
-      companyUsersDebugger(err);
+      companyContactsDebugger(err);
 
       next(err);
     }
@@ -284,20 +285,20 @@ router.post(
   upload.single("csvFile"),
   async (req, res, next) => {
     try {
-      await companyUsersController.uploadCsv({
+      await companyContactsController.uploadCsv({
         companyId: req.user.company._id,
         stripeCustomerId: req.user.company.stripeCustomerId,
         file: req.file,
       });
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.COMPANY_USER_CREATED,
+        message: RESPONSE_MESSAGES.COMPANY_CONTACTS_ADDED,
         data: {},
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
 
-      companyUsersDebugger(err);
+      companyContactsDebugger(err);
 
       next(err);
     }
@@ -306,19 +307,19 @@ router.post(
 
 router.post("/", authenticate.verifyToken, async (req, res, next) => {
   try {
-    await companyUsersController.createCompanyUser({
+    await companyContactsController.createCompanyContact({
       companyId: req.user.company._id,
       companyUserData: req.body,
     });
 
     res.status(200).json({
-      message: RESPONSE_MESSAGES.COMPANY_USER_CREATED,
+      message: RESPONSE_MESSAGES.COMPANY_CONTACT_CREATED,
       data: {},
     });
   } catch (err) {
     // sendErrorReportToSentry(error);
 
-    companyUsersDebugger(err);
+    companyContactsDebugger(err);
 
     next(err);
   }
@@ -334,19 +335,21 @@ router.get(
   }),
   async (req, res, next) => {
     try {
-      const companyUser = await companyUsersController.readCompanyUser({
-        companyId: req.user.company._id,
-        userId: req.params.userId,
-      });
+      const companyContact = await companyContactsController.readCompanyContact(
+        {
+          companyId: req.user.company._id,
+          userId: req.params.userId,
+        }
+      );
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.COMPANY_USER_FETCHED,
-        data: companyUser,
+        message: RESPONSE_MESSAGES.COMPANY_CONTACT_FETCHED,
+        data: companyContact,
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
 
-      companyUsersDebugger(err);
+      companyContactsDebugger(err);
 
       next(err);
     }
@@ -363,20 +366,20 @@ router.patch(
   }),
   async (req, res, next) => {
     try {
-      await companyUsersController.updateCompanyUser({
+      await companyContactsController.updateCompanyContact({
         companyId: req.user.company._id,
         userId: req.params.userId,
         companyUserData: req.body,
       });
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.COMPANY_USER_UPDATED,
+        message: RESPONSE_MESSAGES.COMPANY_CONTACT_UPDATED,
         data: {},
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
 
-      companyUsersDebugger(err);
+      companyContactsDebugger(err);
 
       next(err);
     }
@@ -393,9 +396,8 @@ router.delete(
   }),
   async (req, res, next) => {
     try {
-      await companyUsersController.deleteCompanyUser({
+      await companyContactsController.deleteCompanyContact({
         companyId: req.user.company._id,
-        currentUser: req.user,
         userId: req.params.userId,
       });
 
@@ -406,7 +408,7 @@ router.delete(
     } catch (err) {
       // sendErrorReportToSentry(error);
 
-      companyUsersDebugger(err);
+      companyContactsDebugger(err);
 
       next(err);
     }

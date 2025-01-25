@@ -4,7 +4,7 @@ const randomString = require("randomstring");
 const {
   User,
   Company,
-  CompanyUser,
+  CompanyContact,
   Campaign,
   EmailSent,
   ReferralCode,
@@ -228,8 +228,17 @@ const updateUserUnderACompany = async ({ companyId, userId, roleId }) => {
   }
 };
 
-const deleteUserUnderACompany = async ({ companyId, userId }) => {
+const deleteUserUnderACompany = async ({ companyId, currentUser, userId }) => {
   basicUtil.validateObjectId({ inputString: userId });
+
+  if (
+    currentUser.kind !== USER_KIND.PRIMARY ||
+    currentUser._id.toString() === userId
+  ) {
+    throw createHttpError(404, {
+      errorMessage: RESPONSE_MESSAGES.NO_RIGHTS,
+    });
+  }
 
   const result = await User.updateOne(
     {
@@ -261,7 +270,7 @@ const readDashboardData = async ({ currentUserId, companyId, graphScope }) => {
       status: USER_STATUS.ACTIVE,
       _id: { $ne: currentUserId },
     }),
-    CompanyUser.countDocuments({ company: companyId }),
+    CompanyContact.countDocuments({ company: companyId }),
     Campaign.countDocuments({
       company: companyId,
       status: CAMPAIGN_STATUS.ACTIVE,

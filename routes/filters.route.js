@@ -6,7 +6,7 @@ const { authenticate, validate } = require("../middlewares");
 const {
   constants: { RESPONSE_MESSAGES, FILTER_TYPES },
 } = require("../utils");
-const { companyUsersController, filtersController } = require("../controllers");
+const { filtersController } = require("../controllers");
 
 const router = express.Router();
 
@@ -22,8 +22,9 @@ router.get(
   }),
   async (req, res, next) => {
     try {
-      const possibleFilterKeys =
-        await companyUsersController.getPossibleFilterKeys(req.params);
+      const possibleFilterKeys = await filtersController.readPossibleFilterKeys(
+        req.params
+      );
 
       res.status(200).json({
         message: RESPONSE_MESSAGES.FETCHED_FILTER_KEYS,
@@ -32,7 +33,7 @@ router.get(
     } catch (err) {
       // sendErrorReportToSentry(error);
 
-      companyUsersDebugger(err);
+      filterDebugger(err);
 
       next(err);
     }
@@ -51,7 +52,7 @@ router.get(
   async (req, res, next) => {
     try {
       const possibleFilterValues =
-        await companyUsersController.getPossibleValues(req.query);
+        await filtersController.readPossibleFilterValues(req.query);
 
       res.status(200).json({
         message: RESPONSE_MESSAGES.FETCHED_POSSIBLE_VALUES,
@@ -60,7 +61,7 @@ router.get(
     } catch (err) {
       // sendErrorReportToSentry(error);
 
-      companyUsersDebugger(err);
+      filterDebugger(err);
 
       next(err);
     }

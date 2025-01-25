@@ -56,11 +56,25 @@ const deleteFilter = ({ filterId }) => {
   });
 };
 
+const readPossibleFilterKeys = async ({ companyId }) => {
+  const companyContactsController = require("./company-contacts.controller");
+
+  return companyContactsController.readContactKeys({ companyId });
+};
+
+const readPossibleFilterValues = async ({ companyId, key }) => {
+  const companyContactsController = require("./company-contacts.controller");
+
+  return companyContactsController.readContactValues({ companyId, key });
+};
+
 module.exports = {
   createFilter,
-  updateFilter,
-  readFilter,
   readAllFilters,
   readPaginatedFilters,
+  readFilter,
+  updateFilter,
   deleteFilter,
+  readPossibleFilterKeys,
+  readPossibleFilterValues,
 };

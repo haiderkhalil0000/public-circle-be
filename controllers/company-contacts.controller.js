@@ -1,21 +1,19 @@
 const mongoose = require("mongoose");
-const _ = require("lodash");
 const createHttpError = require("http-errors");
-const fs = require("fs");
 const csvParser = require("csv-parser");
 const { Readable } = require("stream");
 
-const { CompanyUser, Company } = require("../models");
+const { CompanyContact, Company } = require("../models");
 const {
-  constants: { RESPONSE_MESSAGES, USER_KIND },
+  constants: { RESPONSE_MESSAGES },
   basicUtil,
 } = require("../utils");
 
-const getPossibleFilterKeys = async ({ companyId = "" }) => {
-  const totalDocs = await CompanyUser.countDocuments({ company: companyId });
+const readContactKeys = async ({ companyId }) => {
+  const totalDocs = await CompanyContact.countDocuments({ company: companyId });
   const sampleSize = Math.floor(totalDocs * 0.1);
 
-  const randomDocuments = await CompanyUser.aggregate([
+  const randomDocuments = await CompanyContact.aggregate([
     { $match: { company: new mongoose.Types.ObjectId(companyId) } },
     { $sample: { size: sampleSize ? sampleSize : 1 } },
   ]);
@@ -34,10 +32,10 @@ const getPossibleFilterKeys = async ({ companyId = "" }) => {
   );
 };
 
-const getPossibleFilterValues = async ({ companyId, key }) => {
+const readContactValues = async ({ companyId, key }) => {
   const [company, results] = await Promise.all([
     Company.findById(companyId),
-    CompanyUser.find({ company: companyId }, { [key]: 1, _id: 0 }),
+    CompanyContact.find({ company: companyId }, { [key]: 1, _id: 0 }),
   ]);
 
   if (!company.contactsPrimaryKey) {
@@ -53,7 +51,7 @@ const getPossibleFilterValues = async ({ companyId, key }) => {
   return uniqueValues;
 };
 
-const getFilterCount = ({ filter, companyId }) => {
+const readFilterCount = ({ filter, companyId }) => {
   for (let key in filter) {
     if (Array.isArray(filter[key])) {
       filter[key] = { $in: filter[key] }; // Add $in for arrays
@@ -62,13 +60,13 @@ const getFilterCount = ({ filter, companyId }) => {
     }
   }
 
-  return CompanyUser.countDocuments({
+  return CompanyContact.countDocuments({
     company: companyId,
     ...filter,
   });
 };
 
-const getFiltersCount = async ({ filters, companyId }) => {
+const readFiltersCount = async ({ filters, companyId }) => {
   const promises = [];
 
   Object.keys(filters).forEach((key) => {
@@ -76,7 +74,7 @@ const getFiltersCount = async ({ filters, companyId }) => {
       ? filters[key]
       : [filters[key]];
 
-    const promise = CompanyUser.countDocuments({
+    const promise = CompanyContact.countDocuments({
       company: companyId,
       [key]: Array.isArray(filters[key]) ? { $in: filters[key] } : filters[key],
     }).then((count) => ({
@@ -100,91 +98,82 @@ const search = async ({ companyId, searchString, searchFields }) => {
     queryArray.push({ [item]: { $regex: regex } });
   });
 
-  return CompanyUser.find({ company: companyId, $or: queryArray }).limit(10);
+  return CompanyContact.find({ company: companyId, $or: queryArray }).limit(10);
 };
 
-const readAllCompanyUsers = ({ companyId }) =>
-  CompanyUser.find({ company: companyId });
+const readAllCompanyContacts = ({ companyId }) =>
+  CompanyContact.find({ company: companyId });
 
-const readPaginatedCompanyUsers = async ({
+const readPaginatedCompanyContacts = async ({
   companyId,
   pageNumber = 1,
   pageSize = 10,
 }) => {
-  const [totalRecords, companyUsers] = await Promise.all([
-    CompanyUser.countDocuments({ company: companyId }),
-    CompanyUser.find({ company: companyId })
+  const [totalRecords, companyContacts] = await Promise.all([
+    CompanyContact.countDocuments({ company: companyId }),
+    CompanyContact.find({ company: companyId })
       .skip((parseInt(pageNumber) - 1) * pageSize)
       .limit(pageSize),
   ]);
 
   return {
     totalRecords,
-    companyUsers,
+    companyContacts,
   };
 };
 
-const createCompanyUser = ({ companyId, companyUserData }) => {
-  CompanyUser.create({
+const createCompanyContact = ({ companyId, companyUserData }) => {
+  CompanyContact.create({
     company: companyId,
     ...companyUserData,
   });
 };
 
-const readCompanyUser = async ({ companyId, userId }) => {
+const readCompanyContact = async ({ companyId, userId }) => {
   basicUtil.validateObjectId({
     inputString: userId,
   });
 
-  const companyUser = await CompanyUser.findOne({
+  const companyContact = await CompanyContact.findOne({
     _id: userId,
     company: companyId,
   });
 
-  if (!companyUser) {
+  if (!companyContact) {
     throw createHttpError(404, {
-      errorMessage: RESPONSE_MESSAGES.COMPANY_USER_NOT_FOUND,
+      errorMessage: RESPONSE_MESSAGES.COMPANY_CONTACT_NOT_FOUND,
     });
   }
 
-  return companyUser;
+  return companyContact;
 };
 
-const updateCompanyUser = async ({ companyId, userId, companyUserData }) => {
+const updateCompanyContact = async ({ companyId, userId, companyUserData }) => {
   basicUtil.validateObjectId({
     inputString: userId,
   });
 
-  const result = await CompanyUser.updateOne(
+  const result = await CompanyContact.updateOne(
     { _id: userId, company: companyId },
     { ...companyUserData }
   );
 
   if (!result.matchedCount) {
     throw createHttpError(404, {
-      errorMessage: RESPONSE_MESSAGES.COMPANY_USER_NOT_FOUND,
+      errorMessage: RESPONSE_MESSAGES.COMPANY_CONTACT_NOT_FOUND,
     });
   }
 };
 
-const deleteCompanyUser = async ({ companyId, currentUser, userId }) => {
-  if (
-    currentUser.kind !== USER_KIND.PRIMARY ||
-    currentUser._id.toString() === userId
-  ) {
-    throw createHttpError(403, {
-      errorMessage: RESPONSE_MESSAGES.NO_RIGHTS,
-    });
-  }
-
-  const result = await CompanyUser.deleteOne({
+const deleteCompanyContact = async ({ companyId, userId }) => {
+  const result = await CompanyContact.deleteOne({
     _id: userId,
     company: companyId,
   });
 
   if (!result.deletedCount) {
     throw createHttpError(404, {
-      errorMessage: RESPONSE_MESSAGES.COMPANY_USER_DELETED_ALREADY,
+      errorMessage: RESPONSE_MESSAGES.COMPANY_CONTACT_DELETED_ALREADY,
     });
   }
 };
@@ -213,7 +202,7 @@ const uploadCsv = async ({ companyId, stripeCustomerId, file }) => {
       .on("end", async () => {
         try {
           // Pass the parsed data to the controller
-          await webhooksController.recieveCompanyUsersData({
+          await webhooksController.recieveCompanyContacts({
             companyId,
             stripeCustomerId,
             users: results,
@@ -241,11 +230,11 @@ const uploadCsv = async ({ companyId, stripeCustomerId, file }) => {
 
 const removeDuplicatesWithPrimaryKey = async ({ companyId, primaryKey }) => {
   const [companyContacts, companyContactIds] = await Promise.all([
-    CompanyUser.find({ company: companyId }).lean(),
-    CompanyUser.distinct("_id", { company: companyId }),
+    CompanyContact.find({ company: companyId }).lean(),
+    CompanyContact.distinct("_id", { company: companyId }),
   ]);
 
-  await CompanyUser.deleteMany({ _id: { $in: companyContactIds } });
+  await CompanyContact.deleteMany({ _id: { $in: companyContactIds } });
 
   const uniqueContacts = basicUtil.filterUniqueObjectsFromArrayByProperty(
     companyContacts,
@@ -255,7 +244,7 @@ const removeDuplicatesWithPrimaryKey = async ({ companyId, primaryKey }) => {
   const promises = [];
 
   uniqueContacts.forEach((item) => {
-    promises.push(CompanyUser.create(item));
+    promises.push(CompanyContact.create(item));
   });
 
   await Promise.all(promises);
@@ -291,20 +280,20 @@ const deletePrimaryKey = async ({ companyId }) =>
   });
 
 const readCompanyContactsCount = ({ companyId }) =>
-  CompanyUser.countDocuments({ company: companyId });
+  CompanyContact.countDocuments({ company: companyId });
 
 module.exports = {
-  getPossibleFilterKeys,
-  getPossibleFilterValues,
-  getFilterCount,
-  getFiltersCount,
+  readContactKeys,
+  readContactValues,
+  readFilterCount,
+  readFiltersCount,
   search,
-  readAllCompanyUsers,
-  readPaginatedCompanyUsers,
-  createCompanyUser,
-  readCompanyUser,
-  updateCompanyUser,
-  deleteCompanyUser,
+  readAllCompanyContacts,
+  readPaginatedCompanyContacts,
+  createCompanyContact,
+  readCompanyContact,
+  updateCompanyContact,
+  deleteCompanyContact,
   uploadCsv,
   createPrimaryKey,
   readPrimaryKey,

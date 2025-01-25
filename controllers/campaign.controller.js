@@ -4,7 +4,7 @@ const createHttpError = require("http-errors");
 const {
   Campaign,
   Template,
-  CompanyUser,
+  CompanyContact,
   Segment,
   Configuration,
   EmailSent,
@@ -145,7 +145,7 @@ const readPaginatedCampaigns = async ({
       .lean(),
   ]);
 
-  const companyUsersController = require("./company-users.controller");
+  const companyContactsController = require("./company-contacts.controller");
   const promises = [];
   const usersCountMap = new Map();
 
@@ -153,8 +153,8 @@ const readPaginatedCampaigns = async ({
     usersCountMap.set(campaign._id.toString(), 0); // Initialize `usersCount` for each campaign
     for (const segment of campaign.segments) {
       promises.push(
-        companyUsersController
-          .getFiltersCount({ filters: segment.filters, companyId })
+        companyContactsController
+          .readFiltersCount({ filters: segment.filters, companyId })
           .then((item) => ({
             campaignId: campaign._id.toString(),
             usersCount: item[0].filterCount,
@@ -192,7 +192,7 @@ const readAllCampaigns = async ({ companyId }) => {
     .populate("segments")
     .lean();
 
-  const companyUsersController = require("./company-users.controller");
+  const companyContactsController = require("./company-contacts.controller");
   const promises = [];
   const usersCountMap = new Map();
 
@@ -200,8 +200,8 @@ const readAllCampaigns = async ({ companyId }) => {
     usersCountMap.set(campaign._id.toString(), 0);
     for (const segment of campaign.segments) {
       promises.push(
-        companyUsersController
-          .getFiltersCount({ filters: segment.filters, companyId })
+        companyContactsController
+          .readFiltersCount({ filters: segment.filters, companyId })
           .then((item) => ({
             campaignId: campaign._id.toString(),
             usersCount: item[0].filterCount,
@@ -295,7 +295,7 @@ const deleteCampaign = async ({ campaignId }) => {
 };
 
 const mapDynamicValues = async ({ companyId, emailAddress, content }) => {
-  const companyData = await CompanyUser.findOne({
+  const companyData = await CompanyContact.findOne({
     company: companyId,
     email: emailAddress,
   }).lean();
@@ -438,7 +438,7 @@ const runCampaign = async ({ campaign }) => {
 
   const query = populateCompanyUserQuery({ segments });
 
-  let emailAddresses = await CompanyUser.find(
+  let emailAddresses = await CompanyContact.find(
     { ...query, company: campaign.company },
     {
       email: 1,
@@ -543,14 +543,14 @@ const readPaginatedCampaignLogs = async ({
 
   promises.length = 0;
 
-  const companyUsersController = require("./company-users.controller");
+  const companyContactsController = require("./company-contacts.controller");
 
   await Promise.all(
     campaignDocs.map(async (campaign) => {
       let totalUsersCount = 0;
       await Promise.all(
         campaign.segments.map(async (segment) => {
-          const result = await companyUsersController.getFiltersCount({
+          const result = await companyContactsController.readFiltersCount({
             companyId: campaign.company,
             filters: segment.filters,
           });
@@ -579,7 +579,7 @@ const readAllCampaignLogs = ({ pageNumber, pageSize, companyId }) =>
     .populate(CAMPAIGN);
 
 const readCampaignRecipientsCount = async ({ campaign }) => {
-  const companyUsersController = require("./company-users.controller");
+  const companyContactsController = require("./company-contacts.controller");
 
   const { segments } = await Campaign.findById(campaign._id).populate(
     "segments",
@@ -592,7 +592,7 @@ const readCampaignRecipientsCount = async ({ campaign }) => {
 
   filters.forEach((filter) => {
     promises.push(
-      companyUsersController.getFilterCount({
+      companyContactsController.readFilterCount({
         filter,
         companyId: campaign.company,
       })

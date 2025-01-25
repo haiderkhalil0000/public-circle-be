@@ -1,9 +1,9 @@
 const _ = require("lodash");
 
-const { CompanyUser, Plan, Company } = require("../models");
+const { CompanyContact, Plan, Company } = require("../models");
 const { basicUtil } = require("../utils");
 
-const recieveCompanyUsersData = async ({
+const recieveCompanyContacts = async ({
   companyId,
   stripeCustomerId,
   users,
@@ -15,13 +15,13 @@ const recieveCompanyUsersData = async ({
 
   users = basicUtil.fiterUniqueObjectsFromArray(users);
 
-  const { getPossibleFilterKeys } = require("./company-users.controller");
+  const companyContactsController = require("./company-contacts.controller");
 
   const [possibleFilterKeys, existingContactsCount] = await Promise.all([
-    getPossibleFilterKeys({
+    companyContactsController.readContactKeys({
       companyId,
     }),
-    CompanyUser.countDocuments({ company: companyId }),
+    CompanyContact.countDocuments({ company: companyId }),
   ]);
 
   const filterKeys = {};
@@ -42,7 +42,7 @@ const recieveCompanyUsersData = async ({
     }
 
     query = _.pickBy(query, (value) => !_.isEmpty(value));
-    promises.push(CompanyUser.find(query));
+    promises.push(CompanyContact.find(query));
   }
 
   const resultsArray = await Promise.all(promises);
@@ -68,13 +68,13 @@ const recieveCompanyUsersData = async ({
 
         if (newKeys.length) {
           promises.push(
-            CompanyUser.updateOne({ _id: item[0]._id }, updateQuery)
+            CompanyContact.updateOne({ _id: item[0]._id }, updateQuery)
           );
         }
       }
     } else {
       promises.push(
-        CompanyUser.create({
+        CompanyContact.create({
           company: companyId,
           ...users[index],
         })
@@ -159,4 +159,4 @@ const receiveStripeEvents = ({ stripeSignature, body }) => {
   stripeController.readStripeEvent({ stripeSignature, body });
 };
 
-module.exports = { recieveCompanyUsersData, receiveStripeEvents };
+module.exports = { recieveCompanyContacts, receiveStripeEvents };
