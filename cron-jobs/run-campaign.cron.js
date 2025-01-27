@@ -73,6 +73,13 @@ new CronJob(
 
           campaignsController.runCampaign({ campaign });
         } else if (campaign.isRecurring) {
+          if (
+            campaign.runMode === RUN_MODE.SCHEDULE &&
+            moment().isBefore(moment(campaign.runSchedule).startOf("minute"))
+          ) {
+            return;
+          }
+
           const campaignRecurring = campaign.recurringPeriod.split(" ");
 
           const recurringPeriod = moment.duration(
