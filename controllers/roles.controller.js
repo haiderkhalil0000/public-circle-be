@@ -37,8 +37,8 @@ const readRole = async ({ roleId }) => {
 
 const readPaginatedRoles = async ({ pageNumber, pageSize }) => {
   const [totalRecords, roles] = await Promise.all([
-    Role.countDocuments(),
-    Role.find()
+    Role.countDocuments({ name: { $ne: "Admin" } }),
+    Role.find({ name: { $ne: "Admin" } })
       .skip((parseInt(pageNumber) - 1) * pageSize)
       .limit(pageSize),
   ]);
@@ -49,7 +49,7 @@ const readPaginatedRoles = async ({ pageNumber, pageSize }) => {
   };
 };
 
-const readAllRoles = () => Role.find();
+const readAllRoles = () => Role.find({ name: { $ne: "Admin" } });
 
 const updateRole = async ({ roleId, roleData }) => {
   basicUtil.validateObjectId({ inputString: roleId });
