@@ -101,10 +101,24 @@ const search = async ({ companyId, searchString, searchFields }) => {
   return CompanyContact.find({ company: companyId, $or: queryArray }).limit(10);
 };
 
-const readAllCompanyContacts = ({ companyId }) =>
-  CompanyContact.find({ company: companyId }).select(
-    "-_id -company -createdAt -updatedAt -__v"
-  );
+const reorderContacts = ({ contacts }) => {
+  // Reorder fields to make specific ones appear at the end
+  const reorderedContacts = contacts.map((contact) => {
+    const { _id, company, createdAt, updatedAt, __v, ...rest } = contact;
+
+    // Combine the fields with the rest first, then the specified ones at the end
+    return { ...rest, _id, company, createdAt, updatedAt, __v };
+  });
+
+  return reorderedContacts;
+};
+
+const readAllCompanyContacts = async ({ companyId }) => {
+  // Fetch the contacts including all fields
+  const contacts = await CompanyContact.find({ company: companyId }).lean();
+
+  return reorderContacts({ contacts });
+};
 
 const readPaginatedCompanyContacts = async ({
   companyId,
@@ -116,12 +130,12 @@ const readPaginatedCompanyContacts = async ({
     CompanyContact.find({ company: companyId })
       .skip((parseInt(pageNumber) - 1) * pageSize)
       .limit(pageSize)
-      .select("-_id -company -createdAt -updatedAt -__v"),
+      .lean(),
   ]);
 
   return {
     totalRecords,
-    companyContacts,
+    companyContacts: reorderContacts({ contacts: companyContacts }),
   };
 };
 
