@@ -557,12 +557,16 @@ const readCustomerBalanceHistory = async ({ companyId }) => {
   return overageConsumptionDocs;
 };
 
-const createPendingInvoiceItem = async ({ stripeCustomerId, price }) =>
+const createPendingInvoiceItem = async ({
+  stripeCustomerId,
+  price,
+  description,
+}) =>
   stripe.invoiceItems.create({
     customer: stripeCustomerId,
     amount: price * 100,
     currency: "cad",
-    description: "Contacts import overage charges.",
+    description,
   });
 
 const chargeCustomerFromBalance = ({
@@ -654,7 +658,9 @@ const readStripeEvent = async ({ stripeSignature, body }) => {
   let stripeCustomerId = "";
 
   invoiceItems.data.forEach((invoiceItem) => {
-    if (invoiceItem.description === "Contacts import overage charges.") {
+    if (
+      invoiceItem.description.includes("contact")
+    ) {
       stripeCustomerId = invoiceItem.customer;
       invoiceItemIds.push(invoiceItem.id);
     }
@@ -713,6 +719,7 @@ const readStripeEvent = async ({ stripeSignature, body }) => {
     const pendingInvoiceItem = await createPendingInvoiceItem({
       stripeCustomerId,
       chargeAmountInSmallestUnit: extraContactsQuotaCharge,
+      description: `${contactsAboveQuota} x contact (at ${extraContactsQuotaCharge} / month)`,
     });
 
     overageConsumptionController.createOverageConsumption({

@@ -103,8 +103,8 @@ const recieveCompanyContacts = async ({
     const extraContactsQuotaCharge =
       Math.ceil(contactsAboveQuota / contacts) * price;
 
-    let contactsOverageInvoiceItem = pendingInvoiceItems.data.find(
-      (item) => item.description === "Contacts import overage charges."
+    let contactsOverageInvoiceItem = pendingInvoiceItems.data.find((item) =>
+      item.description.includes("contact")
     );
 
     let pendingInvoiceItem = {};
@@ -120,6 +120,7 @@ const recieveCompanyContacts = async ({
       pendingInvoiceItem = await stripeController.createPendingInvoiceItem({
         stripeCustomerId: company.stripeCustomerId,
         price: extraContactsQuotaCharge,
+        description: `${contactsAboveQuota} x contact (at ${extraContactsQuotaCharge} / month)`,
       });
 
       overageConsumptionController.createOverageConsumption({
@@ -139,6 +140,7 @@ const recieveCompanyContacts = async ({
       pendingInvoiceItem = await stripeController.createPendingInvoiceItem({
         stripeCustomerId: company.stripeCustomerId,
         price: extraContactsQuotaCharge,
+        description: `${contactsAboveQuota} x contact (at ${extraContactsQuotaCharge} / month)`,
       });
 
       overageConsumptionController.createOverageConsumption({
