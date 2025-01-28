@@ -13,6 +13,36 @@ const router = express.Router();
 
 Joi.objectId = require("joi-objectid")(Joi);
 
+router.get(
+  "/primary-key/:primaryKey/effect",
+  authenticate.verifyToken,
+  validate({
+    params: Joi.object({
+      primaryKey: Joi.string().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const primaryKeyEffect =
+        await companyContactsController.readPrimaryKeyEffect({
+          companyId: req.user.company._id,
+          ...req.params,
+        });
+
+      res.status(200).json({
+        message: primaryKeyEffect,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      companyContactsDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 router.get("/primary-key", authenticate.verifyToken, async (req, res, next) => {
   try {
     const primaryKey = await companyContactsController.readPrimaryKey({

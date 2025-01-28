@@ -245,20 +245,26 @@ const uploadCsv = async ({ companyId, stripeCustomerId, file }) => {
   }
 };
 
-const removeDuplicatesWithPrimaryKey = async ({ companyId, primaryKey }) => {
-  const [companyContacts, companyContactIds] = await Promise.all([
-    CompanyContact.find({ company: companyId }).lean(),
-    CompanyContact.distinct("_id", { company: companyId }),
-  ]);
+const findUniqueContacts = async ({ companyId, primaryKey }) => {
+  const companyContacts = await CompanyContact.find({
+    company: companyId,
+  }).lean();
 
-  await CompanyContact.deleteMany({ _id: { $in: companyContactIds } });
-
-  const uniqueContacts = basicUtil.filterUniqueObjectsFromArrayByProperty(
+  return basicUtil.filterUniqueObjectsFromArrayByProperty(
     companyContacts,
     primaryKey
   );
+};
+
+const removeDuplicatesWithPrimaryKey = async ({ companyId, primaryKey }) => {
+  const [uniqueContacts, companyContactIds] = await Promise.all([
+    findUniqueContacts({ companyId, primaryKey }),
+    CompanyContact.distinct("_id", { company: companyId }),
+  ]);
 
   const promises = [];
+
+  await CompanyContact.deleteMany({ _id: { $in: companyContactIds } });
 
   uniqueContacts.forEach((item) => {
     promises.push(CompanyContact.create(item));
@@ -299,6 +305,17 @@ const deletePrimaryKey = async ({ companyId }) =>
 const readCompanyContactsCount = ({ companyId }) =>
   CompanyContact.countDocuments({ company: companyId });
 
+const readPrimaryKeyEffect = async ({ companyId, primaryKey }) => {
+  const [allContacts, uniqueContacts] = await Promise.all([
+    readCompanyContactsCount({ companyId }),
+    findUniqueContacts({ companyId, primaryKey }),
+  ]);
+
+  return `${allContacts - uniqueContacts.length} ${
+    allContacts - uniqueContacts.length > 1 ? "contacts" : "contact"
+  } will be deleted if you mark “${primaryKey}” as unique key`;
+};
+
 module.exports = {
   readContactKeys,
   readContactValues,
@@ -317,4 +334,5 @@ module.exports = {
   updatePrimaryKey,
   deletePrimaryKey,
   readCompanyContactsCount,
+  readPrimaryKeyEffect,
 };
