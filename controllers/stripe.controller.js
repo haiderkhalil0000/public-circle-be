@@ -798,10 +798,10 @@ const quotaDetails = async ({ companyId, stripeCustomerId }) => {
     emailsAllowedInPlan === 1 ? "email" : "emails";
 
   const emailsConsumedInPlanUnit =
-    emailsConsumedInPlanUnit === 1 ? "email" : "emails";
+    emailsConsumedInPlan === 1 ? "email" : "emails";
 
   const emailsConsumedInOverageUnit =
-    emailsConsumedInOverageUnit === 1 ? "email" : "emails";
+    emailsConsumedInOverage === 1 ? "email" : "emails";
 
   const emailsConsumedInOveragePriceUnit = "CAD";
 
@@ -813,7 +813,7 @@ const quotaDetails = async ({ companyId, stripeCustomerId }) => {
 
   const bandwidthConsumedInPlanUnit = basicUtil
     .calculateByteUnit({
-      bytes: bandwidthConsumedInPlanUnit,
+      bytes: bandwidthConsumedInPlan,
     })
     .split([" "])[1];
 
