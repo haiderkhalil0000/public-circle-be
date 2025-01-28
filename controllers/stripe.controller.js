@@ -441,7 +441,7 @@ const readCustomerPaidInvoices = async ({
       .format("YYYY-MM-DD h:mm:ss A"),
     description: item.lines.data
       .reduce((description, item) => {
-        return `${description}${item.description}\n`;
+        return `${description} ${item.description},`.trim();
       }, "")
       .trimStart(),
     totalCost: item.total / 100,
@@ -464,7 +464,7 @@ const readCustomerUpcomingInvoices = async ({ stripeCustomerId }) => {
       .format("YYYY-MM-DD h:mm:ss A"),
     description: upcomingInvoice.lines.data
       .reduce((description, item) => {
-        return `${description}${item.description}\n`;
+        return `${description} ${item.description},`.trim();
       }, "")
       .trimStart(),
     status: upcomingInvoice.status,
@@ -658,9 +658,7 @@ const readStripeEvent = async ({ stripeSignature, body }) => {
   let stripeCustomerId = "";
 
   invoiceItems.data.forEach((invoiceItem) => {
-    if (
-      invoiceItem.description.includes("contact")
-    ) {
+    if (invoiceItem.description.includes("contact")) {
       stripeCustomerId = invoiceItem.customer;
       invoiceItemIds.push(invoiceItem.id);
     }
@@ -719,7 +717,7 @@ const readStripeEvent = async ({ stripeSignature, body }) => {
     const pendingInvoiceItem = await createPendingInvoiceItem({
       stripeCustomerId,
       chargeAmountInSmallestUnit: extraContactsQuotaCharge,
-      description: `${contactsAboveQuota} x contact (at ${extraContactsQuotaCharge} / month)`,
+      description: `${contactsAboveQuota} x contact (at ${price} / month)`,
     });
 
     overageConsumptionController.createOverageConsumption({
