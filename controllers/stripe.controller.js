@@ -717,7 +717,7 @@ const readStripeEvent = async ({ stripeSignature, body }) => {
     const pendingInvoiceItem = await createPendingInvoiceItem({
       stripeCustomerId,
       chargeAmountInSmallestUnit: extraContactsQuotaCharge,
-      description: `${contactsAboveQuota} x contact (at ${price} / month)`,
+      description: `${contactsAboveQuota} x contact (at $${price} / month)`,
     });
 
     overageConsumptionController.createOverageConsumption({
