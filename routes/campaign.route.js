@@ -12,6 +12,31 @@ const {
 
 const router = express.Router();
 
+router.get(
+  "/usage-details",
+  authenticate.verifyToken,
+  async (req, res, next) => {
+    try {
+      const campaignUsageDetails =
+        await campaignsController.readCampaignUsageDetails({
+          companyId: req.user.company._id,
+        });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.CAMPAIGN_USAGE_DETAILS_FETCHED,
+        data: campaignUsageDetails,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      campaignDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 router.post(
   "/",
   authenticate.verifyToken,

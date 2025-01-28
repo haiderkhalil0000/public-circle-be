@@ -222,6 +222,8 @@ module.exports = {
     COMPANY_CONTACT_CREATED: "Company contact created successfully.",
     COMPANY_CONTACT_NOT_FOUND: "Company contact not found!",
     COMPANY_CONTACT_FETCHED: "Company contact fetched successfully.",
+    CAMPAIGN_USAGE_DETAILS_FETCHED:
+      "Campaign usage details fetched successfully.",
   },
 
   INTERACTION_CHANNELS: {

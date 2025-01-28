@@ -175,8 +175,12 @@ const readEmailContentConsumed = async ({ companyId }) => {
     .reduce((total, current) => total + current, 0);
 };
 
+const readEmailsSentByCampaignId = ({ campaignId }) =>
+  EmailSent.find({ campaign: campaignId });
+
 module.exports = {
   readEmailSentGraphData,
   readEmailSentCount,
   readEmailContentConsumed,
+  readEmailsSentByCampaignId,
 };

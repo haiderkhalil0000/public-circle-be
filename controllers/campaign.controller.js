@@ -841,6 +841,44 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
   }
 };
 
+const getCampaignBandwidthUsage = ({ emailSentDocsArray }) =>
+  emailSentDocsArray
+    .map((item) => item.size)
+    .reduce((totalValue, currentValue) => totalValue + currentValue, 0);
+
+const readCampaignUsageDetails = async ({ companyId }) => {
+  const campaignIds = await Campaign.distinct("_id", { company: companyId });
+
+  const promises = [];
+
+  const emailSentController = require("./emails-sent.controller");
+
+  campaignIds.forEach((campaignId) => {
+    promises.push(
+      emailSentController.readEmailsSentByCampaignId({
+        campaignId,
+      })
+    );
+  });
+
+  const emailsSentByCompany = await Promise.all(promises);
+
+  return campaignIds.map((campaignId, index) => ({
+    campaignId,
+    emailUsage: emailsSentByCompany[index].length,
+    bandwidthUsage: getCampaignBandwidthUsage({
+      emailSentDocsArray: emailsSentByCompany[index],
+    }),
+    bandwidthUnit: basicUtil
+      .calculateByteUnit({
+        bytes: getCampaignBandwidthUsage({
+          emailSentDocsArray: emailsSentByCompany[index],
+        }),
+      })
+      .split(" ")[1],
+  }));
+};
+
 module.exports = {
   createCampaign,
   readCampaign,
@@ -854,4 +892,5 @@ module.exports = {
   readAllCampaignLogs,
   readCampaignRecipientsCount,
   validateCampaign,
+  readCampaignUsageDetails,
 };
