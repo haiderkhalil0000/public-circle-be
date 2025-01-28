@@ -738,75 +738,98 @@ const readCustomerStripeBalance = async ({ stripeCustomerId }) => {
 };
 
 const quotaDetails = async ({ companyId, stripeCustomerId }) => {
-  const overageConsumptionController = require("./overage-consumption.controller");
-
-  const [planIds, emailOverageDocs, emailContentOverageDocs, emailsSentDocs] =
-    await Promise.all([
-      readPlanIds({
-        stripeCustomerId,
-      }),
-      overageConsumptionController.readEmailOverage({ companyId }),
-      overageConsumptionController.readEmailContentOverage({ companyId }),
-      EmailSent.find({ company: companyId }, { size: 1 }),
-    ]);
-
-  const plan = await Plan.findById(planIds[0].planId);
-
-  const companyExtraEmailQuota = emailOverageDocs
-    .map((item) => item.overageCount)
-    .reduce((totalValue, currentValue) => totalValue + currentValue, 0);
-
-  const companyExtraEmailContentQuota = emailContentOverageDocs
-    .map((item) => item.overageCount)
-    .reduce((totalValue, currentValue) => totalValue + currentValue, 0);
+  const [planIds, emailsSentDocs] = await Promise.all([
+    readPlanIds({
+      stripeCustomerId,
+    }),
+    EmailSent.find({ company: companyId }, { size: 1 }),
+  ]);
 
   const totalEmailContentSent = emailsSentDocs
     .map((item) => item.size)
     .reduce((total, current) => total + current, 0);
 
-  const communicationQuotaAllowed = companyExtraEmailQuota;
+  const plan = await Plan.findById(planIds[0].planId);
 
-  const communicationQuotaConsumed = communicationQuotaAllowed
-    ? emailsSentDocs.length - plan.quota.email
-    : 0;
+  const emailsAllowedInPlan = plan.quota.email;
 
-  const bandwidthQuotaAllowed = parseFloat(
-    basicUtil
-      .calculateByteUnit({
-        bytes: companyExtraEmailContentQuota,
-      })
-      .split(" ")[0]
-  );
+  const emailsConsumedInPlan =
+    plan.quota.email - emailsSentDocs.length > 0
+      ? plan.quota.email - emailsSentDocs.length
+      : plan.quota.email;
 
-  const bandwidthQuotaConsumed = parseFloat(
-    basicUtil
-      .calculateByteUnit({
-        bytes: companyExtraEmailContentQuota
-          ? totalEmailContentSent - plan.quota.emailContent
-          : 0,
-      })
-      .split(" ")[0]
-  );
+  const emailsConsumedInOverage =
+    emailsSentDocs.length - plan.quota.email > 0
+      ? emailsSentDocs.length - plan.quota.email
+      : 0;
+
+  const emailsConsumedInOveragePrice =
+    emailsConsumedInOverage * plan.bundles.email.price;
+
+  const bandwidthAllowedInPlan = plan.quota.emailContent;
+
+  const bandwidthConsumedInPlan =
+    plan.quota.emailContent - totalEmailContentSent > 0
+      ? plan.quota.emailContent - totalEmailContentSent
+      : plan.quota.emailContent;
+
+  const bandwidthConsumedInOverage =
+    totalEmailContentSent - plan.quota.emailContent > 0
+      ? totalEmailContentSent - plan.quota.emailContent
+      : 0;
+
+  const bandwidthConsumedInOveragePrice =
+    bandwidthConsumedInOverage * plan.bundles.emailContent.price;
+
+  const emailsAllowedInPlanUnit =
+    emailsAllowedInPlan === 1 ? "email" : "emails";
+
+  const emailsConsumedInPlanUnit =
+    emailsConsumedInPlanUnit === 1 ? "email" : "emails";
+
+  const emailsConsumedInOverageUnit =
+    emailsConsumedInOverageUnit === 1 ? "email" : "emails";
+
+  const emailsConsumedInOveragePriceUnit = "CAD";
+
+  const bandwidthAllowedInPlanUnit = basicUtil
+    .calculateByteUnit({
+      bytes: bandwidthAllowedInPlan,
+    })
+    .split([" "])[1];
+
+  const bandwidthConsumedInPlanUnit = basicUtil
+    .calculateByteUnit({
+      bytes: bandwidthConsumedInPlanUnit,
+    })
+    .split([" "])[1];
+
+  const bandwidthConsumedInOverageUnit = basicUtil
+    .calculateByteUnit({
+      bytes: bandwidthConsumedInOverage,
+    })
+    .split([" "])[1];
+
+  const bandwidthConsumedInOveragePriceUnit = "CAD";
 
   return {
-    communicationQuotaAllowed,
-    communicationQuotaConsumed,
-    communicationQuotaAllowedUnit:
-      communicationQuotaAllowed === 1 ? "email" : "emails",
-    communicationQuotaConsumedUnit:
-      communicationQuotaConsumed === 1 ? "email" : "emails",
-    bandwidthQuotaAllowed,
-    bandwidthQuotaConsumed,
-    bandwidthQuotaAllowedUnit: basicUtil
-      .calculateByteUnit({
-        bytes: companyExtraEmailContentQuota,
-      })
-      .split(" ")[1],
-    bandwidthQuotaConsumedUnit: basicUtil
-      .calculateByteUnit({
-        bytes: totalEmailContentSent - plan.quota.emailContent,
-      })
-      .split(" ")[1],
+    emailsAllowedInPlan,
+    emailsAllowedInPlanUnit,
+    emailsConsumedInPlan,
+    emailsConsumedInPlanUnit,
+    emailsConsumedInOverage,
+    emailsConsumedInOverageUnit,
+    emailsConsumedInOveragePrice,
+    emailsConsumedInOveragePriceUnit,
+
+    bandwidthAllowedInPlan,
+    bandwidthAllowedInPlanUnit,
+    bandwidthConsumedInPlan,
+    bandwidthConsumedInPlanUnit,
+    bandwidthConsumedInOverage,
+    bandwidthConsumedInOverageUnit,
+    bandwidthConsumedInOveragePrice,
+    bandwidthConsumedInOveragePriceUnit,
   };
 };
 
