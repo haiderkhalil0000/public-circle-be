@@ -20,4 +20,5 @@ module.exports = {
   overageConsumptionController: require("./overage-consumption.controller"),
   companiesController: require("./companies.controller"),
   topupController: require("./topup.controller"),
+  plansController: require("./plans.controller"),
 };

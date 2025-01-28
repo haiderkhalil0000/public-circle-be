@@ -100,15 +100,22 @@ const readActiveBillingCycleDates = async ({ stripeCustomerId }) => {
   };
 };
 
-const getPlans = async ({ pageSize }) => {
+const readPlans = async ({ pageSize }) => {
+  const plansController = require("./plans.controller");
+
   const promises = [];
 
-  const plans = await stripe.products.list({
-    limit: pageSize,
-  });
+  const [stripePlans, dbPlans] = await Promise.all([
+    stripe.products.list({
+      limit: pageSize,
+    }),
+    plansController.readAllPlans(),
+  ]);
 
   // Exclude the product with the name "Top Up"
-  const filteredPlans = plans.data.filter((item) => item.name !== "Top Up");
+  const filteredPlans = stripePlans.data.filter(
+    (item) => item.name !== "Top Up"
+  );
 
   filteredPlans.forEach((item) => {
     promises.push(stripe.prices.retrieve(item.default_price));
@@ -118,6 +125,12 @@ const getPlans = async ({ pageSize }) => {
 
   filteredPlans.forEach((item, index) => {
     item.price = prices[index];
+
+    const dbPlan = dbPlans.find((plan) => plan.name === item.name);
+
+    if (dbPlan) {
+      item.description = dbPlan.description;
+    }
   });
 
   return filteredPlans;
@@ -880,7 +893,7 @@ module.exports = {
   readSetupIntent,
   getSubscriptions,
   readActivePlansByCustomerId,
-  getPlans,
+  readPlans,
   createSubscription,
   attachPaymentMethod,
   createCoupon,
