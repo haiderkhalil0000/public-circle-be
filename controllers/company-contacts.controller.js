@@ -102,7 +102,9 @@ const search = async ({ companyId, searchString, searchFields }) => {
 };
 
 const readAllCompanyContacts = ({ companyId }) =>
-  CompanyContact.find({ company: companyId });
+  CompanyContact.find({ company: companyId }).select(
+    "-_id -company -createdAt -updatedAt -__v"
+  );
 
 const readPaginatedCompanyContacts = async ({
   companyId,
@@ -113,7 +115,8 @@ const readPaginatedCompanyContacts = async ({
     CompanyContact.countDocuments({ company: companyId }),
     CompanyContact.find({ company: companyId })
       .skip((parseInt(pageNumber) - 1) * pageSize)
-      .limit(pageSize),
+      .limit(pageSize)
+      .select("-_id -company -createdAt -updatedAt -__v"),
   ]);
 
   return {
