@@ -101,7 +101,7 @@ const recieveCompanyContacts = async ({
     const { contacts, price } = plan.bundles.contact;
 
     const extraContactsQuotaCharge =
-      Math.ceil(contactsAboveQuota / contacts) * price;
+      Math.ceil(contactsAboveQuota / contacts) * (price * 100); //converted price into cents
 
     let contactsOverageInvoiceItem = pendingInvoiceItems.data.find((item) =>
       item.description.includes("contact")
