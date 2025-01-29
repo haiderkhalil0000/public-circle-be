@@ -725,11 +725,22 @@ const readCustomerStripeBalance = async ({ stripeCustomerId }) => {
 };
 
 const quotaDetails = async ({ companyId, stripeCustomerId }) => {
+  const emailsSentController = require("./emails-sent.controller");
+
+  const activeBillingDates = await readActiveBillingCycleDates({
+    stripeCustomerId,
+  });
+
   const [planIds, emailsSentDocs] = await Promise.all([
     readPlanIds({
       stripeCustomerId,
     }),
-    EmailSent.find({ company: companyId }, { size: 1 }),
+    emailsSentController.readEmailsSentByCompanyId({
+      companyId,
+      startDate: activeBillingDates.startDate,
+      endDate: activeBillingDates.endDate,
+      project: { size: 1 },
+    }),
   ]);
 
   const totalEmailContentSent = emailsSentDocs
