@@ -106,9 +106,8 @@ const createCampaign = async ({
     usersController.readPrimaryUserByCompanyId({ companyId }),
   ]);
 
-  await validateCampaign({ campaign, company, primaryUser });
-
   if (runMode === RUN_MODE.INSTANT) {
+    await validateCampaign({ campaign, company, primaryUser });
     await runCampaign({ campaign });
   }
 };
@@ -272,9 +271,8 @@ const updateCampaign = async ({ companyId, campaignId, campaignData }) => {
 
   await campaign.save();
 
-  await validateCampaign({ campaign, company, primaryUser });
-
   if (campaignData.runMode === RUN_MODE.INSTANT) {
+    await validateCampaign({ campaign, company, primaryUser });
     await runCampaign({ campaign });
   }
 };
