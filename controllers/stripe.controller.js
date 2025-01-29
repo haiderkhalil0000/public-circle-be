@@ -558,7 +558,7 @@ const createPendingInvoiceItem = async ({
 }) =>
   stripe.invoiceItems.create({
     customer: stripeCustomerId,
-    amount: price * 100,
+    amount: price,
     currency: "cad",
     description,
   });
