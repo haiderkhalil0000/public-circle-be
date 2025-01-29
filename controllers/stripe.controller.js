@@ -371,10 +371,17 @@ const readCustomerBalance = async ({ companyId, stripeCustomerId }) => {
   const topupController = require("./topup.controller");
   const emailsSentController = require("./emails-sent.controller");
 
+  const activeBillingCycleDates = await readActiveBillingCycleDates({
+    stripeCustomerId,
+  });
+
   const [topupDocs, emailsSentDocs, planIds] = await Promise.all([
     topupController.readTopupsByCompanyId({ companyId }),
     emailsSentController.readEmailsSentByCompanyId({
       companyId,
+      startDate: activeBillingCycleDates.startDate,
+      endDate: activeBillingCycleDates.endDate,
+      project: { size: 1 },
     }),
     readPlanIds({
       stripeCustomerId,
