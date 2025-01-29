@@ -11,10 +11,7 @@ const createFilter = async (
   { filterLabel, filterType, filterKey, filterValues },
   { companyId }
 ) => {
-  if (
-    (filterType !== FILTER_TYPES.INPUT && !filterValues) ||
-    filterValues.length === 0
-  ) {
+  if (filterType !== FILTER_TYPES.INPUT && !filterValues[0]) {
     throw createHttpError(400, {
       errorMessage: RESPONSE_MESSAGES.FILTER_VALUES_REQUIRED,
     });
