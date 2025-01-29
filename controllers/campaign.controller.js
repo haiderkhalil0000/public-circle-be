@@ -702,6 +702,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
 
       throw createHttpError(400, {
         errorMessage: RESPONSE_MESSAGES.EMAIL_LIMIT_REACHED,
+        errorKind: "EMAIL_LIMIT_REACHED",
       });
     }
   }
@@ -741,6 +742,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
 
       throw createHttpError(400, {
         errorMessage: RESPONSE_MESSAGES.BANDWIDTH_LIMIT_REACHED,
+        errorKind: "BANDWIDTH_LIMIT_REACHED",
       });
     }
   }
