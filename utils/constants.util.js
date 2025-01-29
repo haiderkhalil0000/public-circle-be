@@ -199,7 +199,7 @@ module.exports = {
       "Customer balance history fetched successfully.",
     EMAIL_LIMIT_REACHED:
       "Email sending limit reached for your current subscription!",
-    EMAIL_CONTENT_LIMIT_REACHED:
+    BANDWIDTH_LIMIT_REACHED:
       "Email content limit reached for your current subscription!",
     INVOICES_FETCHED: "Invoices fetched successfully.",
     RECEIPTS_FETCHED: "Receipts fetched successfully.",
@@ -395,8 +395,6 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
   },
 
   OVERAGE_KIND: {
-    EMAIL: "EMAIL",
-    BANDWIDTH: "BANDWIDTH",
     CONTACT: "CONTACT",
   },
 

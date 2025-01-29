@@ -175,11 +175,30 @@ const readEmailContentConsumed = async ({ companyId }) => {
     .reduce((total, current) => total + current, 0);
 };
 
+const readEmailsSentByCompanyId = ({
+  companyId,
+  startDate,
+  endDate,
+  project,
+}) => {
+  let query = { company: companyId };
+
+  if (startDate && endDate) {
+    query.createdAt = {
+      $gte: startDate,
+      $lt: endDate,
+    };
+  }
+
+  return EmailSent.find(query, project);
+};
+
 const readEmailsSentByCampaignId = ({ campaignId }) =>
   EmailSent.find({ campaign: campaignId });
 
 module.exports = {
   readEmailSentGraphData,
+  readEmailsSentByCompanyId,
   readEmailSentCount,
   readEmailContentConsumed,
   readEmailsSentByCampaignId,

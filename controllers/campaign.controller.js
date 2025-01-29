@@ -604,43 +604,28 @@ const readCampaignRecipientsCount = async ({ campaign }) => {
   return filterCounts.reduce((total, current) => total + current);
 };
 
-const calculateExtraEmailQuotaAndCharge = ({ unpaidEmailsCount, plan }) => {
-  const { emails, price } = plan.bundles.email;
+const calculateEmailOverageCharge = ({ unpaidEmailsCount, plan }) => {
+  const { emails, priceInSmallestUnit } = plan.bundles.email;
 
   const timesExceeded = Math.ceil(unpaidEmailsCount / emails);
 
-  return {
-    extraEmailQuota: timesExceeded * emails,
-    extraEmailCharge: timesExceeded * price,
-  };
+  return timesExceeded * priceInSmallestUnit;
 };
 
-const calculateEmailContentQuotaAndCharge = ({ unpaidEmailContent, plan }) => {
-  const { bandwidth, price } = plan.bundles.emailContent;
+const calculateBandwidthOverageCharge = ({ unpaidBandwidth, plan }) => {
+  const { bandwidth, priceInSmallestUnit } = plan.bundles.bandwidth;
 
-  const timesExceeded = Math.ceil(unpaidEmailContent / bandwidth);
+  const timesExceeded = Math.ceil(unpaidBandwidth / bandwidth);
 
-  return {
-    extraEmailContentQuota: timesExceeded * bandwidth,
-    extraEmailContentCharge: timesExceeded * price,
-  };
+  return timesExceeded * priceInSmallestUnit;
 };
 
 const disableCampaign = ({ campaignId }) =>
   Campaign.findByIdAndUpdate(campaignId, { status: CAMPAIGN_STATUS.DISABLED });
 
-const getDescription = ({ extraEmailCharge, extraEmailContentCharge }) => {
-  if (extraEmailCharge && extraEmailContentCharge) {
-    return `Consumed balance over extra email overage + email content overage.`;
-  } else if (extraEmailCharge) {
-    return `Consumed balance over extra email overage.`;
-  } else {
-    return `Consumed balance over extra email content overage.`;
-  }
-};
-
 const validateCampaign = async ({ campaign, company, primaryUser }) => {
   const stripeController = require("./stripe.controller");
+
   //adding email template details in the campaign parameter
   campaign = await Campaign.findById(campaign._id).populate("emailTemplate");
 
@@ -653,84 +638,50 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
     }),
   ]);
 
-  const billingCycleStartDate = activeBillingCycleDates.startDate;
-  const billingCycleEndDate = activeBillingCycleDates.endDate;
+  const emailsSentController = require("./emails-sent.controller");
 
-  const emailsSentByCompany = await EmailSent.find(
-    {
-      company: campaign.company,
-      createdAt: {
-        $gte: billingCycleStartDate,
-        $lt: billingCycleEndDate,
+  const emailsSentByCompany =
+    await emailsSentController.readEmailsSentByCompanyId({
+      companyId: campaign.company,
+      startDate: activeBillingCycleDates.startDate,
+      endDate: activeBillingCycleDates.endDate,
+      project: {
+        size: 1,
       },
-    },
-    {
-      size: 1,
-    }
-  );
+    });
 
-  let emailContentSentByCompany = emailsSentByCompany
+  let bandwidthSentByCompany = emailsSentByCompany
     .map((item) => item.size)
     .reduce((totalValue, currentValue) => totalValue + currentValue, 0);
 
-  const overageConsumptionController = require("./overage-consumption.controller");
+  let [companyBalance, planIds] = await Promise.all([
+    stripeController.readCustomerBalance({
+      companyId: campaign.company,
+    }),
+    stripeController.readPlanIds({
+      stripeCustomerId: company.stripeCustomerId,
+    }),
+  ]);
 
-  let [companyBalance, emailOverageDocs, emailContentOverageDocs, planIds] =
-    await Promise.all([
-      stripeController.readCustomerBalance({
-        companyId: campaign.company,
-      }),
-      overageConsumptionController.readEmailOverage({
-        companyId: company._id,
-        billingCycleStartDate,
-        billingCycleEndDate,
-      }),
-      overageConsumptionController.readEmailContentOverage({
-        companyId: company._id,
-        billingCycleStartDate,
-        billingCycleEndDate,
-      }),
-      stripeController.readPlanIds({
-        stripeCustomerId: company.stripeCustomerId,
-      }),
-    ]);
+  companyBalance = companyBalance * 100; //converting into cents
 
   const plan = await Plan.findById(planIds[0].planId);
 
-  const companyExtraEmailQuota = emailOverageDocs
-    .map((item) => item.overageCount)
-    .reduce((totalValue, currentValue) => totalValue + currentValue, 0);
+  let emailOverageCharge = 0,
+    bandwidthOverageCharge = 0;
 
-  const companyExtraEmailContentQuota = emailContentOverageDocs
-    .map((item) => item.overageCount)
-    .reduce((totalValue, currentValue) => totalValue + currentValue, 0);
-
-  let extraEmailCharge = 0,
-    extraEmailQuota = 0,
-    extraEmailContentCharge = 0;
-  extraEmailContentQuota = 0;
-
-  if (
-    plan.quota.email + companyExtraEmailQuota <
-    campaignRecipientsCount + emailsSentByCompany.length
-  ) {
+  if (plan.quota.email < campaignRecipientsCount + emailsSentByCompany.length) {
     const totalEmailsCount =
       campaignRecipientsCount + emailsSentByCompany.length; // emails to be sent + emails already sent
 
-    const totalPaidEmailsCount = plan.quota.email + companyExtraEmailQuota; // emails from plan + emails from extra purchase
+    const unpaidEmailsCount = totalEmailsCount - plan.quota.email;
 
-    const unpaidEmailsCount = totalEmailsCount - totalPaidEmailsCount;
-
-    const result = calculateExtraEmailQuotaAndCharge({
+    emailOverageCharge = calculateEmailOverageCharge({
       unpaidEmailsCount,
-      companyExtraEmailQuota,
       plan,
     });
 
-    extraEmailQuota = result.extraEmailQuota;
-    extraEmailCharge = result.extraEmailCharge;
-
-    if (companyBalance < extraEmailCharge) {
+    if (companyBalance < emailOverageCharge) {
       await disableCampaign({ campaignId: campaign._id });
 
       await sesUtil.sendEmail({
@@ -754,36 +705,28 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
   }
 
   if (
-    plan.quota.emailContent + companyExtraEmailContentQuota <
-    emailContentSentByCompany +
+    plan.quota.bandwidth <
+    bandwidthSentByCompany +
       campaign.emailTemplate.size * campaignRecipientsCount
   ) {
-    const totalEmailContentCount =
+    const totalBandwidth =
       campaign.emailTemplate.size * campaignRecipientsCount +
-      emailContentSentByCompany;
+      bandwidthSentByCompany;
 
-    const totalPaidEmailContentCount =
-      plan.quota.emailContent + companyExtraEmailContentQuota;
+    const unpaidBandwidth = totalBandwidth - plan.quota.bandwidth;
 
-    const unpaidEmailContent =
-      totalEmailContentCount - totalPaidEmailContentCount;
-
-    result = calculateEmailContentQuotaAndCharge({
-      unpaidEmailContent,
-      companyExtraEmailContentQuota,
+    bandwidthOverageCharge = calculateBandwidthOverageCharge({
+      unpaidBandwidth,
       plan,
     });
 
-    extraEmailContentQuota = result.extraEmailContentQuota;
-    extraEmailContentCharge = result.extraEmailContentCharge;
-
-    if (companyBalance < extraEmailContentCharge) {
+    if (companyBalance < bandwidthOverageCharge) {
       await disableCampaign({ campaignId: campaign._id });
 
       await sesUtil.sendEmail({
         fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
         toEmailAddress: primaryUser.emailAddress,
-        subject: RESPONSE_MESSAGES.EMAIL_CONTENT_LIMIT_REACHED,
+        subject: RESPONSE_MESSAGES.BANDWIDTH_LIMIT_REACHED,
         content: `Dear ${primaryUser.firstName},
         We have restricted your campaign from running because you don't have enough credits to pay for
         the new campaign. As your quota for ${plan.name} is fully consumed. So we recommend you to top-up
@@ -795,49 +738,9 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
       });
 
       throw createHttpError(400, {
-        errorMessage: RESPONSE_MESSAGES.EMAIL_CONTENT_LIMIT_REACHED,
+        errorMessage: RESPONSE_MESSAGES.BANDWIDTH_LIMIT_REACHED,
       });
     }
-  }
-
-  if (extraEmailCharge || extraEmailContentCharge) {
-    const promises = [];
-
-    if (extraEmailCharge) {
-      promises.push(
-        OverageConsumption.create({
-          company: company._id,
-          stripeCustomerId: company.stripeCustomerId,
-          description: getDescription({
-            extraEmailCharge,
-          }),
-          overageCount: extraEmailQuota,
-          overagePrice: extraEmailCharge,
-          kind: OVERAGE_KIND.EMAIL,
-        })
-      );
-
-      companyBalance = companyBalance - extraEmailCharge;
-    }
-
-    if (extraEmailContentCharge) {
-      promises.push(
-        OverageConsumption.create({
-          company: company._id,
-          stripeCustomerId: company.stripeCustomerId,
-          description: getDescription({
-            extraEmailContentCharge,
-          }),
-          overageCount: extraEmailContentQuota,
-          overagePrice: extraEmailContentCharge,
-          kind: OVERAGE_KIND.BANDWIDTH,
-        })
-      );
-
-      companyBalance = companyBalance - extraEmailContentCharge;
-    }
-
-    await Promise.all(promises);
   }
 };
 

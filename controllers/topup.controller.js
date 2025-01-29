@@ -17,7 +17,7 @@ const syncTopups = async ({ companyId, stripeCustomerId }) => {
     company: companyId,
     stripeInvoiceId: invoice.id,
     stripeCreatedAt: moment.unix(invoice.created).utc(),
-    price: invoice.amount_paid / 100,
+    priceInSmallestUnit: invoice.amount_paid,
   }));
 
   await Promise.all([

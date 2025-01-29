@@ -18,7 +18,7 @@ const schema = new mongoose.Schema(
     },
     stripeInvoiceId: { type: String, required: true },
     stripeCreatedAt: { type: Date, required: true },
-    price: { type: Number, required: true },
+    priceInSmallestUnit: { type: Number, required: true },
     currency: { type: String, required: true, default: "CAD" },
   },
   { timestamps: true }

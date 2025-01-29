@@ -253,31 +253,7 @@ router.get(
     try {
       const customerBalance = await stripeController.readCustomerBalance({
         companyId: req.user.company._id,
-      });
-
-      res.status(200).json({
-        message: RESPONSE_MESSAGES.CUSTOMER_BALANCE_FETCHED,
-        data: customerBalance,
-      });
-    } catch (err) {
-      // sendErrorReportToSentry(error);
-      console.log(err);
-
-      stripeDebugger(err);
-
-      next(err);
-    }
-  }
-);
-
-router.get(
-  "/customer-balance/refresh",
-  authenticate.verifyToken,
-  async (req, res, next) => {
-    try {
-      const customerBalance = await stripeController.readUpdatedBalance({
         stripeCustomerId: req.user.company.stripeCustomerId,
-        companyId: req.user.company._id,
       });
 
       res.status(200).json({
@@ -307,31 +283,6 @@ router.get(
       res.status(200).json({
         message: RESPONSE_MESSAGES.CUSTOMER_BALANCE_FETCHED,
         data: customerBalance,
-      });
-    } catch (err) {
-      // sendErrorReportToSentry(error);
-      console.log(err);
-
-      stripeDebugger(err);
-
-      next(err);
-    }
-  }
-);
-
-router.get(
-  "/customer-balance-history",
-  authenticate.verifyToken,
-  async (req, res, next) => {
-    try {
-      const customerBalanceHistory =
-        await stripeController.readCustomerBalanceHistory({
-          companyId: req.user.company._id,
-        });
-
-      res.status(200).json({
-        message: RESPONSE_MESSAGES.CUSTOMER_BALANCE_HISTORY_FETCHED,
-        data: customerBalanceHistory,
       });
     } catch (err) {
       // sendErrorReportToSentry(error);

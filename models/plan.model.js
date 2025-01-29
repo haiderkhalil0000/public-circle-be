@@ -16,7 +16,7 @@ const schema = new mongoose.Schema(
         required: true,
         default: 0,
       },
-      emailContent: {
+      bandwidth: {
         type: Number,
         required: true,
         default: 0,
@@ -34,15 +34,15 @@ const schema = new mongoose.Schema(
           required: true,
           default: 0,
         },
-        price: { type: Number, required: true, default: 0 },
+        priceInSmallestUnit: { type: Number, required: true, default: 0 },
       },
-      emailContent: {
+      bandwidth: {
         bandwidth: {
           type: Number,
           required: true,
           default: 0,
         },
-        price: {
+        priceInSmallestUnit: {
           type: Number,
           required: true,
           default: 0,
@@ -54,14 +54,14 @@ const schema = new mongoose.Schema(
           required: true,
           default: 0,
         },
-        price: {
+        priceInSmallestUnit: {
           type: Number,
           required: true,
           default: 0,
         },
       },
     },
-    price: {
+    priceInSmallestUnit: {
       type: Number,
       required: true,
       default: 0,

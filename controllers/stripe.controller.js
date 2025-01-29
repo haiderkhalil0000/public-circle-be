@@ -328,11 +328,9 @@ const createATopUpInCustomerBalance = async ({
   stripeCustomerId,
   amount,
 }) => {
-  amount = amount * 100;
-
   const price = await stripe.prices.create({
     product: "prod_RXLIDbemHmqlfQ",
-    unit_amount: amount,
+    unit_amount: amount * 100, //passing amount in cents
     currency: "cad",
   });
 
@@ -363,53 +361,53 @@ const createATopUpInCustomerBalance = async ({
 
   const topupController = require("./topup.controller");
 
-  await topupController.syncTopups({ companyId, stripeCustomerId });
+  await topupController.syncTopups({
+    companyId,
+    stripeCustomerId,
+  });
 };
 
-const readCustomerBalance = async ({ companyId }) => {
+const readCustomerBalance = async ({ companyId, stripeCustomerId }) => {
   const topupController = require("./topup.controller");
+  const emailsSentController = require("./emails-sent.controller");
 
-  const [topupDocs, overageConsuptionDocs] = await Promise.all([
+  const [topupDocs, emailsSentDocs, planIds] = await Promise.all([
     topupController.readTopupsByCompanyId({ companyId }),
-    OverageConsumption.find({
-      company: companyId,
-      kind: { $ne: OVERAGE_KIND.CONTACT },
+    emailsSentController.readEmailsSentByCompanyId({
+      companyId,
+    }),
+    readPlanIds({
+      stripeCustomerId,
     }),
   ]);
 
-  const totalTopup = topupDocs
-    .map((item) => item.price)
-    .reduce((totalValue, currentValue) => totalValue + currentValue, 0);
-
-  const totalOverage = overageConsuptionDocs
-    .map((item) => item.overagePrice)
-    .reduce((totalValue, currentValue) => totalValue + currentValue, 0);
-
-  return totalTopup - totalOverage;
-};
-
-const readUpdatedBalance = async ({ companyId, stripeCustomerId }) => {
-  const topupController = require("./topup.controller");
-
-  await topupController.syncTopups({ companyId, stripeCustomerId });
-
-  const [topupDocs, overageConsuptionDocs] = await Promise.all([
-    topupController.readTopupsByCompanyId({ companyId }),
-    OverageConsumption.find({
-      company: companyId,
-      kind: { $ne: OVERAGE_KIND.CONTACT },
-    }),
-  ]);
+  const plan = await Plan.findById(planIds[0].planId);
 
   const totalTopup = topupDocs
-    .map((item) => item.price)
-    .reduce((totalValue, currentValue) => totalValue + currentValue);
+    .map((item) => item.priceInSmallestUnit)
+    .reduce((totalValue, currentValue) => totalValue + currentValue, 0);
 
-  const totalOverage = overageConsuptionDocs
-    .map((item) => item.overagePrice)
-    .reduce((totalValue, currentValue) => totalValue + currentValue);
+  const paidEmails =
+    emailsSentDocs.length - plan.quota.email > 0
+      ? emailsSentDocs.length - plan.quota.email
+      : 0;
 
-  return totalTopup - totalOverage;
+  const paidEmailsPrice =
+    paidEmails / (plan.bundles.email.priceInSmallestUnit / 100);
+
+  const totalBandwidthSent = emailsSentDocs
+    .map((item) => item.size)
+    .reduce((totalValue, currentValue) => totalValue + currentValue, 0);
+
+  const paidEmailContent =
+    totalBandwidthSent - plan.quota.bandwidth > 0
+      ? totalBandwidthSent - plan.quota.bandwidth
+      : 0;
+
+  const paidEmailContentPrice =
+    paidEmailContent / plan.bundles.bandwidth.priceInSmallestUnit;
+
+  return (totalTopup - paidEmailsPrice * 100 - paidEmailContentPrice) / 100; //converted into cad
 };
 
 const generateImmediateChargeInvoice = async ({
@@ -545,30 +543,6 @@ const readDefaultPaymentMethod = async ({ stripeCustomerId }) => {
 
 const readStripeCustomer = ({ stripeCustomerId }) =>
   stripe.customers.retrieve(stripeCustomerId);
-
-const readCustomerBalanceHistory = async ({ companyId }) => {
-  const overageConsumptionController = require("./overage-consumption.controller");
-
-  const overageConsumptionDocs =
-    await overageConsumptionController.readEmailAndContentOverageConsumptions({
-      companyId,
-    });
-
-  overageConsumptionDocs.forEach((doc) => {
-    if (doc.kind === OVERAGE_KIND.EMAIL) {
-      doc.overageCount = `${doc.overageCount} ${
-        doc.overageCount > 1 ? "emails" : "email"
-      }`;
-    }
-    if (doc.kind === OVERAGE_KIND.BANDWIDTH) {
-      doc.overageCount = basicUtil.calculateByteUnit({
-        bytes: doc.overageCount,
-      });
-    }
-  });
-
-  return overageConsumptionDocs;
-};
 
 const createPendingInvoiceItem = async ({
   stripeCustomerId,
@@ -777,22 +751,40 @@ const quotaDetails = async ({ companyId, stripeCustomerId }) => {
       : 0;
 
   const emailsConsumedInOveragePrice =
-    emailsConsumedInOverage * plan.bundles.email.price;
+    (emailsConsumedInOverage * plan.bundles.email.priceInSmallestUnit) / 100;
 
-  const bandwidthAllowedInPlan = plan.quota.emailContent;
+  const bandwidthAllowedInPlan = Number(
+    basicUtil
+      .calculateByteUnit({
+        bytes: plan.quota.bandwidth,
+      })
+      .split([" "])[0]
+  );
 
-  const bandwidthConsumedInPlan =
-    plan.quota.emailContent - totalEmailContentSent > 0
-      ? plan.quota.emailContent - totalEmailContentSent
-      : plan.quota.emailContent;
+  const bandwidthConsumedInPlan = Number(
+    basicUtil
+      .calculateByteUnit({
+        bytes:
+          plan.quota.bandwidth - totalEmailContentSent > 0
+            ? plan.quota.bandwidth - totalEmailContentSent
+            : plan.quota.bandwidth,
+      })
+      .split([" "])[0]
+  );
 
-  const bandwidthConsumedInOverage =
-    totalEmailContentSent - plan.quota.emailContent > 0
-      ? totalEmailContentSent - plan.quota.emailContent
-      : 0;
+  const bandwidthConsumedInOverage = Number(
+    basicUtil
+      .calculateByteUnit({
+        bytes:
+          totalEmailContentSent - plan.quota.bandwidth > 0
+            ? totalEmailContentSent - plan.quota.bandwidth
+            : 0,
+      })
+      .split([" "])[0]
+  );
 
   const bandwidthConsumedInOveragePrice =
-    bandwidthConsumedInOverage * plan.bundles.emailContent.price;
+    bandwidthConsumedInOverage * plan.bundles.bandwidth.priceInSmallestUnit;
 
   const emailsAllowedInPlanUnit =
     emailsAllowedInPlan === 1 ? "email" : "emails";
@@ -807,19 +799,25 @@ const quotaDetails = async ({ companyId, stripeCustomerId }) => {
 
   const bandwidthAllowedInPlanUnit = basicUtil
     .calculateByteUnit({
-      bytes: bandwidthAllowedInPlan,
+      bytes: plan.quota.bandwidth,
     })
     .split([" "])[1];
 
   const bandwidthConsumedInPlanUnit = basicUtil
     .calculateByteUnit({
-      bytes: bandwidthConsumedInPlan,
+      bytes:
+        plan.quota.bandwidth - totalEmailContentSent > 0
+          ? plan.quota.bandwidth - totalEmailContentSent
+          : plan.quota.bandwidth,
     })
     .split([" "])[1];
 
   const bandwidthConsumedInOverageUnit = basicUtil
     .calculateByteUnit({
-      bytes: bandwidthConsumedInOverage,
+      bytes:
+        totalEmailContentSent - plan.quota.bandwidth > 0
+          ? totalEmailContentSent - plan.quota.bandwidth
+          : 0,
     })
     .split([" "])[1];
 
@@ -905,7 +903,6 @@ module.exports = {
   readCustomerUpcomingInvoices,
   readCustomerReceipts,
   readDefaultPaymentMethod,
-  readCustomerBalanceHistory,
   createPendingInvoiceItem,
   chargeCustomerFromBalance,
   readPlanIds,
@@ -920,5 +917,4 @@ module.exports = {
   quotaDetails,
   readActiveBillingCycleDates,
   readTopupInvoices,
-  readUpdatedBalance,
 };
