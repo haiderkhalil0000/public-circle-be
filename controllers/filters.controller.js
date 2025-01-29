@@ -1,7 +1,9 @@
+const createHttpError = require("http-errors");
+
 const { Filter } = require("../models");
 
 const {
-  constants: { FILTER_STATUS },
+  constants: { FILTER_STATUS, FILTER_TYPES },
   basicUtil,
 } = require("../utils");
 
@@ -9,6 +11,15 @@ const createFilter = async (
   { filterLabel, filterType, filterKey, filterValues },
   { companyId }
 ) => {
+  if (
+    (filterType !== FILTER_TYPES.INPUT && !filterValues) ||
+    filterValues.length === 0
+  ) {
+    throw createHttpError(400, {
+      errorMessage: RESPONSE_MESSAGES.FILTER_VALUES_REQUIRED,
+    });
+  }
+
   await Filter.create({
     company: companyId,
     filterLabel,

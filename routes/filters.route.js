@@ -84,7 +84,7 @@ router.post(
         )
         .required(),
       filterKey: Joi.string().required(),
-      filterValues: Joi.array().required(),
+      filterValues: Joi.array().optional().empty(""),
     }),
   }),
   async (req, res, next) => {
