@@ -760,7 +760,7 @@ const quotaDetails = async ({ companyId, stripeCustomerId }) => {
 
   const emailsConsumedInPlan =
     plan.quota.email - emailsSentDocs.length > 0
-      ? plan.quota.email - emailsSentDocs.length
+      ? emailsSentDocs.length
       : plan.quota.email;
 
   const emailsConsumedInOverage =
@@ -784,7 +784,7 @@ const quotaDetails = async ({ companyId, stripeCustomerId }) => {
       .calculateByteUnit({
         bytes:
           plan.quota.bandwidth - totalEmailContentSent > 0
-            ? plan.quota.bandwidth - totalEmailContentSent
+            ? totalEmailContentSent
             : plan.quota.bandwidth,
       })
       .split([" "])[0]
@@ -825,7 +825,7 @@ const quotaDetails = async ({ companyId, stripeCustomerId }) => {
     .calculateByteUnit({
       bytes:
         plan.quota.bandwidth - totalEmailContentSent > 0
-          ? plan.quota.bandwidth - totalEmailContentSent
+          ? totalEmailContentSent
           : plan.quota.bandwidth,
     })
     .split([" "])[1];
