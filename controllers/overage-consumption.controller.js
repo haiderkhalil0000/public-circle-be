@@ -38,46 +38,6 @@ const createOverageConsumption = async ({
   });
 };
 
-const readEmailOverage = ({
-  companyId,
-  billingCycleStartDate,
-  billingCycleEndDate,
-}) => {
-  const query = {
-    company: companyId,
-    kind: OVERAGE_KIND.EMAIL,
-  };
-
-  if (billingCycleStartDate && billingCycleEndDate) {
-    query.createdAt = {
-      $gte: billingCycleStartDate,
-      $lt: billingCycleEndDate,
-    };
-  }
-
-  return OverageConsumption.find(query);
-};
-
-const readEmailContentOverage = ({
-  companyId,
-  billingCycleStartDate,
-  billingCycleEndDate,
-}) => {
-  const query = {
-    company: companyId,
-    kind: OVERAGE_KIND.BANDWIDTH,
-  };
-
-  if (billingCycleStartDate && billingCycleEndDate) {
-    query.createdAt = {
-      $gte: billingCycleStartDate,
-      $lt: billingCycleEndDate,
-    };
-  }
-
-  return OverageConsumption.find(query);
-};
-
 const readEmailAndContentOverageConsumptions = ({ companyId }) =>
   OverageConsumption.find({
     company: companyId,
@@ -87,7 +47,5 @@ const readEmailAndContentOverageConsumptions = ({ companyId }) =>
 module.exports = {
   createOverageConsumption,
   readLatestPrivateOverageConsumption,
-  readEmailOverage,
-  readEmailContentOverage,
   readEmailAndContentOverageConsumptions,
 };
