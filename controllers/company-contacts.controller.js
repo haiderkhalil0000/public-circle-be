@@ -4,7 +4,7 @@ const path = require("path");
 
 const { CompanyContact, Company } = require("../models");
 const {
-  constants: { RESPONSE_MESSAGES },
+  constants: { RESPONSE_MESSAGES, USER_KIND },
   basicUtil,
 } = require("../utils");
 
@@ -194,6 +194,24 @@ const deleteCompanyContact = async ({ companyId, userId }) => {
   }
 };
 
+const deleteAllCompanyContacts = async ({ companyId, currentUserKind }) => {
+  if (currentUserKind !== USER_KIND.PRIMARY) {
+    throw createHttpError(403, {
+      errorMessage: RESPONSE_MESSAGES.NO_RIGHTS,
+    });
+  }
+
+  const result = await CompanyContact.deleteMany({
+    company: companyId,
+  });
+
+  if (!result.deletedCount) {
+    throw createHttpError(404, {
+      errorMessage: RESPONSE_MESSAGES.COMPANY_CONTACTS_DELETED_ALREADY,
+    });
+  }
+};
+
 const uploadCsv = async ({ companyId, stripeCustomerId, file }) => {
   if (!file) {
     throw createHttpError(400, {
@@ -316,6 +334,7 @@ module.exports = {
   readCompanyContact,
   updateCompanyContact,
   deleteCompanyContact,
+  deleteAllCompanyContacts,
   uploadCsv,
   createPrimaryKey,
   readPrimaryKey,
