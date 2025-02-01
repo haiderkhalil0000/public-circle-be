@@ -1,7 +1,6 @@
 const _ = require("lodash");
 
 const { CompanyContact, Plan, Company } = require("../models");
-const { basicUtil } = require("../utils");
 
 const recieveCompanyContacts = async ({
   companyId,
@@ -12,8 +11,6 @@ const recieveCompanyContacts = async ({
   const overageConsumptionController = require("./overage-consumption.controller");
 
   const promises = [];
-
-  users = basicUtil.fiterUniqueObjectsFromArray(users);
 
   const companyContactsController = require("./company-contacts.controller");
 
