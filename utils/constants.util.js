@@ -118,6 +118,7 @@ module.exports = {
     COMPANY_USER_UPDATED: "Company user updated successfully.",
     COMPANY_CONTACT_UPDATED: "Company contact updated successfully.",
     COMPANY_USER_DELETED: "Company user deleted successfully.",
+    COMPANY_USERS_DELETED: "Company users deleted successfully.",
     COMPANY_CONTACT_DELETED: "Company contact deleted successfully.",
     COMPANY_DATA_RECEIVED: "Users recieved successfully.",
     INVALID_OBJECT_ID: "Invalid objectId!",

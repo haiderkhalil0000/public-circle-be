@@ -424,7 +424,7 @@ router.delete("/all", authenticate.verifyToken, async (req, res, next) => {
     });
 
     res.status(200).json({
-      message: RESPONSE_MESSAGES.COMPANY_USER_DELETED,
+      message: RESPONSE_MESSAGES.COMPANY_USERS_DELETED,
       data: {},
     });
   } catch (err) {
