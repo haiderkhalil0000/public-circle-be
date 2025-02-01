@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const createHttpError = require("http-errors");
-const csvParser = require("csv-parser");
-const { Readable } = require("stream");
+const path = require("path");
 
 const { CompanyContact, Company } = require("../models");
 const {
@@ -9,7 +8,7 @@ const {
   basicUtil,
 } = require("../utils");
 
-const readContactKeys = async ({ companyId }) => {
+const readContactKeys = async ({ companyId = "" }) => {
   const totalDocs = await CompanyContact.countDocuments({ company: companyId });
   const sampleSize = Math.floor(totalDocs * 0.1);
 
@@ -196,53 +195,42 @@ const deleteCompanyContact = async ({ companyId, userId }) => {
 };
 
 const uploadCsv = async ({ companyId, stripeCustomerId, file }) => {
-  const results = [];
-
   if (!file) {
     throw createHttpError(400, {
       errorMessage: "No file uploaded.",
     });
   }
 
-  const webhooksController = require("./webhooks.controller");
+  const { Worker } = require("worker_threads");
 
-  try {
-    // Convert the buffer into a readable stream
-    const fileStream = Readable.from(file.buffer);
+  const workerPath = path.resolve(
+    __dirname,
+    "../threads/process-contacts.thread.js"
+  );
 
-    // Parse the CSV from the buffer
-    fileStream
-      .pipe(csvParser())
-      .on("data", (data) => {
-        results.push(data); // Collect each row of CSV data
-      })
-      .on("end", async () => {
-        try {
-          // Pass the parsed data to the controller
-          await webhooksController.recieveCompanyContacts({
-            companyId,
-            stripeCustomerId,
-            users: results,
-          });
-        } catch (err) {
-          console.error("Error processing CSV data:", err);
-          throw createHttpError(500, {
-            errorMessage: "Something went wrong while processing the CSV!",
-          });
-        }
-      })
-      .on("error", (err) => {
-        console.error("Error reading CSV buffer:", err);
-        throw createHttpError(500, {
-          errorMessage: "Error reading CSV data!",
-        });
-      });
-  } catch (err) {
-    console.error("Unexpected error:", err);
-    throw createHttpError(500, {
-      errorMessage: "Unexpected error occurred!",
-    });
-  }
+  const worker = new Worker(workerPath);
+
+  worker.on("message", (message) => {
+    console.log("Message from worker:", message);
+  });
+
+  worker.on("error", (error) => {
+    console.error("Worker error:", error);
+  });
+
+  worker.on("exit", (code) => {
+    if (code !== 0) {
+      console.error(`Worker stopped with exit code ${code}`);
+    }
+  });
+
+  file.buffer = file.buffer.toString("base64"); //this is to prevent buffer to get modified in the worker thread
+
+  worker.postMessage({
+    companyId: companyId.toString(),
+    stripeCustomerId,
+    file,
+  });
 };
 
 const findUniqueContacts = async ({ companyId, primaryKey }) => {
