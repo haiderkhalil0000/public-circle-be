@@ -416,6 +416,26 @@ router.patch(
   }
 );
 
+router.delete("/all", authenticate.verifyToken, async (req, res, next) => {
+  try {
+    await companyContactsController.deleteAllCompanyContacts({
+      companyId: req.user.company._id,
+      currentUserKind: req.user.kind,
+    });
+
+    res.status(200).json({
+      message: RESPONSE_MESSAGES.COMPANY_USER_DELETED,
+      data: {},
+    });
+  } catch (err) {
+    // sendErrorReportToSentry(error);
+
+    companyContactsDebugger(err);
+
+    next(err);
+  }
+});
+
 router.delete(
   "/:userId",
   authenticate.verifyToken,
