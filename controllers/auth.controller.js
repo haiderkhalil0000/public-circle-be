@@ -145,7 +145,7 @@ const verifyJwtToken = async ({ token, source }) => {
 
     await User.findOneAndUpdate(
       { emailAddress: decodedToken.emailAddress },
-      { isEmailVerified: true }
+      { isEmailVerified: true, signUpStepsCompleted: 2 }
     );
 
     if (source === "reset-password") {
