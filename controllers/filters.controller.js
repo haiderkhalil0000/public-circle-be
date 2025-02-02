@@ -72,9 +72,9 @@ const readPossibleFilterKeys = async ({ companyId }) => {
 
 const readPossibleFilterValues = async ({
   companyId,
-  key,
   pageNumber,
   pageSize,
+  key,
 }) => {
   const companyContactsController = require("./company-contacts.controller");
 
