@@ -31,10 +31,18 @@ const readContactKeys = async ({ companyId = "" }) => {
   );
 };
 
-const readContactValues = async ({ companyId, key }) => {
-  const [company, results] = await Promise.all([
+const readContactValues = async ({
+  companyId,
+  key,
+  pageNumber = 1,
+  pageSize = 100,
+}) => {
+  const [company, results, totalResults] = await Promise.all([
     Company.findById(companyId),
-    CompanyContact.find({ company: companyId }, { [key]: 1, _id: 0 }),
+    CompanyContact.find({ company: companyId }, { [key]: 1, _id: 0 })
+      .skip((parseInt(pageNumber) - 1) * pageSize)
+      .limit(pageSize),
+    CompanyContact.countDocuments({ company: companyId }, { [key]: 1, _id: 0 }),
   ]);
 
   if (!company.contactsPrimaryKey) {
@@ -47,7 +55,7 @@ const readContactValues = async ({ companyId, key }) => {
 
   const uniqueValues = [...new Set(values)];
 
-  return uniqueValues;
+  return { contactValues: uniqueValues, totalResults };
 };
 
 const readFilterCount = ({ filter, companyId }) => {

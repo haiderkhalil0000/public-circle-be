@@ -70,10 +70,20 @@ const readPossibleFilterKeys = async ({ companyId }) => {
   return companyContactsController.readContactKeys({ companyId });
 };
 
-const readPossibleFilterValues = async ({ companyId, key }) => {
+const readPossibleFilterValues = async ({
+  companyId,
+  key,
+  pageNumber,
+  pageSize,
+}) => {
   const companyContactsController = require("./company-contacts.controller");
 
-  return companyContactsController.readContactValues({ companyId, key });
+  return companyContactsController.readContactValues({
+    companyId,
+    key,
+    pageNumber,
+    pageSize,
+  });
 };
 
 module.exports = {

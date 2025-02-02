@@ -47,6 +47,8 @@ router.get(
     query: Joi.object({
       companyId: Joi.string().required(),
       key: Joi.string().required(),
+      pageNumber: Joi.number().required(),
+      pageSize: Joi.number().required(),
     }),
   }),
   async (req, res, next) => {
