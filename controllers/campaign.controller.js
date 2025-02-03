@@ -307,20 +307,24 @@ const deleteCampaign = async ({ campaignId }) => {
 };
 
 const mapDynamicValues = async ({ companyId, emailAddress, content }) => {
-  const companyData = await CompanyContact.findOne({
+  let companyContactDoc = await CompanyContact.findOne({
     company: companyId,
     email: emailAddress,
   }).lean();
 
-  if (!companyData) {
-    throw createHttpError(400, {
-      errorMessage: RESPONSE_MESSAGES.EMAIL_NOT_FOUND_IN_COMPANY,
-    });
+  if (!companyContactDoc) {
+    companyContactDoc = await CompanyContact.findOne({
+      company: companyId,
+    }).lean();
+  }
+
+  if (!companyContactDoc) {
+    return content;
   }
 
   let modifiedContent = content;
 
-  for (const [key, value] of Object.entries(companyData)) {
+  for (const [key, value] of Object.entries(companyContactDoc)) {
     const placeholder = `{{${key}}}`;
 
     modifiedContent = modifiedContent.replace(
@@ -334,12 +338,23 @@ const mapDynamicValues = async ({ companyId, emailAddress, content }) => {
 
 const sendTestEmail = async ({
   companyId,
+  campaignId,
   sourceEmailAddress,
   toEmailAddresses,
   emailSubject,
   emailTemplateId,
 }) => {
   const promises = [];
+
+  const usersController = require("./users.controller");
+
+  const [campaign, company, primaryUser] = await Promise.all([
+    Campaign.findById(campaignId),
+    Company.findById(companyId),
+    usersController.readPrimaryUserByCompanyId({ companyId }),
+  ]);
+
+  await validateCampaign({ campaign, company, primaryUser });
 
   const emailAddresses = toEmailAddresses
     .split(",")
