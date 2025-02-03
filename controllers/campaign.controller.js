@@ -24,7 +24,7 @@ const {
     RUN_MODE,
     TEMPLATE_CONTENT_TYPE,
     EMAIL_KIND,
-    OVERAGE_KIND,
+    SORT_ORDER,
   },
 } = require("../utils");
 
@@ -131,6 +131,8 @@ const readPaginatedCampaigns = async ({
   companyId,
   pageNumber = 1,
   pageSize = 10,
+  sortBy,
+  sortOrder = SORT_ORDER.ASC,
 }) => {
   const query = {
     company: companyId,
@@ -140,6 +142,7 @@ const readPaginatedCampaigns = async ({
   const [totalRecords, allCampaigns] = await Promise.all([
     Campaign.countDocuments(query),
     Campaign.find(query)
+      .sort({ [sortBy]: sortOrder === SORT_ORDER.ASC ? 1 : -1 })
       .skip((parseInt(pageNumber) - 1) * pageSize)
       .limit(pageSize)
       .populate("segments")
@@ -185,11 +188,16 @@ const readPaginatedCampaigns = async ({
   };
 };
 
-const readAllCampaigns = async ({ companyId }) => {
+const readAllCampaigns = async ({
+  companyId,
+  sortBy,
+  sortOrder = SORT_ORDER.ASC,
+}) => {
   const allCampaigns = await Campaign.find({
     company: companyId,
     status: { $ne: CAMPAIGN_STATUS.DELETED },
   })
+    .sort({ [sortBy]: sortOrder === SORT_ORDER.ASC ? 1 : -1 })
     .populate("segments")
     .lean();
 
@@ -274,13 +282,10 @@ const updateCampaign = async ({ companyId, campaignId, campaignData }) => {
 
   if (campaign.status === CAMPAIGN_STATUS.ACTIVE) {
     await validateCampaign({ campaign, company, primaryUser });
-  }
 
-  if (
-    campaign.status === CAMPAIGN_STATUS.ACTIVE &&
-    campaign.runMode === RUN_MODE.INSTANT
-  ) {
-    await runCampaign({ campaign });
+    if (campaign.runMode === RUN_MODE.INSTANT) {
+      await runCampaign({ campaign });
+    }
   }
 };
 

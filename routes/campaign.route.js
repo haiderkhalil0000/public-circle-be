@@ -5,10 +5,8 @@ const Joi = require("joi");
 const { authenticate, validate } = require("../middlewares");
 const { campaignsController } = require("../controllers");
 const {
-  RESPONSE_MESSAGES,
-  RUN_MODE,
-  CAMPAIGN_STATUS,
-} = require("../utils/constants.util");
+  constants: { RESPONSE_MESSAGES, RUN_MODE, CAMPAIGN_STATUS, SORT_ORDER },
+} = require("../utils");
 
 const router = express.Router();
 
@@ -76,25 +74,36 @@ router.post(
   }
 );
 
-router.get("/all", authenticate.verifyToken, async (req, res, next) => {
-  try {
-    const allCampaigns = await campaignsController.readAllCampaigns({
-      companyId: req.user.company._id,
-    });
+router.get(
+  "/all",
+  authenticate.verifyToken,
+  validate({
+    query: Joi.object({
+      sortBy: Joi.string().optional(),
+      sortOrder: Joi.string().valid(SORT_ORDER.ASC, SORT_ORDER.DSC).optional(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const allCampaigns = await campaignsController.readAllCampaigns({
+        companyId: req.user.company._id,
+        ...req.query,
+      });
 
-    res.status(200).json({
-      message: RESPONSE_MESSAGES.FETCHED_ALL_CAMPAIGNS,
-      data: allCampaigns,
-    });
-  } catch (err) {
-    // sendErrorReportToSentry(error);
-    console.log(err);
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.FETCHED_ALL_CAMPAIGNS,
+        data: allCampaigns,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
 
-    campaignDebugger(err);
+      campaignDebugger(err);
 
-    next(err);
+      next(err);
+    }
   }
-});
+);
 
 router.get(
   "/logs/all",
@@ -192,6 +201,8 @@ router.get(
     query: Joi.object({
       pageNumber: Joi.number().optional(),
       pageSize: Joi.number().optional(),
+      sortBy: Joi.string().optional(),
+      sortOrder: Joi.string().valid(SORT_ORDER.ASC, SORT_ORDER.DSC).optional(),
     }),
   }),
   async (req, res, next) => {
