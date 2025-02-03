@@ -24,10 +24,9 @@ const {
     RUN_MODE,
     TEMPLATE_CONTENT_TYPE,
     EMAIL_KIND,
-    OVERAGE_KIND,
+    SORT_ORDER,
   },
 } = require("../utils");
-const { SORT_ORDER } = require("../utils/constants.util");
 
 const { PUBLIC_CIRCLES_EMAIL_ADDRESS } = process.env;
 
