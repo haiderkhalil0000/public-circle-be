@@ -274,7 +274,7 @@ const updateCampaign = async ({ companyId, campaignId, campaignData }) => {
 
   await validateCampaign({ campaign, company, primaryUser });
 
-  if (campaignData.runMode === RUN_MODE.INSTANT) {
+  if (campaign.runMode === RUN_MODE.INSTANT) {
     await runCampaign({ campaign });
   }
 };
