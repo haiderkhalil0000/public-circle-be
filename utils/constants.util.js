@@ -132,8 +132,6 @@ module.exports = {
     FETCHED_ACCESS_TOKEN: "Access token fetched successfully.",
     FETCHED_ACCESS_TOKENS: "Access tokens fetched successfully.",
     ACCESS_TOKEN_DELETED: "Access token deleted successfully.",
-    EMAIL_NOT_FOUND_IN_COMPANY:
-      "Destination email address not found in the company data!",
     SETUP_INTENT_FETCHED: "Setup intent fetched successfully.",
     ROLE_EXISTS_ALREADY: "Role exists already!",
     ROLE_CREATED: "Role created successfully.",
