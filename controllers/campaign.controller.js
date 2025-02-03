@@ -272,7 +272,9 @@ const updateCampaign = async ({ companyId, campaignId, campaignData }) => {
 
   await campaign.save();
 
-  await validateCampaign({ campaign, company, primaryUser });
+  if (campaign.status === CAMPAIGN_STATUS.ACTIVE) {
+    await validateCampaign({ campaign, company, primaryUser });
+  }
 
   if (
     campaign.status === CAMPAIGN_STATUS.ACTIVE &&
