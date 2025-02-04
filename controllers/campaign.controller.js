@@ -396,11 +396,13 @@ const sendTestEmail = async ({
     promises.push(
       EmailSent.create({
         company: companyId,
+        campaign: campaignId,
         kind: EMAIL_KIND.TEST,
         fromEmailAddress: sourceEmailAddress,
         toEmailAddress: emailAddresses[index],
         emailSubject,
         emailContent: mappedContentArray[index],
+        size: emailTemplate.size,
         sesMessageId: item.MessageId,
       })
     );
@@ -778,8 +780,17 @@ const getCampaignBandwidthUsage = ({ emailSentDocsArray }) =>
     .map((item) => item.size)
     .reduce((totalValue, currentValue) => totalValue + currentValue, 0);
 
-const readCampaignUsageDetails = async ({ companyId }) => {
-  const campaignIds = await Campaign.distinct("_id", { company: companyId });
+const readCampaignUsageDetails = async ({ companyId, stripeCustomerId }) => {
+  const stripeController = require("./stripe.controller");
+
+  const [campaignIds, planIds] = await Promise.all([
+    Campaign.distinct("_id", { company: companyId }),
+    stripeController.readPlanIds({
+      stripeCustomerId,
+    }),
+  ]);
+
+  const plan = await Plan.findById(planIds[0].planId);
 
   const promises = [];
 
@@ -795,20 +806,97 @@ const readCampaignUsageDetails = async ({ companyId }) => {
 
   const emailsSentByCompany = await Promise.all(promises);
 
-  return campaignIds.map((campaignId, index) => ({
-    campaignId,
-    emailUsage: emailsSentByCompany[index].length,
-    bandwidthUsage: getCampaignBandwidthUsage({
-      emailSentDocsArray: emailsSentByCompany[index],
-    }),
-    bandwidthUnit: basicUtil
+  let emailUsageIterated = 0,
+    bandwidthUsageIterated = 0,
+    isEmailOverage = false,
+    isBandwidthOverage = false,
+    emailOverageIterator = 0,
+    bandwidthOverageIterator = 0,
+    emailRemainder = 0,
+    bandwidthRemainder = 0;
+
+  return campaignIds.map((campaignId, index) => {
+    const emailUsage = emailsSentByCompany[index].length;
+
+    emailUsageIterated = emailUsageIterated + emailUsage;
+
+    const bandwidthUsage = parseFloat(
+      basicUtil
+        .calculateByteUnit({
+          bytes: getCampaignBandwidthUsage({
+            emailSentDocsArray: emailsSentByCompany[index],
+          }),
+        })
+        .split(" ")[0]
+    );
+
+    bandwidthUsageIterated =
+      bandwidthUsageIterated +
+      getCampaignBandwidthUsage({
+        emailSentDocsArray: emailsSentByCompany[index],
+      });
+
+    const bandwidthUsageUnit = basicUtil
       .calculateByteUnit({
         bytes: getCampaignBandwidthUsage({
           emailSentDocsArray: emailsSentByCompany[index],
         }),
       })
-      .split(" ")[1],
-  }));
+      .split(" ")[1];
+
+    if (emailUsageIterated - plan.quota.email > 0) {
+      isEmailOverage = true;
+      emailOverageIterator++;
+    } else {
+      emailRemainder = emailRemainder + emailUsage;
+    }
+
+    if (bandwidthUsageIterated - plan.quota.bandwidth > 0) {
+      isBandwidthOverage = true;
+      bandwidthOverageIterator++;
+    } else {
+      bandwidthRemainder =
+        bandwidthRemainder +
+        getCampaignBandwidthUsage({
+          emailSentDocsArray: emailsSentByCompany[index],
+        });
+    }
+
+    const overagePrice = {
+      email:
+        isEmailOverage && emailOverageIterator === 1
+          ? ((emailUsage + emailRemainder - plan.quota.email) *
+              plan.bundles.email.priceInSmallestUnit) /
+            100
+          : isEmailOverage
+          ? (emailUsage * plan.bundles.email.priceInSmallestUnit) / 100
+          : 0,
+      bandwidth:
+        isBandwidthOverage && bandwidthOverageIterator === 1
+          ? ((getCampaignBandwidthUsage({
+              emailSentDocsArray: emailsSentByCompany[index],
+            }) +
+              bandwidthRemainder -
+              plan.quota.bandwidth) *
+              plan.bundles.bandwidth.priceInSmallestUnit) /
+            100
+          : isBandwidthOverage
+          ? (getCampaignBandwidthUsage({
+              emailSentDocsArray: emailsSentByCompany[index],
+            }) *
+              plan.bundles.bandwidth.priceInSmallestUnit) /
+            100
+          : 0,
+    };
+
+    return {
+      campaignId,
+      emailUsage,
+      bandwidthUsage,
+      bandwidthUsageUnit,
+      overagePrice,
+    };
+  });
 };
 
 module.exports = {

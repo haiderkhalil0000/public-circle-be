@@ -18,6 +18,7 @@ router.get(
       const campaignUsageDetails =
         await campaignsController.readCampaignUsageDetails({
           companyId: req.user.company._id,
+          stripeCustomerId: req.user.company.stripeCustomerid,
         });
 
       res.status(200).json({
