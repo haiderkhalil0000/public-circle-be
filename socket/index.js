@@ -26,9 +26,9 @@ const registerEvents = () => {
       try {
         const token = socket.handshake.query.token;
 
-        const { _id: userId } = authenticate.decodeToken(token);
+        const { emailAddress } = authenticate.decodeToken(token);
 
-        const user = await User.findById(userId).lean();
+        const user = await User.findOne({ emailAddress }).lean();
 
         if (!user) {
           return next(new Error("Not authenticated, profile not found!"));
@@ -36,15 +36,9 @@ const registerEvents = () => {
 
         const oldConnection = connections[user._id.toString()];
 
-        if (oldConnection) {
-          emitMessage({
-            socketObj: oldConnection,
-            socketChannel: SOCKET_CHANNELS.DISCONNECT_OLD_DEVICE,
-            message: SOCKET_MESSAGES.LOGIN_FROM_OTHER_DEVICE,
-          });
+        if (!oldConnection) {
+          connections[user._id.toString()] = socket;
         }
-
-        connections[user._id.toString()] = socket;
 
         socket.user = user;
 
