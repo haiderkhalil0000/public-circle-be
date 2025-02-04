@@ -305,6 +305,7 @@ router.post(
   authenticate.verifyToken,
   validate({
     body: Joi.object({
+      campaignId: Joi.string().required(),
       sourceEmailAddress: Joi.string().email().required(),
       toEmailAddresses: Joi.string().required(),
       emailSubject: Joi.string().required(),
@@ -314,8 +315,8 @@ router.post(
   async (req, res, next) => {
     try {
       await campaignsController.sendTestEmail({
-        ...req.body,
         companyId: req.user.company._id,
+        ...req.body,
       });
 
       res.status(200).json({
