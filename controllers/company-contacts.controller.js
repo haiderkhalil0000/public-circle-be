@@ -328,6 +328,19 @@ const readPrimaryKeyEffect = async ({ companyId, primaryKey }) => {
   } will be deleted if you mark “${primaryKey}” as unique key`;
 };
 
+const deleteSelectedContacts = async ({ companyId, contactIds }) => {
+  const result = await CompanyContact.deleteMany({
+    _id: { $in: contactIds },
+    company: companyId,
+  });
+
+  if (!result.deletedCount) {
+    throw createHttpError(404, {
+      errorMessage: RESPONSE_MESSAGES.COMPANY_CONTACTS_DELETED_ALREADY,
+    });
+  }
+};
+
 module.exports = {
   readContactKeys,
   readContactValues,
@@ -348,4 +361,5 @@ module.exports = {
   deletePrimaryKey,
   readCompanyContactsCount,
   readPrimaryKeyEffect,
+  deleteSelectedContacts,
 };
