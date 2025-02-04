@@ -4,6 +4,8 @@ const { Readable } = require("stream");
 const csvParser = require("csv-parser");
 
 const webhooksController = require("../controllers/webhooks.controller");
+const { emitMessage, getSocket } = require("../socket");
+const { SOCKET_CHANNELS } = require("../utils/constants.util");
 
 const { MONGODB_URL } = process.env;
 
@@ -24,7 +26,7 @@ parentPort.on("message", async (message) => {
   try {
     await connectDbForThread();
 
-    const { companyId, stripeCustomerId, file } = message;
+    const { companyId, stripeCustomerId, currentUserId, file } = message;
 
     const results = [];
 
@@ -48,7 +50,15 @@ parentPort.on("message", async (message) => {
       users: results,
     });
 
-    parentPort.postMessage("Contacts imported in thread successfully");
+    const targetSocket = getSocket({ userId: currentUserId });
+
+    emitMessage({
+      socketObj: targetSocket,
+      socketChannel: SOCKET_CHANNELS.CONTACTS_UPLOAD_PROGRESS,
+      message: {
+        progress: 100,
+      },
+    });
   } catch (error) {
     console.error("Error in worker thread:", error);
   }

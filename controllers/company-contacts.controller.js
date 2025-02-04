@@ -212,7 +212,12 @@ const deleteAllCompanyContacts = async ({ companyId, currentUserKind }) => {
   }
 };
 
-const uploadCsv = async ({ companyId, stripeCustomerId, file }) => {
+const uploadCsv = async ({
+  companyId,
+  stripeCustomerId,
+  currentUserId,
+  file,
+}) => {
   if (!file) {
     throw createHttpError(400, {
       errorMessage: "No file uploaded.",
@@ -247,6 +252,7 @@ const uploadCsv = async ({ companyId, stripeCustomerId, file }) => {
   worker.postMessage({
     companyId: companyId.toString(),
     stripeCustomerId,
+    currentUserId,
     file,
   });
 };

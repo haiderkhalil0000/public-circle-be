@@ -407,4 +407,8 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
     ASC: "ASC",
     DSC: "DSC",
   },
+
+  SOCKET_CHANNELS: {
+    CONTACTS_UPLOAD_PROGRESS: "CONTACTS_UPLOAD_PROGRESS",
+  },
 };

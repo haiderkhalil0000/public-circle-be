@@ -47,6 +47,8 @@ app.use(
 
 const server = http.createServer(app);
 
+require("./socket").initializeSocket(server);
+
 server.timeout = 0; // Disable timeout
 
 configure(app);
