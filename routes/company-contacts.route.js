@@ -417,6 +417,35 @@ router.patch(
   }
 );
 
+router.post(
+  "/delete-contacts/selected",
+  authenticate.verifyToken,
+  validate({
+    body: Joi.object({
+      contactIds: Joi.array().items(Joi.string()).required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      await companyContactsController.deleteSelectedContacts({
+        companyId: req.user.company._id,
+        ...req.body,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.COMPANY_USERS_DELETED,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      companyContactsDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 router.delete("/all", authenticate.verifyToken, async (req, res, next) => {
   try {
     await companyContactsController.deleteAllCompanyContacts({
