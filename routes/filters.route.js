@@ -40,34 +40,6 @@ router.get(
   }
 );
 
-router.get(
-  "/possible-filter-values",
-  authenticate.verifyToken,
-  validate({
-    query: Joi.object({
-      companyId: Joi.string().required(),
-      key: Joi.string().required(),
-    }),
-  }),
-  async (req, res, next) => {
-    try {
-      const possibleFilterValues =
-        await filtersController.readPossibleFilterValues(req.query);
-
-      res.status(200).json({
-        message: RESPONSE_MESSAGES.FETCHED_POSSIBLE_VALUES,
-        data: possibleFilterValues,
-      });
-    } catch (err) {
-      // sendErrorReportToSentry(error);
-
-      filterDebugger(err);
-
-      next(err);
-    }
-  }
-);
-
 router.post(
   "/",
   authenticate.verifyToken,

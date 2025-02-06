@@ -168,10 +168,12 @@ router.get(
 );
 
 router.get(
-  "/possible-filter-values",
+  "/contact-values",
   authenticate.verifyToken,
   validate({
     query: Joi.object({
+      pageNumber: Joi.number().required(),
+      pageSize: Joi.number().required(),
       key: Joi.string().required(),
     }),
   }),
@@ -180,7 +182,7 @@ router.get(
       const possibleFilterValues =
         await companyContactsController.readContactValues({
           companyId: req.user.company._id,
-          key: req.query.key,
+          ...req.query,
         });
 
       res.status(200).json({
