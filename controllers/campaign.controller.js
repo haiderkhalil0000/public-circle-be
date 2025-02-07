@@ -76,16 +76,20 @@ const createCampaign = async ({
   runSchedule,
   isRecurring,
   recurringPeriod,
+  status,
 }) => {
+  if (status !== CAMPAIGN_STATUS.DISABLED) {
+    for (const segmentId of segmentIds) {
+      basicUtil.validateObjectId({ inputString: segmentId });
+    }
+  }
+
   await validateSourceEmailAddress({
     companyId,
     sourceEmailAddress,
   });
-  basicUtil.validateObjectId({ inputString: emailTemplateId });
 
-  for (const segmentId of segmentIds) {
-    basicUtil.validateObjectId({ inputString: segmentId });
-  }
+  basicUtil.validateObjectId({ inputString: emailTemplateId });
 
   const usersController = require("./users.controller");
   const companiesController = require("./companies.controller");
@@ -101,15 +105,18 @@ const createCampaign = async ({
       runSchedule,
       isRecurring,
       recurringPeriod,
+      status,
     }),
     companiesController.readCompanyById({ companyId }),
     usersController.readPrimaryUserByCompanyId({ companyId }),
   ]);
 
-  await validateCampaign({ campaign, company, primaryUser });
+  if (campaign.status === CAMPAIGN_STATUS.ACTIVE) {
+    await validateCampaign({ campaign, company, primaryUser });
 
-  if (runMode === RUN_MODE.INSTANT) {
-    await runCampaign({ campaign });
+    if (runMode === RUN_MODE.INSTANT) {
+      await runCampaign({ campaign });
+    }
   }
 };
 

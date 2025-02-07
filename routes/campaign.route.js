@@ -41,7 +41,7 @@ router.post(
   authenticate.verifyToken,
   validate({
     body: Joi.object({
-      segmentIds: Joi.array().required(),
+      segmentIds: Joi.array(),
       sourceEmailAddress: Joi.string().email().required(),
       emailSubject: Joi.string().required(),
       emailTemplateId: Joi.string().required(),
@@ -51,6 +51,10 @@ router.post(
       runSchedule: Joi.string(),
       isRecurring: Joi.boolean(),
       recurringPeriod: Joi.string(),
+      status: Joi.string().valid(
+        CAMPAIGN_STATUS.ACTIVE,
+        CAMPAIGN_STATUS.DISABLED
+      ),
     }),
   }),
   async (req, res, next) => {
