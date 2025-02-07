@@ -20,7 +20,10 @@ router.get(
   }),
   async (req, res, next) => {
     try {
-      const plans = await stripeController.readPlans(req.query);
+      const plans = await stripeController.readPlans({
+        ...req.query,
+        stripeCustomerId: req.user.company.stripeCustomerId,
+      });
 
       res.status(200).json({
         message: RESPONSE_MESSAGES.PLANS_FETCHED,

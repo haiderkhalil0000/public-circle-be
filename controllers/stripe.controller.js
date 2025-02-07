@@ -100,17 +100,21 @@ const readActiveBillingCycleDates = async ({ stripeCustomerId }) => {
   };
 };
 
-const readPlans = async ({ pageSize }) => {
+const readPlans = async ({ pageSize, stripeCustomerId }) => {
   const plansController = require("./plans.controller");
 
   const promises = [];
 
-  const [stripePlans, dbPlans] = await Promise.all([
+  const [stripePlans, activePlanArray, dbPlans] = await Promise.all([
     stripe.products.list({
       limit: pageSize,
     }),
+    readActivePlansByCustomerId({ stripeCustomerId }),
     plansController.readAllPlans(),
   ]);
+
+  const activePlan = activePlanArray[0];
+  const activePlanPrice = Number(activePlan.productPrice.split(" ")[0]);
 
   // Exclude the product with the name "Top Up"
   const filteredPlans = stripePlans.data.filter(
@@ -123,8 +127,17 @@ const readPlans = async ({ pageSize }) => {
 
   const prices = await Promise.all(promises);
 
+  const today = moment();
+  const currentDayOfMonth = today.date();
+
+  const daysInMonth = moment().daysInMonth();
+
   filteredPlans.forEach((item, index) => {
     item.price = prices[index];
+
+    item.price.unit_amount =
+      ((item.price.unit_amount / 100 - activePlanPrice) / daysInMonth) *
+      (daysInMonth - currentDayOfMonth + 1);
 
     const dbPlan = dbPlans.find((plan) => plan.name === item.name);
 
