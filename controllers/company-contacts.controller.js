@@ -31,6 +31,12 @@ const readContactKeys = async ({ companyId = "" }) => {
   );
 };
 
+// Helper function to get a random sample from an array
+const getRandomSample = (array, sampleSize) => {
+  const shuffled = array.sort(() => 0.5 - Math.random()); // Shuffle the array
+  return shuffled.slice(0, sampleSize); // Return the first `sampleSize` elements
+};
+
 const readContactValues = async ({
   companyId,
   key,
@@ -51,7 +57,13 @@ const readContactValues = async ({
     });
   }
 
-  const values = results.map((item) => item[key]);
+  let values = results.map((item) => item[key]);
+
+  // If total results are more than 500, sample 10% of the values
+  if (values.length > 500) {
+    const sampleSize = Math.ceil(values.length * 0.1); // Take 10% of the current page's values
+    values = getRandomSample(values, sampleSize);
+  }
 
   const uniqueValues = [...new Set(values)];
 
