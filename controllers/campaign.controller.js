@@ -529,6 +529,10 @@ const runCampaign = async ({ campaign }) => {
     Campaign.updateOne(
       { _id: campaign._id },
       {
+        [campaign.runMode === RUN_MODE.INSTANT ? "status" : undefined]:
+          campaign.runMode === RUN_MODE.INSTANT
+            ? CAMPAIGN_STATUS.DISABLED
+            : undefined,
         cronStatus: CRON_STATUS.PROCESSED,
         lastProcessed: moment().format(),
         $inc: { processedCount: 1 },
