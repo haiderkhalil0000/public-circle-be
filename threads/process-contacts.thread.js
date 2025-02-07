@@ -4,8 +4,6 @@ const { Readable } = require("stream");
 const csvParser = require("csv-parser");
 
 const webhooksController = require("../controllers/webhooks.controller");
-const { emitMessage, getSocket } = require("../socket");
-const { SOCKET_CHANNELS } = require("../utils/constants.util");
 
 const { MONGODB_URL } = process.env;
 
@@ -22,11 +20,25 @@ const connectDbForThread = async () => {
   }
 };
 
+const splitArrayIntoParts = (array, numberOfParts) => {
+  const partSize = Math.ceil(array.length / numberOfParts); // Size of each part
+  const parts = [];
+
+  for (let i = 0; i < numberOfParts; i++) {
+    const start = i * partSize; // Start index of the current part
+    const end = start + partSize; // End index of the current part
+    const part = array.slice(start, end); // Extract the part
+    parts.push(part);
+  }
+
+  return parts;
+};
+
 parentPort.on("message", async (message) => {
   try {
     await connectDbForThread();
 
-    const { companyId, stripeCustomerId, currentUserId, file } = message;
+    const { companyId, stripeCustomerId, file } = message;
 
     const results = [];
 
@@ -44,20 +56,22 @@ parentPort.on("message", async (message) => {
 
     await processCSV;
 
-    await webhooksController.recieveCompanyContacts({
-      companyId,
-      stripeCustomerId,
-      users: results,
-    });
+    const parts = splitArrayIntoParts(results, 10);
 
-    const targetSocket = getSocket({ userId: currentUserId });
+    let iteratedProgress = 0;
 
-    emitMessage({
-      socketObj: targetSocket,
-      socketChannel: SOCKET_CHANNELS.CONTACTS_UPLOAD_PROGRESS,
-      message: {
-        progress: 100,
-      },
+    parts.forEach(async (item) => {
+      await webhooksController.recieveCompanyContacts({
+        companyId,
+        stripeCustomerId,
+        users: item,
+      });
+
+      iteratedProgress = iteratedProgress + item.length;
+
+      parentPort.postMessage({
+        progress: (iteratedProgress / results.length) * 100,
+      });
     });
   } catch (error) {
     console.error("Error in worker thread:", error);

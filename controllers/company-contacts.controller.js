@@ -253,8 +253,19 @@ const uploadCsv = async ({
 
   const worker = new Worker(workerPath);
 
+  const { emitMessage, getSocket } = require("../socket");
+  const { SOCKET_CHANNELS } = require("../utils/constants.util");
+
   worker.on("message", (message) => {
-    console.log("Message from worker:", message);
+    const targetSocket = getSocket({ userId: currentUserId });
+
+    console.log(message);
+
+    emitMessage({
+      socketObj: targetSocket,
+      socketChannel: SOCKET_CHANNELS.CONTACTS_UPLOAD_PROGRESS,
+      message,
+    });
   });
 
   worker.on("error", (error) => {
