@@ -175,6 +175,7 @@ router.get(
       pageNumber: Joi.number().required(),
       pageSize: Joi.number().required(),
       key: Joi.string().required(),
+      searchString: Joi.string().optional(),
     }),
   }),
   async (req, res, next) => {

@@ -42,7 +42,17 @@ const readContactValues = async ({
   key,
   pageNumber = 1,
   pageSize = 100,
+  searchString,
 }) => {
+  if (searchString) {
+    const regex = new RegExp(`^${searchString}`, "i"); // 'i' for case-insensitive
+
+    return CompanyContact.find({
+      company: companyId,
+      [key]: { $regex: regex },
+    }).limit(10);
+  }
+
   const [company, results, totalResults] = await Promise.all([
     Company.findById(companyId),
     CompanyContact.find({ company: companyId }, { [key]: 1, _id: 0 })
