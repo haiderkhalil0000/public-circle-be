@@ -105,21 +105,52 @@ const readPlans = async ({ pageSize, stripeCustomerId }) => {
 
   const promises = [];
 
-  const [stripePlans, activePlanArray, dbPlans] = await Promise.all([
+  const [stripePlans, dbPlans] = await Promise.all([
     stripe.products.list({
       limit: pageSize,
     }),
-    readActivePlansByCustomerId({ stripeCustomerId }),
     plansController.readAllPlans(),
   ]);
 
-  const activePlan = activePlanArray[0];
-  const activePlanPrice = Number(activePlan.productPrice.split(" ")[0]);
+  let activePlanArray;
 
   // Exclude the product with the name "Top Up"
   const filteredPlans = stripePlans.data.filter(
     (item) => item.name !== "Top Up"
   );
+
+  try {
+    const activePlanArrayTemp = await readActivePlansByCustomerId({
+      stripeCustomerId,
+    });
+
+    activePlanArray = activePlanArrayTemp;
+  } catch (err) {
+    const promises = [];
+
+    if (err.errorMessage.includes("No active plan found!")) {
+      filteredPlans.forEach((item) => {
+        promises.push(stripe.prices.retrieve(item.default_price));
+      });
+
+      const prices = await Promise.all(promises);
+
+      filteredPlans.forEach((item, index) => {
+        item.price = prices[index];
+
+        const dbPlan = dbPlans.find((plan) => plan.name === item.name);
+
+        if (dbPlan) {
+          item.description = dbPlan.description;
+        }
+      });
+
+      return filteredPlans;
+    }
+  }
+
+  const activePlan = activePlanArray[0];
+  const activePlanPrice = Number(activePlan.productPrice.split(" ")[0]);
 
   filteredPlans.forEach((item) => {
     promises.push(stripe.prices.retrieve(item.default_price));
