@@ -713,13 +713,8 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
     bandwidthOverageCharge = 0;
 
   if (plan.quota.email < campaignRecipientsCount + emailsSentByCompany.length) {
-    const totalEmailsCount =
-      campaignRecipientsCount + emailsSentByCompany.length; // emails to be sent + emails already sent
-
-    const unpaidEmailsCount = totalEmailsCount - plan.quota.email;
-
     emailOverageCharge = calculateEmailOverageCharge({
-      unpaidEmailsCount,
+      unpaidEmailsCount: campaignRecipientsCount,
       plan,
     });
 
@@ -752,14 +747,8 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
     bandwidthSentByCompany +
       campaign.emailTemplate.size * campaignRecipientsCount
   ) {
-    const totalBandwidth =
-      campaign.emailTemplate.size * campaignRecipientsCount +
-      bandwidthSentByCompany;
-
-    const unpaidBandwidth = totalBandwidth - plan.quota.bandwidth;
-
     bandwidthOverageCharge = calculateBandwidthOverageCharge({
-      unpaidBandwidth,
+      unpaidBandwidth: campaign.emailTemplate.size * campaignRecipientsCount,
       plan,
     });
 
