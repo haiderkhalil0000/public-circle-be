@@ -409,6 +409,8 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
   },
 
   SOCKET_CHANNELS: {
-    CONTACTS_UPLOAD_PROGRESS: "CONTACTS_UPLOAD_PROGRESS",
+    CONNECTION: "connection",
+    DISCONNECT: "disconnect",
+    CONTACTS_UPLOAD_PROGRESS: "contacts-upload-progress",
   },
 };
