@@ -196,6 +196,20 @@ const readEmailsSentByCompanyId = ({
 const readEmailsSentByCampaignId = ({ campaignId }) =>
   EmailSent.find({ campaign: campaignId });
 
+const readEmailAddressesByCampaignId = async ({ campaignId }) => {
+  const campaignsController = require("./campaign.controller");
+
+  const [campaign, emailSentDocs] = await Promise.all([
+    campaignsController.readCampaign({ campaignId }),
+    EmailSent.find({ campaign: campaignId }).lean(),
+  ]);
+
+  return {
+    campaign,
+    emailAddresses: emailSentDocs.map((item) => item.toEmailAddress),
+  };
+};
+
 const createEmailSentDoc = ({
   companyId,
   campaignId,
@@ -223,4 +237,5 @@ module.exports = {
   readEmailContentConsumed,
   readEmailsSentByCampaignId,
   createEmailSentDoc,
+  readEmailAddressesByCampaignId,
 };
