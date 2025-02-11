@@ -3,7 +3,7 @@ const campaignDebugger = require("debug")("debug:campaign");
 const Joi = require("joi");
 
 const { authenticate, validate } = require("../middlewares");
-const { campaignsController } = require("../controllers");
+const { campaignsController, emailsSentController } = require("../controllers");
 const {
   constants: { RESPONSE_MESSAGES, RUN_MODE, CAMPAIGN_STATUS, SORT_ORDER },
 } = require("../utils");
@@ -160,6 +160,34 @@ router.get(
       res.status(200).json({
         message: RESPONSE_MESSAGES.CAMPAIGN_LOGS_FETCHED,
         data: campaignLogs,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      campaignDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.get(
+  "/:campaignId/email-addresses",
+  // authenticate.verifyToken,
+  validate({
+    params: Joi.object({
+      campaignId: Joi.string().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const emailAddresses =
+        await emailsSentController.readEmailAddressesByCampaignId(req.params);
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.FETCHED_CAMPAIGN,
+        data: emailAddresses,
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
