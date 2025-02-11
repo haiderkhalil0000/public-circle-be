@@ -1,8 +1,9 @@
 const moment = require("moment");
 const mongoose = require("mongoose");
 
-const { EmailSent } = require("../models");
+const { EmailSent, CompanyContact } = require("../models");
 const { EMAIL_KIND } = require("../utils/constants.util");
+const { basicUtil } = require("../utils");
 
 const MONTH_NAMES = moment.months().map((month) => month.substring(0, 3)); // ['Jan', 'Feb', ... 'Dec']
 
@@ -200,13 +201,30 @@ const readEmailAddressesByCampaignId = async ({ campaignId }) => {
   const campaignsController = require("./campaign.controller");
 
   const [campaign, emailSentDocs] = await Promise.all([
-    campaignsController.readCampaign({ campaignId }),
+    campaignsController.readSegmentPopulatedCampaign({ campaignId }),
     EmailSent.find({ campaign: campaignId }).lean(),
   ]);
 
+  let query = {};
+
+  query = campaignsController.populateCompanyUserQuery({
+    segments: campaign.segments,
+  });
+
+  let emailAddresses = await CompanyContact.find(
+    { ...query, company: campaign.company },
+    {
+      email: 1,
+    }
+  ).lean();
+
+  emailAddresses = basicUtil.fiterUniqueStringsFromArray(
+    emailAddresses.map((item) => item.email)
+  );
+
   return {
     campaign,
-    emailAddresses: emailSentDocs.map((item) => item.toEmailAddress),
+    emailAddresses,
   };
 };
 
