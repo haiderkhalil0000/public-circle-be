@@ -136,6 +136,22 @@ const readCampaign = async ({ campaignId }) => {
   return campaign;
 };
 
+const readSegmentPopulatedCampaign = async ({ campaignId }) => {
+  basicUtil.validateObjectId({ inputString: campaignId });
+
+  const campaign = await Campaign.findById(campaignId)
+    .populate("segments")
+    .lean();
+
+  if (!campaign) {
+    throw createHttpError(404, {
+      errorMessage: RESPONSE_MESSAGES.CAMPAIGN_NOT_FOUND,
+    });
+  }
+
+  return campaign;
+};
+
 const readPaginatedCampaigns = async ({
   companyId,
   pageNumber = 1,
@@ -917,4 +933,7 @@ module.exports = {
   readCampaignRecipientsCount,
   validateCampaign,
   readCampaignUsageDetails,
+  readCampaign,
+  readSegmentPopulatedCampaign,
+  populateCompanyUserQuery,
 };
