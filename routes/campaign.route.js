@@ -59,14 +59,14 @@ router.post(
   }),
   async (req, res, next) => {
     try {
-      await campaignsController.createCampaign({
+      const campaign = await campaignsController.createCampaign({
         companyId: req.user.company._id,
         ...req.body,
       });
 
       res.status(200).json({
         message: RESPONSE_MESSAGES.CAMPAIGN_CREATED,
-        data: {},
+        data: campaign,
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
