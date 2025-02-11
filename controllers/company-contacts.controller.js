@@ -47,10 +47,23 @@ const readContactValues = async ({
   if (searchString) {
     const regex = new RegExp(`^${searchString}`, "i"); // 'i' for case-insensitive
 
-    return CompanyContact.find({
+    const query = {
       company: companyId,
       [key]: { $regex: regex },
-    }).limit(10);
+    };
+
+    const [companyContactDocs, totalResults] = await Promise.all([
+      CompanyContact.find(query)
+        .skip((parseInt(pageNumber) - 1) * pageSize)
+        .limit(pageSize),
+      CompanyContact.countDocuments(query),
+    ]);
+
+    let values = companyContactDocs.map((item) => item[key]);
+
+    const uniqueValues = [...new Set(values)];
+
+    return { contactValues: uniqueValues, totalResults };
   }
 
   const [company, results, totalResults] = await Promise.all([
