@@ -29,6 +29,7 @@ router.use("/stripe", require("./stripe.route"));
 router.use("/social-links", require("./social-links.route"));
 router.use("/assets", require("./assets.route"));
 router.use("/rewards", require("./rewards.route"));
+router.use("/emails", require("./emails.route"));
 
 router.use(error);
 
