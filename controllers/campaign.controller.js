@@ -118,6 +118,8 @@ const createCampaign = async ({
       await runCampaign({ campaign });
     }
   }
+
+  return campaign;
 };
 
 const readCampaign = async ({ campaignId }) => {
