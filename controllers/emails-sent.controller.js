@@ -196,10 +196,33 @@ const readEmailsSentByCompanyId = ({
 const readEmailsSentByCampaignId = ({ campaignId }) =>
   EmailSent.find({ campaign: campaignId });
 
+const createEmailSentDoc = ({
+  companyId,
+  campaignId,
+  campaignRunId,
+  kind,
+  fromEmailAddress,
+  toEmailAddress,
+  emailSubject,
+  emailContent,
+}) => {
+  EmailSent.create({
+    company: companyId,
+    campaign: campaignId,
+    campaignRun: campaignRunId,
+    kind,
+    fromEmailAddress,
+    toEmailAddress,
+    emailSubject,
+    emailContent,
+  });
+};
+
 module.exports = {
   readEmailSentGraphData,
   readEmailsSentByCompanyId,
   readEmailSentCount,
   readEmailContentConsumed,
   readEmailsSentByCampaignId,
+  createEmailSentDoc,
 };

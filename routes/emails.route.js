@@ -39,4 +39,38 @@ router.get(
   }
 );
 
+router.post(
+  "/sent/create",
+  //   authenticate.verifyToken,
+  validate({
+    body: Joi.object({
+      companyId: Joi.string().required(),
+      campaignId: Joi.string().required(),
+      campaignRunId: Joi.string().required(),
+      kind: Joi.string().required(),
+      fromEmailAddress: Joi.string().required(),
+      toEmailAddress: Joi.string().required(),
+      emailSubject: Joi.string().required(),
+      emailContent: Joi.string().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const email = await emailsSentController.createEmailSentDoc(req.body);
+
+      res.status(200).json({
+        message: "Email sent document created successfully.",
+        data: email,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      emailsSentDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 module.exports = router;
