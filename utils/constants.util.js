@@ -225,6 +225,7 @@ module.exports = {
     CAMPAIGN_USAGE_DETAILS_FETCHED:
       "Campaign usage details fetched successfully.",
     FILTER_VALUES_REQUIRED: "Filter values are required!",
+    EMAILS_FETCHED: "Emails fetched successfully.",
   },
 
   INTERACTION_CHANNELS: {
