@@ -414,4 +414,9 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
     DISCONNECT: "disconnect",
     CONTACTS_UPLOAD_PROGRESS: "contacts-upload-progress",
   },
+
+  COMPANY_CONTACT_STATUS: {
+    ACTIVE: "ACTIVE",
+    DELETED: "DELETED",
+  },
 };
