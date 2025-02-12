@@ -22,6 +22,14 @@ const schema = new mongoose.Schema(
         type: String,
       },
     ],
+    contactSelectionCriteria: [
+      {
+        filterKey: {
+          type: String,
+        },
+        filterValues: [{ type: String }],
+      },
+    ],
   },
   { timestamps: true }
 );

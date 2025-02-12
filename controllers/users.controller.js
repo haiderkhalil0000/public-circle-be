@@ -38,6 +38,7 @@ const updateUser = async ({
   watchTutorialStepsCompleted,
   currentUser,
   contactsDisplayOrder,
+  contactSelectionCriteria,
 }) => {
   let companyDoc;
   const promises = [];
@@ -113,14 +114,33 @@ const updateUser = async ({
     city ||
     province ||
     country ||
-    contactsDisplayOrder
+    contactsDisplayOrder ||
+    contactSelectionCriteria
   ) {
     promises.push(
       Company.updateOne(
         { _id: userUpdates.company || currentUser.company._id },
-        { companySize, address, postalCode, city, province, country }
+        {
+          companySize,
+          address,
+          postalCode,
+          city,
+          province,
+          country,
+          contactsDisplayOrder,
+          contactSelectionCriteria,
+        }
       )
     );
+
+    if (contactSelectionCriteria.length) {
+      const companyContactsController = require("./company-contacts.controller");
+
+      companyContactsController.filterContactsBySelectionCriteria({
+        companyId: userUpdates.company || currentUser.company._id,
+        contactSelectionCriteria,
+      });
+    }
   }
 
   promises.push(

@@ -4,7 +4,12 @@ const path = require("path");
 
 const { CompanyContact, Company } = require("../models");
 const {
-  constants: { RESPONSE_MESSAGES, USER_KIND },
+  constants: {
+    RESPONSE_MESSAGES,
+    USER_KIND,
+    SOCKET_CHANNELS,
+    COMPANY_CONTACT_STATUS,
+  },
   basicUtil,
 } = require("../utils");
 
@@ -277,7 +282,6 @@ const uploadCsv = async ({
   const worker = new Worker(workerPath);
 
   const { emitMessage, getSocket } = require("../socket");
-  const { SOCKET_CHANNELS } = require("../utils/constants.util");
 
   worker.on("message", (message) => {
     const targetSocket = getSocket({ userId: currentUserId });
@@ -414,6 +418,25 @@ const getSelectionCriteriaEffect = async ({
   return totalContacts - filteredContacts;
 };
 
+const filterContactsBySelectionCriteria = async ({
+  companyId,
+  contactSelectionCriteria,
+}) => {
+  const query = {
+    company: companyId,
+    $and: contactSelectionCriteria.map((filter) => ({
+      [filter.filterKey]: { $in: filter.filterValues },
+    })),
+  };
+
+  const filteredContactIds = await CompanyContact.distinct("_id", query);
+
+  await CompanyContact.updateMany(
+    { _id: { $nin: filteredContactIds }, company: companyId },
+    { status: COMPANY_CONTACT_STATUS.DELETED }
+  );
+};
+
 module.exports = {
   readContactKeys,
   readContactValues,
@@ -436,4 +459,5 @@ module.exports = {
   readPrimaryKeyEffect,
   deleteSelectedContacts,
   getSelectionCriteriaEffect,
+  filterContactsBySelectionCriteria,
 };

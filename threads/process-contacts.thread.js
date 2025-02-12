@@ -3,7 +3,7 @@ const { parentPort } = require("worker_threads");
 const { Readable } = require("stream");
 const csvParser = require("csv-parser");
 
-const webhooksController = require("../controllers/webhooks.controller");
+const { webhooksController, companiesController } = require("../controllers");
 
 const { MONGODB_URL } = process.env;
 
@@ -34,13 +34,25 @@ const splitArrayIntoParts = (array, numberOfParts) => {
   return parts;
 };
 
+function filterContacts({ contacts, criteria }) {
+  return contacts.filter((contact) => {
+    return criteria.every((criterion) => {
+      const { filterKey, filterValues } = criterion;
+      return filterValues.includes(contact[filterKey]);
+    });
+  });
+}
+
 parentPort.on("message", async (message) => {
   try {
-    await connectDbForThread();
-
     const { companyId, stripeCustomerId, file } = message;
 
-    const results = [];
+    const [_, company] = await Promise.all([
+      connectDbForThread(),
+      companiesController.readCompanyById({ companyId }),
+    ]);
+
+    let contacts = [];
 
     file.buffer = Buffer.from(file.buffer, "base64");
 
@@ -49,14 +61,21 @@ parentPort.on("message", async (message) => {
     const processCSV = new Promise((resolve, reject) => {
       fileStream
         .pipe(csvParser())
-        .on("data", (data) => results.push(data)) // Collect each row of CSV data
-        .on("end", () => resolve(results))
+        .on("data", (data) => contacts.push(data)) // Collect each row of CSV data
+        .on("end", () => resolve(contacts))
         .on("error", (err) => reject(err));
     });
 
     await processCSV;
 
-    const parts = splitArrayIntoParts(results, 10);
+    if (company.contactSelectionCriteria) {
+      contacts = filterContacts({
+        contacts,
+        criteria: company.contactSelectionCriteria,
+      });
+    }
+
+    const parts = splitArrayIntoParts(contacts, 10);
 
     let iteratedProgress = 0;
 
@@ -70,7 +89,7 @@ parentPort.on("message", async (message) => {
       iteratedProgress = iteratedProgress + item.length;
 
       parentPort.postMessage({
-        progress: (iteratedProgress / results.length) * 100,
+        progress: (iteratedProgress / contacts.length) * 100,
       });
     });
   } catch (error) {
