@@ -17,6 +17,11 @@ const schema = new mongoose.Schema(
     country: { type: String },
     stripeCustomerId: { type: String },
     contactsPrimaryKey: { type: String },
+    contactsDisplayOrder: [
+      {
+        type: String,
+      },
+    ],
   },
   { timestamps: true }
 );
