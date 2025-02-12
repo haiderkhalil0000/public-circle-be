@@ -86,6 +86,7 @@ router.patch(
         .strict()
         .min(1)
         .max(8),
+      contactsDisplayOrder: Joi.array(),
     }),
   }),
   async (req, res, next) => {
