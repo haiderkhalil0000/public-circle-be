@@ -395,6 +395,25 @@ const deleteSelectedContacts = async ({ companyId, contactIds }) => {
   }
 };
 
+const getSelectionCriteriaEffect = async ({
+  companyId,
+  contactSelectionCriteria,
+}) => {
+  const query = {
+    company: companyId,
+    $and: contactSelectionCriteria.map((filter) => ({
+      [filter.filterKey]: { $in: filter.filterValues },
+    })),
+  };
+
+  const [filteredContacts, totalContacts] = await Promise.all([
+    CompanyContact.countDocuments(query),
+    CompanyContact.countDocuments({ company: companyId }),
+  ]);
+
+  return totalContacts - filteredContacts;
+};
+
 module.exports = {
   readContactKeys,
   readContactValues,
@@ -416,4 +435,5 @@ module.exports = {
   readCompanyContactsCount,
   readPrimaryKeyEffect,
   deleteSelectedContacts,
+  getSelectionCriteriaEffect,
 };

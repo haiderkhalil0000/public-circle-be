@@ -498,4 +498,34 @@ router.delete(
   }
 );
 
+router.post(
+  "/get-selection-effect",
+  authenticate.verifyToken,
+  validate({
+    body: Joi.object({
+      contactSelectionCriteria: Joi.array().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const noOfAffectedContacts =
+        await companyContactsController.getSelectionCriteriaEffect({
+          companyId: req.user.company._id,
+          ...req.body,
+        });
+
+      res.status(200).json({
+        message: `${noOfAffectedContacts} contacts will be deleted by this action`,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      companyContactsDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 module.exports = router;
