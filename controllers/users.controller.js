@@ -37,6 +37,7 @@ const updateUser = async ({
   signUpStepsCompleted,
   watchTutorialStepsCompleted,
   currentUser,
+  contactsDisplayOrder,
 }) => {
   let companyDoc;
   const promises = [];
@@ -105,7 +106,15 @@ const updateUser = async ({
     }
   }
 
-  if (companySize || address || postalCode || city || province || country) {
+  if (
+    companySize ||
+    address ||
+    postalCode ||
+    city ||
+    province ||
+    country ||
+    contactsDisplayOrder
+  ) {
     promises.push(
       Company.updateOne(
         { _id: userUpdates.company || currentUser.company._id },
