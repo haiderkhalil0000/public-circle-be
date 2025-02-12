@@ -661,7 +661,7 @@ const readCampaignRecipientsCount = async ({ campaign }) => {
 
   let filterCounts = await Promise.all(promises);
 
-  return filterCounts.reduce((total, current) => total + current);
+  return filterCounts.reduce((total, current) => total + current, 0);
 };
 
 const calculateEmailOverageCharge = ({ unpaidEmailsCount, plan }) => {
