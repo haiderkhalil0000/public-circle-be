@@ -7,17 +7,11 @@ const {
   basicUtil,
 } = require("../utils");
 
-const createFilter = async (
+const createFilter = (
   { filterLabel, filterType, filterKey, filterValues },
   { companyId }
 ) => {
-  if (filterType !== FILTER_TYPES.INPUT && !filterValues[0]) {
-    throw createHttpError(400, {
-      errorMessage: RESPONSE_MESSAGES.FILTER_VALUES_REQUIRED,
-    });
-  }
-
-  await Filter.create({
+  Filter.create({
     company: companyId,
     filterLabel,
     filterType,
