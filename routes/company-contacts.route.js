@@ -510,7 +510,14 @@ router.post(
   authenticate.verifyToken,
   validate({
     body: Joi.object({
-      contactSelectionCriteria: Joi.array().required(),
+      contactSelectionCriteria: Joi.array()
+        .items(
+          Joi.object({
+            filterKey: Joi.string().required(),
+            filterValues: Joi.array().required(),
+          })
+        )
+        .required(),
     }),
   }),
   async (req, res, next) => {
