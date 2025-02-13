@@ -812,14 +812,14 @@ const readCampaignUsageDetails = async ({ companyId, stripeCustomerId }) => {
 
   const plan = await Plan.findById(planIds[0].planId);
 
-  const lastProcessedPromises = [];
+  const promises = [];
   const emailSentPromises = [];
 
   const emailSentController = require("./emails-sent.controller");
 
   campaignIds.forEach((campaignId) => {
-    lastProcessedPromises.push(
-      Campaign.findById(campaignId).select("lastProcessed")
+    promises.push(
+      Campaign.findById(campaignId).select("emailSubject lastProcessed")
     );
     emailSentPromises.push(
       emailSentController.readEmailsSentByCampaignId({
@@ -828,9 +828,13 @@ const readCampaignUsageDetails = async ({ companyId, stripeCustomerId }) => {
     );
   });
 
-  let campaignLastProcessedArray = await Promise.all(lastProcessedPromises);
-  campaignLastProcessedArray = campaignLastProcessedArray
-    .map((item) => item.lastProcessed)
+  let promisesResult = await Promise.all(promises);
+
+  promisesResult = promisesResult
+    .map((item) => ({
+      emailSubject: item.emailSubject,
+      lastProcessed: item.lastProcessed,
+    }))
     .filter((item) => item);
 
   const emailsSentByCompany = await Promise.all(emailSentPromises);
@@ -842,12 +846,15 @@ const readCampaignUsageDetails = async ({ companyId, stripeCustomerId }) => {
     emailOverageIterator = 0,
     bandwidthOverageIterator = 0,
     emailRemainder = 0,
-    bandwidthRemainder = 0;
+    bandwidthRemainder = 0,
+    emailSubject = "";
 
   let emailUsage = campaignIds.map((campaignId, index) => {
     const emailUsage = emailsSentByCompany[index].length;
 
-    campaignLastProcessed = campaignLastProcessedArray[index];
+    emailSubject = promisesResult[index].emailSubject;
+
+    campaignLastProcessed = promisesResult[index].lastProcessed;
 
     emailUsageIterated = emailUsageIterated + emailUsage;
 
@@ -922,6 +929,7 @@ const readCampaignUsageDetails = async ({ companyId, stripeCustomerId }) => {
 
     return {
       campaignId,
+      emailSubject,
       campaignLastProcessed,
       emailUsage,
       bandwidthUsage,
