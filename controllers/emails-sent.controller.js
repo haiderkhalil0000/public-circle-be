@@ -8,10 +8,10 @@ const { basicUtil } = require("../utils");
 const MONTH_NAMES = moment.months().map((month) => month.substring(0, 3)); // ['Jan', 'Feb', ... 'Dec']
 
 const readEmailSentGraphData = async ({
-  graphScope,
-  companyId,
-  campaignId,
-  campaignRunId,
+  graphScope = { yearly: 1 },
+  companyId = "",
+  campaignId = "",
+  campaignRunId = "",
 }) => {
   const matchStage = {};
 
