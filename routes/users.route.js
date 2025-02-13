@@ -87,7 +87,12 @@ router.patch(
         .min(1)
         .max(8),
       contactsDisplayOrder: Joi.array(),
-      contactSelectionCriteria: Joi.array(),
+      contactSelectionCriteria: Joi.array().items(
+        Joi.object({
+          filterKey: Joi.string().required(),
+          filterValues: Joi.array().required(),
+        })
+      ),
     }),
   }),
   async (req, res, next) => {

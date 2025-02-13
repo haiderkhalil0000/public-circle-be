@@ -280,13 +280,21 @@ router.get("/all", authenticate.verifyToken, async (req, res, next) => {
   }
 });
 
-router.get(
-  "/",
+router.post(
+  "/get-paginated-contacts",
   authenticate.verifyToken,
   validate({
-    query: Joi.object({
+    body: Joi.object({
       pageNumber: Joi.number().optional(),
       pageSize: Joi.number().optional(),
+      filters: Joi.array()
+        .items(
+          Joi.object({
+            filterKey: Joi.string().required(),
+            filterValues: Joi.array().required(),
+          })
+        )
+        .optional(),
     }),
   }),
   async (req, res, next) => {
@@ -294,8 +302,7 @@ router.get(
       const companyContacts =
         await companyContactsController.readPaginatedCompanyContacts({
           companyId: req.user.company._id,
-          pageNumber: req.query.pageNumber,
-          pageSize: req.query.pageSize,
+          ...req.body,
         });
 
       res.status(200).json({
@@ -503,7 +510,14 @@ router.post(
   authenticate.verifyToken,
   validate({
     body: Joi.object({
-      contactSelectionCriteria: Joi.array().required(),
+      contactSelectionCriteria: Joi.array()
+        .items(
+          Joi.object({
+            filterKey: Joi.string().required(),
+            filterValues: Joi.array().required(),
+          })
+        )
+        .required(),
     }),
   }),
   async (req, res, next) => {

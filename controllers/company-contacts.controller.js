@@ -171,10 +171,22 @@ const readPaginatedCompanyContacts = async ({
   companyId,
   pageNumber = 1,
   pageSize = 10,
+  filters = [],
 }) => {
+  const query = {
+    company: companyId,
+    status: COMPANY_CONTACT_STATUS.ACTIVE,
+  };
+
+  if (filters.length) {
+    query["$and"] = filters.map((filter) => ({
+      [filter.filterKey]: { $in: filter.filterValues },
+    }));
+  }
+
   const [totalRecords, companyContacts] = await Promise.all([
-    CompanyContact.countDocuments({ company: companyId }),
-    CompanyContact.find({ company: companyId })
+    CompanyContact.countDocuments(query),
+    CompanyContact.find(query)
       .skip((parseInt(pageNumber) - 1) * pageSize)
       .limit(pageSize)
       .lean(),
