@@ -133,7 +133,7 @@ const updateUser = async ({
       )
     );
 
-    if (contactSelectionCriteria.length) {
+    if (contactSelectionCriteria) {
       const companyContactsController = require("./company-contacts.controller");
 
       companyContactsController.filterContactsBySelectionCriteria({
