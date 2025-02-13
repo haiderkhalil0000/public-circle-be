@@ -50,7 +50,7 @@ const readContactValues = async ({
   searchString,
 }) => {
   if (searchString) {
-    const regex = new RegExp(`^${searchString}`, "i"); // 'i' for case-insensitive
+    const regex = new RegExp(`${searchString}`, "i"); // 'i' for case-insensitive
 
     const query = {
       company: companyId,
