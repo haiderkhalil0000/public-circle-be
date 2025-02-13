@@ -164,6 +164,10 @@ const readPlans = async ({ pageSize, stripeCustomerId }) => {
   const daysInMonth = moment().daysInMonth();
 
   filteredPlans.forEach((item, index) => {
+    if (item.id === activePlan.productId) {
+      item.isActivePlan = true;
+    }
+
     item.price = prices[index];
 
     item.price.unit_amount =
