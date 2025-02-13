@@ -812,19 +812,28 @@ const readCampaignUsageDetails = async ({ companyId, stripeCustomerId }) => {
 
   const plan = await Plan.findById(planIds[0].planId);
 
-  const promises = [];
+  const lastProcessedPromises = [];
+  const emailSentPromises = [];
 
   const emailSentController = require("./emails-sent.controller");
 
   campaignIds.forEach((campaignId) => {
-    promises.push(
+    lastProcessedPromises.push(
+      Campaign.findById(campaignId).select("lastProcessed")
+    );
+    emailSentPromises.push(
       emailSentController.readEmailsSentByCampaignId({
         campaignId,
       })
     );
   });
 
-  const emailsSentByCompany = await Promise.all(promises);
+  let campaignLastProcessedArray = await Promise.all(lastProcessedPromises);
+  campaignLastProcessedArray = campaignLastProcessedArray
+    .map((item) => item.lastProcessed)
+    .filter((item) => item);
+
+  const emailsSentByCompany = await Promise.all(emailSentPromises);
 
   let emailUsageIterated = 0,
     bandwidthUsageIterated = 0,
@@ -835,8 +844,10 @@ const readCampaignUsageDetails = async ({ companyId, stripeCustomerId }) => {
     emailRemainder = 0,
     bandwidthRemainder = 0;
 
-  return campaignIds.map((campaignId, index) => {
+  let emailUsage = campaignIds.map((campaignId, index) => {
     const emailUsage = emailsSentByCompany[index].length;
+
+    campaignLastProcessed = campaignLastProcessedArray[index];
 
     emailUsageIterated = emailUsageIterated + emailUsage;
 
@@ -911,12 +922,23 @@ const readCampaignUsageDetails = async ({ companyId, stripeCustomerId }) => {
 
     return {
       campaignId,
+      campaignLastProcessed,
       emailUsage,
       bandwidthUsage,
       bandwidthUsageUnit,
       overagePrice,
     };
   });
+
+  emailUsage = emailUsage
+    .filter((item) => {
+      if (item.emailUsage && item.bandwidthUsage) {
+        return item;
+      }
+    })
+    .sort((a, b) => b.campaignLastProcessed - a.campaignLastProcessed);
+
+  return emailUsage;
 };
 
 module.exports = {
