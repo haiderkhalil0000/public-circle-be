@@ -44,12 +44,17 @@ function filterContacts({ contacts, criteria }) {
 }
 
 parentPort.on("message", async (message) => {
+  const companyContactsController = require("../controllers/company-contacts.controller");
+
   try {
     const { companyId, stripeCustomerId, file } = message;
 
-    const [_, company] = await Promise.all([
+    const [_, company, existingCompanyContactsCount] = await Promise.all([
       connectDbForThread(),
       companiesController.readCompanyById({ companyId }),
+      companyContactsController.readCompanyContactsCount({
+        companyId,
+      }),
     ]);
 
     let contacts = [];
@@ -75,9 +80,13 @@ parentPort.on("message", async (message) => {
       });
     }
 
-    const parts = splitArrayIntoParts(contacts, 10);
+    let parts = splitArrayIntoParts(contacts, 10);
+
+    parts = parts.filter((part) => part.length);
 
     let iteratedProgress = 0;
+
+    const stripeController = require("../controllers/stripe.controller");
 
     parts.forEach(async (item) => {
       await webhooksController.recieveCompanyContacts({
@@ -91,6 +100,15 @@ parentPort.on("message", async (message) => {
       parentPort.postMessage({
         progress: (iteratedProgress / contacts.length) * 100,
       });
+
+      if ((iteratedProgress / contacts.length) * 100 === 100) {
+        stripeController.calculateAndChargeContactOverage({
+          companyId,
+          stripeCustomerId,
+          importedContactsCount: contacts.length,
+          existingContactsCount: existingCompanyContactsCount,
+        });
+      }
     });
   } catch (error) {
     console.error("Error in worker thread:", error);
