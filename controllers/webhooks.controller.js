@@ -1,25 +1,15 @@
 const _ = require("lodash");
 
-const { CompanyContact, Plan, Company } = require("../models");
+const { CompanyContact } = require("../models");
 
-const recieveCompanyContacts = async ({
-  companyId,
-  stripeCustomerId,
-  users,
-}) => {
-  const stripeController = require("./stripe.controller");
-  const overageConsumptionController = require("./overage-consumption.controller");
-
+const recieveCompanyContacts = async ({ companyId, users }) => {
   const promises = [];
 
   const companyContactsController = require("./company-contacts.controller");
 
-  const [possibleFilterKeys, existingContactsCount] = await Promise.all([
-    companyContactsController.readContactKeys({
-      companyId,
-    }),
-    CompanyContact.countDocuments({ company: companyId }),
-  ]);
+  const possibleFilterKeys = await companyContactsController.readContactKeys({
+    companyId,
+  });
 
   const filterKeys = {};
 
@@ -79,81 +69,7 @@ const recieveCompanyContacts = async ({
     }
   });
 
-  promises.push(stripeController.readPlanIds({ stripeCustomerId }));
-
-  const results = await Promise.all(promises);
-
-  const planIds = results[results.length - 1];
-
-  const [company, plan, pendingInvoiceItems] = await Promise.all([
-    Company.findById(companyId),
-    Plan.findById(planIds[0].planId),
-    stripeController.readPendingInvoiceItems({ stripeCustomerId }),
-  ]);
-
-  if (plan.quota.contacts < users.length + existingContactsCount) {
-    const unpaidContacts =
-      users.length + existingContactsCount - plan.quota.contacts;
-
-    const { priceInSmallestUnit } = plan.bundles.contact;
-
-    const contactOverageCharge =
-      Math.ceil(unpaidContacts / (priceInSmallestUnit / 100)) * 100; //converting it into cents
-
-    let contactsOverageInvoiceItem = pendingInvoiceItems.data.find((item) =>
-      item.description.includes("contact")
-    );
-
-    let pendingInvoiceItem = {};
-
-    if (
-      contactsOverageInvoiceItem &&
-      contactsOverageInvoiceItem.amount < contactOverageCharge
-    ) {
-      await stripeController.deleteInvoiceItem({
-        invoiceItemId: contactsOverageInvoiceItem.id,
-      });
-
-      pendingInvoiceItem = await stripeController.createPendingInvoiceItem({
-        stripeCustomerId: company.stripeCustomerId,
-        price: contactOverageCharge,
-        description: `${unpaidContacts} contacts (at $${
-          contactOverageCharge / 100
-        } / month)`,
-      });
-
-      overageConsumptionController.createOverageConsumption({
-        companyId: company._id,
-        stripeCustomerId: company.stripeCustomerId,
-        description: "Overage charge for importing contacts above quota.",
-        overageCount: `${unpaidContacts} contacts`,
-        overagePrice: contactOverageCharge,
-        stripeInvoiceItemId: pendingInvoiceItem.id,
-      });
-    } else if (
-      contactsOverageInvoiceItem &&
-      contactsOverageInvoiceItem.amount > contactOverageCharge
-    ) {
-      //do nothing
-    } else if (!contactsOverageInvoiceItem) {
-      pendingInvoiceItem = await stripeController.createPendingInvoiceItem({
-        stripeCustomerId: company.stripeCustomerId,
-        price: contactOverageCharge,
-        description: `${unpaidContacts} contacts (at $${
-          contactOverageCharge / 100
-        } / month)`,
-      });
-
-      overageConsumptionController.createOverageConsumption({
-        companyId: company._id,
-        stripeCustomerId: company.stripeCustomerId,
-        description: "Overage charge for importing contacts above quota.",
-        contactOverage: `${unpaidContacts} contacts`,
-        contactOverageCharge,
-        stripeInvoiceItemId: pendingInvoiceItem.id,
-      });
-    }
-  }
+  await Promise.all(promises);
 };
 
 const receiveStripeEvents = ({ stripeSignature, body }) => {
