@@ -105,6 +105,12 @@ parentPort.on("message", async (message) => {
 
     parts = parts.filter((part) => part.length);
 
+    if (!parts.length) {
+      parentPort.postMessage({
+        progress: 100,
+      });
+    }
+
     let iteratedProgress = 0;
 
     const stripeController = require("../controllers/stripe.controller");
