@@ -284,6 +284,8 @@ const uploadCsv = async ({
     });
   }
 
+  const contactsPrimaryKey = await readPrimaryKey({ companyId });
+
   const { Worker } = require("worker_threads");
 
   const workerPath = path.resolve(
@@ -322,7 +324,7 @@ const uploadCsv = async ({
   worker.postMessage({
     companyId: companyId.toString(),
     stripeCustomerId,
-    currentUserId,
+    contactsPrimaryKey,
     file,
   });
 };
@@ -344,15 +346,10 @@ const removeDuplicatesWithPrimaryKey = async ({ companyId, primaryKey }) => {
     CompanyContact.distinct("_id", { company: companyId }),
   ]);
 
-  const promises = [];
-
-  await CompanyContact.deleteMany({ _id: { $in: companyContactIds } });
-
-  uniqueContacts.forEach((item) => {
-    promises.push(CompanyContact.create(item));
-  });
-
-  await Promise.all(promises);
+  await Promise.all([
+    CompanyContact.deleteMany({ _id: { $in: companyContactIds } }),
+    CompanyContact.insertMany(uniqueContacts),
+  ]);
 };
 
 const createPrimaryKey = async ({ companyId, primaryKey }) => {
@@ -449,6 +446,10 @@ const filterContactsBySelectionCriteria = async ({
   );
 };
 
+const createMultipleCompanyContacts = ({ contacts }) => {
+  CompanyContact.insertMany(contacts);
+};
+
 module.exports = {
   readContactKeys,
   readContactValues,
@@ -472,4 +473,5 @@ module.exports = {
   deleteSelectedContacts,
   getSelectionCriteriaEffect,
   filterContactsBySelectionCriteria,
+  createMultipleCompanyContacts,
 };

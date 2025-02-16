@@ -63,14 +63,13 @@ router.post(
   authenticate.verifyWebhookToken,
   validate({
     body: Joi.object({
-      users: Joi.array().required(),
+      contacts: Joi.array().required(),
     }),
   }),
   async (req, res, next) => {
     try {
       await webhooksController.recieveCompanyContacts({
         companyId: req.companyId,
-        stripeCustomerId: req.stripeCustomerId,
         ...req.body,
       });
 
