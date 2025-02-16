@@ -2,6 +2,8 @@ const mongoose = require("mongoose");
 const { parentPort } = require("worker_threads");
 const { Readable } = require("stream");
 const csvParser = require("csv-parser");
+const lodash = require("lodash");
+const differenceWith = require("lodash/differenceWith");
 
 const { webhooksController, companiesController } = require("../controllers");
 
@@ -47,15 +49,19 @@ parentPort.on("message", async (message) => {
   const companyContactsController = require("../controllers/company-contacts.controller");
 
   try {
-    const { companyId, stripeCustomerId, file } = message;
+    const { companyId, stripeCustomerId, contactsPrimaryKey, file } = message;
 
-    const [_, company, existingCompanyContactsCount] = await Promise.all([
-      connectDbForThread(),
-      companiesController.readCompanyById({ companyId }),
-      companyContactsController.readCompanyContactsCount({
-        companyId,
-      }),
-    ]);
+    const [_, company, existingCompanyContactsCount, existingCompanyContacts] =
+      await Promise.all([
+        connectDbForThread(),
+        companiesController.readCompanyById({ companyId }),
+        companyContactsController.readCompanyContactsCount({
+          companyId,
+        }),
+        companyContactsController.readAllCompanyContacts({
+          companyId,
+        }),
+      ]);
 
     let contacts = [];
 
@@ -73,7 +79,22 @@ parentPort.on("message", async (message) => {
 
     await processCSV;
 
-    if (company.contactSelectionCriteria) {
+    if (contactsPrimaryKey) {
+      contacts = lodash.uniqBy(contacts, "email");
+
+      contacts = differenceWith(
+        contacts,
+        existingCompanyContacts,
+        (contacts, existingCompanyContacts) => {
+          return (
+            contacts[contactsPrimaryKey] ===
+            existingCompanyContacts[contactsPrimaryKey]
+          );
+        }
+      );
+    }
+
+    if (company.contactSelectionCriteria.length) {
       contacts = filterContacts({
         contacts,
         criteria: company.contactSelectionCriteria,
@@ -88,14 +109,13 @@ parentPort.on("message", async (message) => {
 
     const stripeController = require("../controllers/stripe.controller");
 
-    parts.forEach(async (item) => {
+    parts.forEach(async (part) => {
       await webhooksController.recieveCompanyContacts({
         companyId,
-        stripeCustomerId,
-        users: item,
+        contacts: part,
       });
 
-      iteratedProgress = iteratedProgress + item.length;
+      iteratedProgress = iteratedProgress + part.length;
 
       parentPort.postMessage({
         progress: (iteratedProgress / contacts.length) * 100,
