@@ -3,16 +3,9 @@ const _ = require("lodash");
 const moment = require("moment");
 const momentTz = require("moment-timezone");
 
+const { ReferralCode, User, Reward, Plan } = require("../models");
 const {
-  ReferralCode,
-  User,
-  Reward,
-  Plan,
-  OverageConsumption,
-  EmailSent,
-} = require("../models");
-const {
-  constants: { RESPONSE_MESSAGES, OVERAGE_KIND },
+  constants: { RESPONSE_MESSAGES },
   basicUtil,
 } = require("../utils");
 
@@ -141,7 +134,13 @@ const readPlans = async ({ pageSize, stripeCustomerId }) => {
         const dbPlan = dbPlans.find((plan) => plan.name === item.name);
 
         if (dbPlan) {
-          item.description = dbPlan.description;
+          item.description = [
+            `${dbPlan.quota.email} emails`,
+            `${basicUtil.calculateByteUnit({
+              bytes: dbPlan.quota.bandwidth,
+            })} of bandwidth`,
+            `${dbPlan.quota.contact} contacts`,
+          ];
         }
       });
 
@@ -177,7 +176,13 @@ const readPlans = async ({ pageSize, stripeCustomerId }) => {
     const dbPlan = dbPlans.find((plan) => plan.name === item.name);
 
     if (dbPlan) {
-      item.description = dbPlan.description;
+      item.description = [
+        `${dbPlan.quota.email} emails`,
+        `${basicUtil.calculateByteUnit({
+          bytes: dbPlan.quota.bandwidth,
+        })} of bandwidth`,
+        `${dbPlan.quota.contact} contacts`,
+      ];
     }
   });
 
@@ -748,7 +753,7 @@ const readStripeEvent = async ({ stripeSignature, body }) => {
     ]);
 
     const contactsAboveQuota = Math.abs(
-      companyContactsCount - plan.quota.contacts
+      companyContactsCount - plan.quota.contact
     );
 
     const { contacts, price } = plan.bundles.contact;
@@ -970,9 +975,9 @@ const calculateAndChargeContactOverage = async ({
     readPendingInvoiceItems({ stripeCustomerId }),
   ]);
 
-  if (plan.quota.contacts < importedContactsCount + existingContactsCount) {
+  if (plan.quota.contact < importedContactsCount + existingContactsCount) {
     const unpaidContacts =
-      importedContactsCount + existingContactsCount - plan.quota.contacts;
+      importedContactsCount + existingContactsCount - plan.quota.contact;
 
     const { priceInSmallestUnit } = plan.bundles.contact;
 

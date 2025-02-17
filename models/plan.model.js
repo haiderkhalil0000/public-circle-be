@@ -9,7 +9,6 @@ const {
 const schema = new mongoose.Schema(
   {
     name: { type: String, required: true },
-    description: [{ type: String }],
     quota: {
       email: {
         type: Number,
@@ -21,7 +20,7 @@ const schema = new mongoose.Schema(
         required: true,
         default: 0,
       },
-      contacts: {
+      contact: {
         type: Number,
         required: true,
         default: 0,
