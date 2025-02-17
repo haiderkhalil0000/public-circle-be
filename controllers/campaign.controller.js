@@ -900,6 +900,31 @@ const readCampaignUsageDetails = async ({ companyId, stripeCustomerId }) => {
         });
     }
 
+    const emailOverage =
+      isEmailOverage && emailOverageIterator === 1
+        ? emailUsage + emailRemainder - plan.quota.email
+        : isEmailOverage
+        ? emailUsage
+        : 0;
+
+    const bandwidthOverage =
+      isBandwidthOverage && bandwidthOverageIterator === 1
+        ? basicUtil.calculateByteUnit({
+            bytes:
+              getCampaignBandwidthUsage({
+                emailSentDocsArray: emailsSentByCompany[index],
+              }) +
+              bandwidthRemainder -
+              plan.quota.bandwidth,
+          })
+        : isBandwidthOverage
+        ? basicUtil.calculateByteUnit({
+            bytes: getCampaignBandwidthUsage({
+              emailSentDocsArray: emailsSentByCompany[index],
+            }),
+          })
+        : 0;
+
     const overagePrice = {
       email:
         isEmailOverage && emailOverageIterator === 1
@@ -932,7 +957,9 @@ const readCampaignUsageDetails = async ({ companyId, stripeCustomerId }) => {
       emailSubject,
       campaignLastProcessed,
       emailUsage,
+      emailOverage,
       bandwidthUsage,
+      bandwidthOverage,
       bandwidthUsageUnit,
       overagePrice,
     };
