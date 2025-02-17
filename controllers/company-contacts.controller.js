@@ -346,10 +346,8 @@ const removeDuplicatesWithPrimaryKey = async ({ companyId, primaryKey }) => {
     CompanyContact.distinct("_id", { company: companyId }),
   ]);
 
-  await Promise.all([
-    CompanyContact.deleteMany({ _id: { $in: companyContactIds } }),
-    CompanyContact.insertMany(uniqueContacts),
-  ]);
+  await CompanyContact.deleteMany({ _id: { $in: companyContactIds } });
+  await CompanyContact.insertMany(uniqueContacts);
 };
 
 const createPrimaryKey = async ({ companyId, primaryKey }) => {
