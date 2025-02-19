@@ -27,7 +27,7 @@ const schema = new mongoose.Schema(
         operator: { type: String, enum: ["AND", "OR"] },
         conditions: [
           {
-            type: { type: String },
+            conditionType: { type: String },
             value: { type: String },
             fromValue: { type: String },
             toValue: { type: String },
