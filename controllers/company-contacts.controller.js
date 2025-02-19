@@ -113,27 +113,111 @@ const readFilterCount = ({ filter, companyId }) => {
   });
 };
 
-const readFiltersCount = async ({ filters, companyId }) => {
+const readFiltersCount = async ({ companyId, filters }) => {
   const promises = [];
 
-  Object.keys(filters).forEach((key) => {
-    const filterValues = Array.isArray(filters[key])
-      ? filters[key]
-      : [filters[key]];
+  filters.forEach((item) => {
+    if (item.values && item.values.length) {
+      promises.push(
+        CompanyContact.countDocuments({
+          company: companyId,
+          [item.key]: { $in: item.values },
+        }).then((count) => ({
+          key: item.key,
+          values: item.conditions,
+          count,
+        }))
+      );
+    } else if (item.conditions && item.conditions.length) {
+      const query = { company: companyId };
 
-    const promise = CompanyContact.countDocuments({
-      company: companyId,
-      [key]: Array.isArray(filters[key]) ? { $in: filters[key] } : filters[key],
-    }).then((count) => ({
-      filterKey: key,
-      filterValues: filterValues,
-      filterCount: count,
-    }));
+      const conditionQueries = item.conditions.map((condition) => {
+        if (condition && condition.type) {
+          switch (condition.type) {
+            case "equals":
+              return { [item.key]: { $eq: condition.value } };
 
-    promises.push(promise);
+            case "not_equals":
+              return { [item.key]: { $ne: condition.value } };
+
+            case "greater_than":
+              return { [item.key]: { $gt: condition.value } };
+
+            case "less_than":
+              return { [item.key]: { $lt: condition.value } };
+
+            case "between":
+              return {
+                [item.key]: {
+                  $gte: condition.fromValue,
+                  $lte: condition.toValue,
+                },
+              };
+
+            case "contains":
+              return {
+                [item.key]: { $regex: condition.value, $options: "i" },
+              };
+
+            case "not_contains":
+              return {
+                [item.key]: {
+                  $not: { $regex: condition.value, $options: "i" },
+                },
+              };
+            case "is_timestamp":
+              return { [item.key]: { $type: "date" } };
+
+            case "is_not_timestamp":
+              return { [item.key]: { $not: { $type: "date" } } };
+
+            case "timestamp_before":
+              return { [item.key]: { $lt: condition.value } };
+
+            case "timestamp_after":
+              return { [item.key]: { $gt: condition.value } };
+
+            case "timestamp_between":
+              return {
+                [item.key]: {
+                  $gte: condition.fromValue,
+                  $lte: condition.toValue,
+                },
+              };
+            default:
+              return {};
+          }
+        }
+        return {};
+      });
+
+      query[item.operator === "AND" ? "$and" : "$or"] = conditionQueries.filter(
+        (c) => Object.keys(c).length > 0
+      );
+
+      promises.push(
+        CompanyContact.countDocuments(query).then((count) => ({
+          key: item.key,
+          values: item.conditions,
+          count: count,
+        }))
+      );
+    }
   });
 
-  return Promise.all(promises);
+  const results = await Promise.all(promises);
+
+  const filterCounts = [];
+
+  results.forEach((item, index) => {
+    filterCounts.push({
+      filterKey: filters[index].key,
+      filterValues: filters[index].values || filters[index].conditions,
+      filterCount: item.count,
+    });
+  });
+
+  return filterCounts;
 };
 
 const search = async ({ companyId, searchString, searchFields }) => {

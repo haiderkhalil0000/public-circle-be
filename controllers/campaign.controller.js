@@ -440,25 +440,73 @@ const populateCompanyUserQuery = ({ segments }) => {
   let allFilters = {};
 
   for (const segment of segments) {
-    for (const [key, value] of Object.entries(segment.filters)) {
-      if (!allFilters[key]) {
-        allFilters[key] = [];
+    for (const filter of segment.filters) {
+      if (filter.values.length) {
+        allFilters[filter.key] = { $in: filter.values };
+      } else if (filter.conditions.length) {
+        const conditionQueries = filter.conditions.map((condition) => {
+          if (condition && condition.type) {
+            switch (condition.type) {
+              case "equals":
+                return { [filter.key]: { $eq: condition.value } };
+
+              case "not_equals":
+                return { [filter.key]: { $ne: condition.value } };
+
+              case "greater_than":
+                return { [filter.key]: { $gt: condition.value } };
+
+              case "less_than":
+                return { [filter.key]: { $lt: condition.value } };
+
+              case "between":
+                return {
+                  [filter.key]: {
+                    $gte: condition.fromValue,
+                    $lte: condition.toValue,
+                  },
+                };
+
+              case "contains":
+                return {
+                  [filter.key]: { $regex: condition.value, $options: "i" },
+                };
+
+              case "not_contains":
+                return {
+                  [filter.key]: {
+                    $not: { $regex: condition.value, $options: "i" },
+                  },
+                };
+              case "is_timestamp":
+                return { [filter.key]: { $type: "date" } };
+
+              case "is_not_timestamp":
+                return { [filter.key]: { $not: { $type: "date" } } };
+
+              case "timestamp_before":
+                return { [filter.key]: { $lt: condition.value } };
+
+              case "timestamp_after":
+                return { [filter.key]: { $gt: condition.value } };
+
+              case "timestamp_between":
+                return {
+                  [filter.key]: {
+                    $gte: condition.fromValue,
+                    $lte: condition.toValue,
+                  },
+                };
+              default:
+                return {};
+            }
+          }
+          return {};
+        });
+
+        allFilters[filter.operator === "AND" ? "$and" : "$or"] =
+          conditionQueries.filter((c) => Object.keys(c).length > 0);
       }
-      allFilters[key].push(value);
-    }
-  }
-
-  // Flatten all keys in `allFilters`
-  for (const key in allFilters) {
-    allFilters[key] = allFilters[key].flat();
-  }
-
-  // Process each key to apply $in or keep a single value
-  for (const key in allFilters) {
-    if (allFilters[key].length > 1) {
-      allFilters[key] = { $in: allFilters[key] };
-    } else {
-      allFilters[key] = allFilters[key][0];
     }
   }
 

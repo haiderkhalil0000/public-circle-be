@@ -20,10 +20,21 @@ const schema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    filters: {
-      type: Object,
-      require: true,
-    },
+    filters: [
+      {
+        key: { type: String },
+        values: { type: Array },
+        operator: { type: String, enum: ["AND", "OR"] },
+        conditions: [
+          {
+            type: { type: String },
+            value: { type: String },
+            fromValue: { type: String },
+            toValue: { type: String },
+          },
+        ],
+      },
+    ],
     status: {
       type: String,
       enum: Object.values(SEGMENT_STATUS),
