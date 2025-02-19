@@ -14,7 +14,7 @@ router.post(
   validate({
     body: Joi.object({
       name: Joi.string().required(),
-      filters: Joi.object().required(),
+      filters: Joi.array().required(),
     }),
   }),
   async (req, res, next) => {

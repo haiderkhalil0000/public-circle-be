@@ -205,7 +205,7 @@ router.post(
   authenticate.verifyToken,
   validate({
     body: Joi.object({
-      filters: Joi.object().required(),
+      filters: Joi.array().required(),
     }),
   }),
   async (req, res, next) => {
