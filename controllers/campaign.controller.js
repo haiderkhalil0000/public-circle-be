@@ -445,8 +445,8 @@ const populateCompanyUserQuery = ({ segments }) => {
         allFilters[filter.key] = { $in: filter.values };
       } else if (filter.conditions.length) {
         const conditionQueries = filter.conditions.map((condition) => {
-          if (condition && condition.type) {
-            switch (condition.type) {
+          if (condition && condition.conditionType) {
+            switch (condition.conditionType) {
               case "equals":
                 return { [filter.key]: { $eq: condition.value } };
 

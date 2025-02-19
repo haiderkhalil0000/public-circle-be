@@ -132,8 +132,8 @@ const readFiltersCount = async ({ companyId, filters }) => {
       const query = { company: companyId };
 
       const conditionQueries = item.conditions.map((condition) => {
-        if (condition && condition.type) {
-          switch (condition.type) {
+        if (condition && condition.conditionType) {
+          switch (condition.conditionType) {
             case "equals":
               return { [item.key]: { $eq: condition.value } };
 
