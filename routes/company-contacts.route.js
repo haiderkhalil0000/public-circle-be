@@ -443,7 +443,7 @@ router.post(
       });
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.COMPANY_USERS_DELETED,
+        message: RESPONSE_MESSAGES.COMPANY_CONTACTS_DELETED,
         data: {},
       });
     } catch (err) {
@@ -464,7 +464,7 @@ router.delete("/all", authenticate.verifyToken, async (req, res, next) => {
     });
 
     res.status(200).json({
-      message: RESPONSE_MESSAGES.COMPANY_USERS_DELETED,
+      message: RESPONSE_MESSAGES.COMPANY_CONTACTS_DELETED,
       data: {},
     });
   } catch (err) {
@@ -492,7 +492,7 @@ router.delete(
       });
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.COMPANY_USER_DELETED,
+        message: RESPONSE_MESSAGES.COMPANY_CONTACT_DELETED,
         data: {},
       });
     } catch (err) {
