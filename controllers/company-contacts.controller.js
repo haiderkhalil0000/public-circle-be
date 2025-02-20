@@ -348,12 +348,15 @@ const updateCompanyContact = async ({ companyId, userId, companyUserData }) => {
 };
 
 const deleteCompanyContact = async ({ companyId, userId }) => {
-  const result = await CompanyContact.deleteOne({
-    _id: userId,
-    company: companyId,
-  });
+  const result = await CompanyContact.updateOne(
+    {
+      _id: userId,
+      company: companyId,
+    },
+    { status: COMPANY_CONTACT_STATUS.DELETED }
+  );
 
-  if (!result.deletedCount) {
+  if (!result.modifiedCount) {
     throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.COMPANY_CONTACT_DELETED_ALREADY,
     });
@@ -367,11 +370,14 @@ const deleteAllCompanyContacts = async ({ companyId, currentUserKind }) => {
     });
   }
 
-  const result = await CompanyContact.deleteMany({
-    company: companyId,
-  });
+  const result = await CompanyContact.updateMany(
+    {
+      company: companyId,
+    },
+    { status: COMPANY_CONTACT_STATUS.DELETED }
+  );
 
-  if (!result.deletedCount) {
+  if (!result.modifiedCount) {
     throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.COMPANY_CONTACTS_DELETED_ALREADY,
     });
@@ -500,12 +506,15 @@ const readPrimaryKeyEffect = async ({ companyId, primaryKey }) => {
 };
 
 const deleteSelectedContacts = async ({ companyId, contactIds }) => {
-  const result = await CompanyContact.deleteMany({
-    _id: { $in: contactIds },
-    company: companyId,
-  });
+  const result = await CompanyContact.updateMany(
+    {
+      _id: { $in: contactIds },
+      company: companyId,
+    },
+    { status: COMPANY_CONTACT_STATUS.DELETED }
+  );
 
-  if (!result.deletedCount) {
+  if (!result.modifiedCount) {
     throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.COMPANY_CONTACTS_DELETED_ALREADY,
     });

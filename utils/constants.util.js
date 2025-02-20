@@ -112,6 +112,7 @@ module.exports = {
     TEST_EMAIL_SENT: "Test email sent successfully.",
     COMPANY_CONTACT_DELETED_ALREADY: "Company contact deleted already!",
     COMPANY_CONTACTS_DELETED_ALREADY: "Company contacts deleted already!",
+    COMPANY_CONTACTS_DELETED: "Company contacts deleted successfully.",
     COMPANY_USER_CREATED: "Company user created successfully.",
     COMPANY_USER_FETCHED: "Company user fetched successfully.",
     COMPANY_USERS_FETCHED: "Company users fetched successfully.",
