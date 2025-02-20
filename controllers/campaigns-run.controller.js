@@ -157,9 +157,20 @@ const readCampaignRunEmailsSent = ({ campaignRunId, pageNumber, pageSize }) =>
     .skip((parseInt(pageNumber) - 1) * pageSize)
     .limit(pageSize);
 
+const readCampaignRunByCampaignId = ({ campaignId }) =>
+  CamapaignRun.findOne({ campaign: campaignId });
+
+const createCampaignRun = ({ companyId, campaignId }) =>
+  CampaignRun.create({
+    company: companyId,
+    campaign: campaignId,
+  });
+
 module.exports = {
   readPaginatedCampaignsRun,
   readCampaignRunsStats,
   readCampaignRunEmailsSentStats,
   readCampaignRunEmailsSent,
+  readCampaignRunByCampaignId,
+  createCampaignRun,
 };

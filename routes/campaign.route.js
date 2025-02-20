@@ -46,7 +46,7 @@ router.post(
       emailSubject: Joi.string().required(),
       emailTemplateId: Joi.string().required(),
       runMode: Joi.string()
-        .valid(RUN_MODE.INSTANT, RUN_MODE.SCHEDULE)
+        .valid(RUN_MODE.INSTANT, RUN_MODE.SCHEDULE, RUN_MODE.ON_GOING)
         .required(),
       runSchedule: Joi.string(),
       isRecurring: Joi.boolean(),

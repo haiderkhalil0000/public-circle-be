@@ -113,7 +113,7 @@ const createCampaign = async ({
   if (campaign.status === CAMPAIGN_STATUS.ACTIVE) {
     await validateCampaign({ campaign, company, primaryUser });
 
-    if (runMode === RUN_MODE.INSTANT) {
+    if (runMode !== RUN_MODE.SCHEDULE) {
       await runCampaign({ campaign });
     }
   }
@@ -464,16 +464,46 @@ const runCampaign = async ({ campaign }) => {
   const promises = [];
   const segmentPromises = [];
 
-  const [_, campaignRunDoc] = await Promise.all([
+  promises.push(
     Campaign.updateOne(
       { _id: campaign._id },
       { cronStatus: CRON_STATUS.PROCESSING }
-    ),
-    CampaignRun.create({
-      company: campaign.company,
-      campaign: campaign._id,
-    }),
-  ]);
+    )
+  );
+
+  if (campaign.runMode === RUN_MODE.ON_GOING) {
+    const campaignRunController = require("./campaigns-run.controller");
+
+    promises.push(
+      campaignRunController.readCampaignRunByCampaignId({
+        campaignId: campaign._id,
+      })
+    );
+
+    const [_, existingCampaignRun] = await Promise.all(promises);
+
+    if (!existingCampaignRun) {
+      promises.length = 0;
+
+      promises.push(
+        campaignRunController.createCampaignRun({
+          companyId: campaign.company,
+          campaignId: campaign._id,
+        })
+      );
+    }
+
+    //since campaignRun is existing we will not create another campaignRun for ON_GOING
+  } else {
+    promises.push(
+      campaignRunController.createCampaignRun({
+        companyId: campaign.company,
+        campaignId: campaign._id,
+      })
+    );
+  }
+
+  const [_, campaignRunDoc] = await Promise.all(promises);
 
   for (const segment of campaign.segments) {
     segmentPromises.push(Segment.findById(segment));
@@ -497,6 +527,8 @@ const runCampaign = async ({ campaign }) => {
   emailAddresses = basicUtil.fiterUniqueStringsFromArray(
     emailAddresses.map((item) => item.email)
   );
+
+  promises.length = 0;
 
   for (const address of emailAddresses) {
     promises.push(

@@ -264,6 +264,7 @@ module.exports = {
   RUN_MODE: {
     INSTANT: "INSTANT",
     SCHEDULE: "SCHEDULE",
+    ON_GOING: "ON_GOING",
   },
 
   CRON_STATUS: {
