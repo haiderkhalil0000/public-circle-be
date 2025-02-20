@@ -419,4 +419,19 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
     ACTIVE: "ACTIVE",
     DELETED: "DELETED",
   },
+
+  FILTER_CONDITION_CASES: {
+    EQUALS: "equals",
+    NOT_EQUALS: "not_equals",
+    GREATER_THAN: "greater_than",
+    LESS_THAN: "less_than",
+    BETWEEN: "between",
+    CONTAINS: "contains",
+    NOT_CONTAINS: "not_contains",
+    IS_TIMESTAMP: "is_timestamp",
+    IS_NOT_TIMESTAMP: "is_not_timestamp",
+    TIMESTAMP_BEFORE: "timestamp_before",
+    TIMESTAMP_AFTER: "timestamp_after",
+    TIMESTAMP_BETWEEN: "timestamp_between",
+  },
 };

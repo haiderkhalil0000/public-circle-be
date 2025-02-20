@@ -437,6 +437,8 @@ const sendTestEmail = async ({
 };
 
 const populateCompanyUserQuery = ({ segments }) => {
+  segments = segments.map((item) => item.toJSON());
+
   let allFilters = {};
 
   for (const segment of segments) {
@@ -444,68 +446,16 @@ const populateCompanyUserQuery = ({ segments }) => {
       if (filter.values.length) {
         allFilters[filter.key] = { $in: filter.values };
       } else if (filter.conditions.length) {
-        const conditionQueries = filter.conditions.map((condition) => {
-          if (condition && condition.conditionType) {
-            switch (condition.conditionType) {
-              case "equals":
-                return { [filter.key]: { $eq: condition.value } };
+        const companyContactsController = require("./company-contacts.controller");
 
-              case "not_equals":
-                return { [filter.key]: { $ne: condition.value } };
-
-              case "greater_than":
-                return { [filter.key]: { $gt: condition.value } };
-
-              case "less_than":
-                return { [filter.key]: { $lt: condition.value } };
-
-              case "between":
-                return {
-                  [filter.key]: {
-                    $gte: condition.fromValue,
-                    $lte: condition.toValue,
-                  },
-                };
-
-              case "contains":
-                return {
-                  [filter.key]: { $regex: condition.value, $options: "i" },
-                };
-
-              case "not_contains":
-                return {
-                  [filter.key]: {
-                    $not: { $regex: condition.value, $options: "i" },
-                  },
-                };
-              case "is_timestamp":
-                return { [filter.key]: { $type: "date" } };
-
-              case "is_not_timestamp":
-                return { [filter.key]: { $not: { $type: "date" } } };
-
-              case "timestamp_before":
-                return { [filter.key]: { $lt: condition.value } };
-
-              case "timestamp_after":
-                return { [filter.key]: { $gt: condition.value } };
-
-              case "timestamp_between":
-                return {
-                  [filter.key]: {
-                    $gte: condition.fromValue,
-                    $lte: condition.toValue,
-                  },
-                };
-              default:
-                return {};
-            }
-          }
-          return {};
-        });
+        const filterConditionQueries =
+          companyContactsController.getFilterConditionQuery({
+            conditions: filter.conditions,
+            conditionKey: filter.key,
+          });
 
         allFilters[filter.operator === "AND" ? "$and" : "$or"] =
-          conditionQueries.filter((c) => Object.keys(c).length > 0);
+          filterConditionQueries.filter((c) => Object.keys(c).length > 0);
       }
     }
   }
