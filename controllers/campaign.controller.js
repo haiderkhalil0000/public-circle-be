@@ -11,7 +11,6 @@ const {
   CampaignRun,
   Company,
   Plan,
-  OverageConsumption,
 } = require("../models");
 const {
   basicUtil,
@@ -436,9 +435,7 @@ const sendTestEmail = async ({
   await Promise.all(promises);
 };
 
-const populateCompanyUserQuery = ({ segments }) => {
-  segments = segments.map((item) => item.toJSON());
-
+const populateCompanyContactsQuery = ({ segments }) => {
   let allFilters = {};
 
   for (const segment of segments) {
@@ -488,7 +485,7 @@ const runCampaign = async ({ campaign }) => {
 
   const [segments, template] = await Promise.all(queryArray);
 
-  const query = populateCompanyUserQuery({ segments });
+  const query = populateCompanyContactsQuery({ segments });
 
   let emailAddresses = await CompanyContact.find(
     { ...query, company: campaign.company },
@@ -990,5 +987,5 @@ module.exports = {
   readCampaignUsageDetails,
   readCampaign,
   readSegmentPopulatedCampaign,
-  populateCompanyUserQuery,
+  populateCompanyContactsQuery,
 };

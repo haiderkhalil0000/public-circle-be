@@ -200,14 +200,13 @@ const readEmailsSentByCampaignId = ({ campaignId }) =>
 const readEmailAddressesByCampaignId = async ({ campaignId }) => {
   const campaignsController = require("./campaign.controller");
 
-  const [campaign, emailSentDocs] = await Promise.all([
-    campaignsController.readSegmentPopulatedCampaign({ campaignId }),
-    EmailSent.find({ campaign: campaignId }).lean(),
-  ]);
+  const campaign = await campaignsController.readSegmentPopulatedCampaign({
+    campaignId,
+  });
 
   let query = {};
 
-  query = campaignsController.populateCompanyUserQuery({
+  query = campaignsController.populateCompanyContactsQuery({
     segments: campaign.segments,
   });
 
