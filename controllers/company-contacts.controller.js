@@ -9,6 +9,7 @@ const {
     USER_KIND,
     SOCKET_CHANNELS,
     COMPANY_CONTACT_STATUS,
+    FILTER_CONDITION_CASES,
   },
   basicUtil,
 } = require("../utils");
@@ -113,6 +114,81 @@ const readFilterCount = ({ filter, companyId }) => {
   });
 };
 
+const getFilterConditionQuery = ({ conditions, conditionKey }) => {
+  const {
+    EQUALS,
+    NOT_EQUALS,
+    GREATER_THAN,
+    LESS_THAN,
+    BETWEEN,
+    CONTAINS,
+    NOT_CONTAINS,
+    IS_TIMESTAMP,
+    IS_NOT_TIMESTAMP,
+    TIMESTAMP_BEFORE,
+    TIMESTAMP_AFTER,
+    TIMESTAMP_BETWEEN,
+  } = FILTER_CONDITION_CASES;
+
+  return conditions.map((condition) => {
+    switch (condition.conditionType) {
+      case EQUALS:
+        return { [conditionKey]: { $eq: condition.value } };
+
+      case NOT_EQUALS:
+        return { [conditionKey]: { $ne: condition.value } };
+
+      case GREATER_THAN:
+        return { [conditionKey]: { $gt: condition.value } };
+
+      case LESS_THAN:
+        return { [conditionKey]: { $lt: condition.value } };
+
+      case BETWEEN:
+        return {
+          [conditionKey]: {
+            $gte: condition.fromValue,
+            $lte: condition.toValue,
+          },
+        };
+
+      case CONTAINS:
+        return {
+          [conditionKey]: { $regex: condition.value, $options: "i" },
+        };
+
+      case NOT_CONTAINS:
+        return {
+          [conditionKey]: {
+            $not: { $regex: condition.value, $options: "i" },
+          },
+        };
+      case IS_TIMESTAMP:
+        return { [conditionKey]: { $type: "date" } };
+
+      case IS_NOT_TIMESTAMP:
+        return { [conditionKey]: { $not: { $type: "date" } } };
+
+      case TIMESTAMP_BEFORE:
+        return { [conditionKey]: { $lt: condition.value } };
+
+      case TIMESTAMP_AFTER:
+        return { [conditionKey]: { $gt: condition.value } };
+
+      case TIMESTAMP_BETWEEN:
+        return {
+          [conditionKey]: {
+            $gte: condition.fromValue,
+            $lte: condition.toValue,
+          },
+        };
+
+      default:
+        return {};
+    }
+  });
+};
+
 const readFiltersCount = async ({ companyId, filters }) => {
   const promises = [];
 
@@ -129,71 +205,17 @@ const readFiltersCount = async ({ companyId, filters }) => {
         }))
       );
     } else if (item.conditions && item.conditions.length) {
-      const query = { company: companyId };
+      const query = {
+        company: companyId,
+      };
 
-      const conditionQueries = item.conditions.map((condition) => {
-        if (condition && condition.conditionType) {
-          switch (condition.conditionType) {
-            case "equals":
-              return { [item.key]: { $eq: condition.value } };
-
-            case "not_equals":
-              return { [item.key]: { $ne: condition.value } };
-
-            case "greater_than":
-              return { [item.key]: { $gt: condition.value } };
-
-            case "less_than":
-              return { [item.key]: { $lt: condition.value } };
-
-            case "between":
-              return {
-                [item.key]: {
-                  $gte: condition.fromValue,
-                  $lte: condition.toValue,
-                },
-              };
-
-            case "contains":
-              return {
-                [item.key]: { $regex: condition.value, $options: "i" },
-              };
-
-            case "not_contains":
-              return {
-                [item.key]: {
-                  $not: { $regex: condition.value, $options: "i" },
-                },
-              };
-            case "is_timestamp":
-              return { [item.key]: { $type: "date" } };
-
-            case "is_not_timestamp":
-              return { [item.key]: { $not: { $type: "date" } } };
-
-            case "timestamp_before":
-              return { [item.key]: { $lt: condition.value } };
-
-            case "timestamp_after":
-              return { [item.key]: { $gt: condition.value } };
-
-            case "timestamp_between":
-              return {
-                [item.key]: {
-                  $gte: condition.fromValue,
-                  $lte: condition.toValue,
-                },
-              };
-            default:
-              return {};
-          }
-        }
-        return {};
+      const filterConditionQueries = getFilterConditionQuery({
+        conditions: item.conditions,
+        conditionKey: item.key,
       });
 
-      query[item.operator === "AND" ? "$and" : "$or"] = conditionQueries.filter(
-        (c) => Object.keys(c).length > 0
-      );
+      query[item.operator === "AND" ? "$and" : "$or"] =
+        filterConditionQueries.filter((c) => Object.keys(c).length > 0);
 
       promises.push(
         CompanyContact.countDocuments(query).then((count) => ({
@@ -556,4 +578,5 @@ module.exports = {
   getSelectionCriteriaEffect,
   filterContactsBySelectionCriteria,
   createMultipleCompanyContacts,
+  getFilterConditionQuery,
 };
