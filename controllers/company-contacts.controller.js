@@ -268,7 +268,10 @@ const reorderContacts = ({ contacts }) => {
 
 const readAllCompanyContacts = async ({ companyId }) => {
   // Fetch the contacts including all fields
-  const contacts = await CompanyContact.find({ company: companyId }).lean();
+  const contacts = await CompanyContact.find({
+    company: companyId,
+    status: "ACTIVE",
+  }).lean();
 
   return reorderContacts({ contacts });
 };
