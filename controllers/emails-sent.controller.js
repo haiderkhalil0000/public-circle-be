@@ -2,8 +2,10 @@ const moment = require("moment");
 const mongoose = require("mongoose");
 
 const { EmailSent, CompanyContact } = require("../models");
-const { EMAIL_KIND } = require("../utils/constants.util");
-const { basicUtil } = require("../utils");
+const {
+  basicUtil,
+  constants: { EMAIL_KIND, COMPANY_CONTACT_STATUS },
+} = require("../utils");
 
 const MONTH_NAMES = moment.months().map((month) => month.substring(0, 3)); // ['Jan', 'Feb', ... 'Dec']
 
@@ -211,7 +213,11 @@ const readEmailAddressesByCampaignId = async ({ campaignId }) => {
   });
 
   let emailAddresses = await CompanyContact.find(
-    { ...query, company: campaign.company },
+    {
+      ...query,
+      company: campaign.company,
+      status: COMPANY_CONTACT_STATUS.ACTIVE,
+    },
     {
       email: 1,
     }

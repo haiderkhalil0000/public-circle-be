@@ -15,7 +15,10 @@ const {
 } = require("../utils");
 
 const readContactKeys = async ({ companyId = "" }) => {
-  const totalDocs = await CompanyContact.countDocuments({ company: companyId });
+  const totalDocs = await CompanyContact.countDocuments({
+    company: companyId,
+    status: COMPANY_CONTACT_STATUS.ACTIVE,
+  });
   const sampleSize = Math.floor(totalDocs * 0.1);
 
   const randomDocuments = await CompanyContact.aggregate([
@@ -55,6 +58,7 @@ const readContactValues = async ({
 
     const query = {
       company: companyId,
+      status: COMPANY_CONTACT_STATUS.ACTIVE,
       [key]: { $regex: regex },
     };
 
@@ -74,10 +78,16 @@ const readContactValues = async ({
 
   const [company, results, totalResults] = await Promise.all([
     Company.findById(companyId),
-    CompanyContact.find({ company: companyId }, { [key]: 1, _id: 0 })
+    CompanyContact.find(
+      { company: companyId, status: COMPANY_CONTACT_STATUS.ACTIVE },
+      { [key]: 1, _id: 0 }
+    )
       .skip((parseInt(pageNumber) - 1) * pageSize)
       .limit(pageSize),
-    CompanyContact.countDocuments({ company: companyId }, { [key]: 1, _id: 0 }),
+    CompanyContact.countDocuments(
+      { company: companyId, status: COMPANY_CONTACT_STATUS.ACTIVE },
+      { [key]: 1, _id: 0 }
+    ),
   ]);
 
   if (!company.contactsPrimaryKey) {
@@ -110,6 +120,7 @@ const readFilterCount = ({ filter, companyId }) => {
 
   return CompanyContact.countDocuments({
     company: companyId,
+    status: COMPANY_CONTACT_STATUS.ACTIVE,
     ...filter,
   });
 };
@@ -197,6 +208,7 @@ const readFiltersCount = async ({ companyId, filters }) => {
       promises.push(
         CompanyContact.countDocuments({
           company: companyId,
+          status: COMPANY_CONTACT_STATUS.ACTIVE,
           [item.key]: { $in: item.values },
         }).then((count) => ({
           key: item.key,
@@ -207,6 +219,7 @@ const readFiltersCount = async ({ companyId, filters }) => {
     } else if (item.conditions && item.conditions.length) {
       const query = {
         company: companyId,
+        status: COMPANY_CONTACT_STATUS.ACTIVE,
       };
 
       const filterConditionQueries = getFilterConditionQuery({
@@ -251,7 +264,11 @@ const search = async ({ companyId, searchString, searchFields }) => {
     queryArray.push({ [item]: { $regex: regex } });
   });
 
-  return CompanyContact.find({ company: companyId, $or: queryArray }).limit(10);
+  return CompanyContact.find({
+    company: companyId,
+    status: COMPANY_CONTACT_STATUS.ACTIVE,
+    $or: queryArray,
+  }).limit(10);
 };
 
 const reorderContacts = ({ contacts }) => {
@@ -270,7 +287,7 @@ const readAllCompanyContacts = async ({ companyId }) => {
   // Fetch the contacts including all fields
   const contacts = await CompanyContact.find({
     company: companyId,
-    status: "ACTIVE",
+    status: COMPANY_CONTACT_STATUS.ACTIVE,
   }).lean();
 
   return reorderContacts({ contacts });
@@ -322,6 +339,7 @@ const readCompanyContact = async ({ companyId, userId }) => {
   const companyContact = await CompanyContact.findOne({
     _id: userId,
     company: companyId,
+    status: COMPANY_CONTACT_STATUS.ACTIVE,
   });
 
   if (!companyContact) {
@@ -447,6 +465,7 @@ const uploadCsv = async ({
 const findUniqueContacts = async ({ companyId, primaryKey }) => {
   const companyContacts = await CompanyContact.find({
     company: companyId,
+    status: COMPANY_CONTACT_STATUS.ACTIVE,
   }).lean();
 
   return basicUtil.filterUniqueObjectsFromArrayByProperty(
@@ -495,7 +514,10 @@ const deletePrimaryKey = async ({ companyId }) =>
   });
 
 const readCompanyContactsCount = ({ companyId }) =>
-  CompanyContact.countDocuments({ company: companyId });
+  CompanyContact.countDocuments({
+    company: companyId,
+    status: COMPANY_CONTACT_STATUS.ACTIVE,
+  });
 
 const readPrimaryKeyEffect = async ({ companyId, primaryKey }) => {
   const [allContacts, uniqueContacts] = await Promise.all([
@@ -530,6 +552,7 @@ const getSelectionCriteriaEffect = async ({
 }) => {
   const query = {
     company: companyId,
+    status: COMPANY_CONTACT_STATUS.ACTIVE,
     $and: contactSelectionCriteria.map((filter) => ({
       [filter.filterKey]: { $in: filter.filterValues },
     })),
@@ -537,7 +560,10 @@ const getSelectionCriteriaEffect = async ({
 
   const [filteredContacts, totalContacts] = await Promise.all([
     CompanyContact.countDocuments(query),
-    CompanyContact.countDocuments({ company: companyId }),
+    CompanyContact.countDocuments({
+      company: companyId,
+      status: COMPANY_CONTACT_STATUS.ACTIVE,
+    }),
   ]);
 
   return totalContacts - filteredContacts;

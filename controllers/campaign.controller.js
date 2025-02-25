@@ -24,6 +24,7 @@ const {
     TEMPLATE_CONTENT_TYPE,
     EMAIL_KIND,
     SORT_ORDER,
+    COMPANY_CONTACT_STATUS,
   },
 } = require("../utils");
 
@@ -333,12 +334,14 @@ const deleteCampaign = async ({ campaignId }) => {
 const mapDynamicValues = async ({ companyId, emailAddress, content }) => {
   let companyContactDoc = await CompanyContact.findOne({
     company: companyId,
+    status: COMPANY_CONTACT_STATUS.ACTIVE,
     email: emailAddress,
   }).lean();
 
   if (!companyContactDoc) {
     companyContactDoc = await CompanyContact.findOne({
       company: companyId,
+      status: COMPANY_CONTACT_STATUS.ACTIVE,
     }).lean();
   }
 
@@ -488,7 +491,11 @@ const runCampaign = async ({ campaign }) => {
   const query = populateCompanyContactsQuery({ segments });
 
   let emailAddresses = await CompanyContact.find(
-    { ...query, company: campaign.company },
+    {
+      ...query,
+      company: campaign.company,
+      status: COMPANY_CONTACT_STATUS.ACTIVE,
+    },
     {
       email: 1,
     }
