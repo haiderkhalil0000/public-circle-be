@@ -199,6 +199,11 @@ const readEmailsSentByCompanyId = ({
 const readEmailsSentByCampaignId = ({ campaignId }) =>
   EmailSent.find({ campaign: campaignId });
 
+const readEmailSentByCampaignIdAndEmailAdress = ({
+  campaignId,
+  emailAddress,
+}) => EmailSent.findOne({ campaign: campaignId, toEmailAddress: emailAddress });
+
 const readEmailAddressesByCampaignId = async ({ campaignId }) => {
   const campaignsController = require("./campaign.controller");
 
@@ -261,4 +266,5 @@ module.exports = {
   readEmailsSentByCampaignId,
   createEmailSentDoc,
   readEmailAddressesByCampaignId,
+  readEmailSentByCampaignIdAndEmailAdress,
 };

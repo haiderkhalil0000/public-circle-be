@@ -7,6 +7,7 @@ const {
     CAMPAIGN_STATUS,
     RUN_MODE,
     CRON_STATUS,
+    CAMPAIGN_FREQUENCIES,
   },
 } = require("../utils");
 
@@ -21,7 +22,7 @@ const schema = new mongoose.Schema(
     segments: [{ type: ObjectId, ref: SEGMENT }],
     sourceEmailAddress: {
       type: String,
-      require: true,
+      required: true,
     },
     emailSubject: {
       type: String,
@@ -60,6 +61,12 @@ const schema = new mongoose.Schema(
       default: 0,
     },
     history: [{ type: Object }],
+    frequency: {
+      type: String,
+      required: true,
+      enum: Object.values(CAMPAIGN_FREQUENCIES),
+      default: CAMPAIGN_FREQUENCIES.ONE_TIME,
+    },
     status: {
       type: String,
       enum: Object.values(CAMPAIGN_STATUS),
