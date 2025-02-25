@@ -436,4 +436,9 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
     TIMESTAMP_AFTER: "timestamp_after",
     TIMESTAMP_BETWEEN: "timestamp_between",
   },
+
+  CAMPAIGN_FREQUENCIES: {
+    ONE_TIME: "ONE_TIME",
+    MANY_TIMES: "MANY_TIMES",
+  },
 };

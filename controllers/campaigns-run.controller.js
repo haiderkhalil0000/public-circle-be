@@ -158,7 +158,7 @@ const readCampaignRunEmailsSent = ({ campaignRunId, pageNumber, pageSize }) =>
     .limit(pageSize);
 
 const readCampaignRunByCampaignId = ({ campaignId }) =>
-  CamapaignRun.findOne({ campaign: campaignId });
+  CampaignRun.findOne({ campaign: campaignId });
 
 const createCampaignRun = ({ companyId, campaignId }) =>
   CampaignRun.create({

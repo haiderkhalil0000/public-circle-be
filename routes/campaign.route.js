@@ -5,7 +5,13 @@ const Joi = require("joi");
 const { authenticate, validate } = require("../middlewares");
 const { campaignsController, emailsSentController } = require("../controllers");
 const {
-  constants: { RESPONSE_MESSAGES, RUN_MODE, CAMPAIGN_STATUS, SORT_ORDER },
+  constants: {
+    RESPONSE_MESSAGES,
+    RUN_MODE,
+    CAMPAIGN_STATUS,
+    SORT_ORDER,
+    CAMPAIGN_FREQUENCIES,
+  },
 } = require("../utils");
 
 const router = express.Router();
@@ -51,6 +57,9 @@ router.post(
       runSchedule: Joi.string(),
       isRecurring: Joi.boolean(),
       recurringPeriod: Joi.string(),
+      frequency: Joi.string()
+        .valid(CAMPAIGN_FREQUENCIES.ONE_TIME, CAMPAIGN_FREQUENCIES.MANY_TIMES)
+        .required(),
       status: Joi.string().valid(
         CAMPAIGN_STATUS.ACTIVE,
         CAMPAIGN_STATUS.DISABLED

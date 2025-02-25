@@ -25,6 +25,7 @@ const {
     EMAIL_KIND,
     SORT_ORDER,
     COMPANY_CONTACT_STATUS,
+    CAMPAIGN_FREQUENCIES,
   },
 } = require("../utils");
 
@@ -76,6 +77,7 @@ const createCampaign = async ({
   runSchedule,
   isRecurring,
   recurringPeriod,
+  frequency,
   status,
 }) => {
   if (status !== CAMPAIGN_STATUS.DISABLED) {
@@ -105,6 +107,7 @@ const createCampaign = async ({
       runSchedule,
       isRecurring,
       recurringPeriod,
+      frequency,
       status,
     }),
     companiesController.readCompanyById({ companyId }),
@@ -466,6 +469,7 @@ const populateCompanyContactsQuery = ({ segments }) => {
 const runCampaign = async ({ campaign }) => {
   const promises = [];
   const segmentPromises = [];
+  const frequencyPromises = [];
 
   promises.push(
     Campaign.updateOne(
@@ -474,9 +478,9 @@ const runCampaign = async ({ campaign }) => {
     )
   );
 
-  if (campaign.runMode === RUN_MODE.ON_GOING) {
-    const campaignRunController = require("./campaigns-run.controller");
+  const campaignRunController = require("./campaigns-run.controller");
 
+  if (campaign.runMode === RUN_MODE.ON_GOING) {
     promises.push(
       campaignRunController.readCampaignRunByCampaignId({
         campaignId: campaign._id,
@@ -506,7 +510,15 @@ const runCampaign = async ({ campaign }) => {
     );
   }
 
-  const [_, campaignRunDoc] = await Promise.all(promises);
+  const results = await Promise.all(promises);
+
+  let campaignRunDoc = {};
+
+  if (results[1]) {
+    campaignRunDoc = results[1];
+  } else {
+    campaignRunDoc = results[0];
+  }
 
   for (const segment of campaign.segments) {
     segmentPromises.push(Segment.findById(segment));
@@ -534,6 +546,31 @@ const runCampaign = async ({ campaign }) => {
   emailAddresses = basicUtil.fiterUniqueStringsFromArray(
     emailAddresses.map((item) => item.email)
   );
+
+  if (campaign.frequency === CAMPAIGN_FREQUENCIES.ONE_TIME) {
+    //we will iterate and find each email address document with this campaignId in email-sent collection
+    //if any document found we will remove that email address from the emailAddresses array
+    const emailsSentController = require("./emails-sent.controller");
+
+    emailAddresses.forEach((emailAddress) => {
+      frequencyPromises.push(
+        emailsSentController.readEmailSentByCampaignIdAndEmailAdress({
+          campaignId: campaign._id,
+          emailAddress,
+        })
+      );
+    });
+
+    const results = await Promise.all(frequencyPromises);
+
+    const emailAddressesToBeRemoved = results
+      .filter((doc) => doc && doc.toEmailAddress)
+      .map((doc) => doc.toEmailAddress);
+
+    emailAddresses = emailAddresses.filter(
+      (emailAddress) => !emailAddressesToBeRemoved.includes(emailAddress)
+    );
+  }
 
   promises.length = 0;
 
