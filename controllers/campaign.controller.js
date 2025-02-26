@@ -304,9 +304,13 @@ const updateCampaign = async ({ companyId, campaignId, campaignData }) => {
     });
   }
 
-  Object.assign(campaign, campaignData);
-
-  await campaign.save();
+  campaign = await campaign.findOneAndUpdate(
+    { _id: campaign._id },
+    campaignData,
+    {
+      new: true,
+    }
+  );
 
   if (campaign.status === CAMPAIGN_STATUS.ACTIVE) {
     await validateCampaign({ campaign, company, primaryUser });
