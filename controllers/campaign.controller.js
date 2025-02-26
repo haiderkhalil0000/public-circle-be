@@ -480,7 +480,7 @@ const runCampaign = async ({ campaign }) => {
 
   const campaignRunController = require("./campaigns-run.controller");
 
-  if (campaign.runMode === RUN_MODE.ON_GOING) {
+  if (campaign.isOnGoing) {
     promises.push(
       campaignRunController.readCampaignRunByCampaignId({
         campaignId: campaign._id,

@@ -45,6 +45,10 @@ const schema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isOnGoing: {
+      type: Boolean,
+      default: false,
+    },
     recurringPeriod: {
       type: String,
     },
