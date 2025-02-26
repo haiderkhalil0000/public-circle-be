@@ -218,4 +218,37 @@ router.delete(
   }
 );
 
+router.get(
+  "/:filterId/values",
+  authenticate.verifyToken,
+  validate({
+    params: Joi.object({
+      filterId: Joi.string().required(),
+    }),
+    query: Joi.object({
+      pageNumber: Joi.number().optional(),
+      pageSize: Joi.number().optional(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const filterValues = await filtersController.readPaginatedFilterValues({
+        ...req.params,
+        ...req.query,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.FILTER_VALUES_FETCHED,
+        data: filterValues,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      filterDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 module.exports = router;

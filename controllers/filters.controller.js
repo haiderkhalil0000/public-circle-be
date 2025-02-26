@@ -80,6 +80,32 @@ const readPossibleFilterValues = async ({
   });
 };
 
+const paginate = ({ arr, pageNumber, pageSize }) => {
+  pageNumber = Number(pageNumber);
+  pageSize = Number(pageSize);
+
+  const startIndex = (pageNumber - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+
+  // Slice the array to get the paginated results
+  const paginatedItems = arr.slice(startIndex, endIndex);
+
+  return paginatedItems;
+};
+
+const readPaginatedFilterValues = async ({
+  filterId,
+  pageNumber = 1,
+  pageSize = 10,
+}) => {
+  const filter = await Filter.findById(filterId);
+
+  return {
+    totalRecords: filter.filterValues.length,
+    filterValues: paginate({ arr: filter.filterValues, pageNumber, pageSize }),
+  };
+};
+
 module.exports = {
   createFilter,
   readAllFilters,
@@ -89,4 +115,5 @@ module.exports = {
   deleteFilter,
   readPossibleFilterKeys,
   readPossibleFilterValues,
+  readPaginatedFilterValues,
 };
