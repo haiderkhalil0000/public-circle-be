@@ -22,6 +22,7 @@ router.get(
     try {
       const plans = await stripeController.readPlans({
         ...req.query,
+        companyId: req.user.company._id,
         stripeCustomerId: req.user.company.stripeCustomerId,
       });
 
