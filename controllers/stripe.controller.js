@@ -169,9 +169,13 @@ const readPlans = async ({ pageSize, stripeCustomerId }) => {
 
     item.price = prices[index];
 
-    item.price.unit_amount =
-      ((item.price.unit_amount / 100 - activePlanPrice) / daysInMonth) *
-      (daysInMonth - currentDayOfMonth + 1);
+    if (item.isActivePlan) {
+      item.price.proratedAmount = 0;
+    } else {
+      item.price.proratedAmount =
+        ((item.price.unit_amount / 100 - activePlanPrice) / daysInMonth) *
+        (daysInMonth - currentDayOfMonth + 1);
+    }
 
     const dbPlan = dbPlans.find((plan) => plan.name === item.name);
 
