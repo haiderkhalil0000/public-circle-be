@@ -93,17 +93,23 @@ const readActiveBillingCycleDates = async ({ stripeCustomerId }) => {
   };
 };
 
-const readPlans = async ({ pageSize, stripeCustomerId }) => {
+const readPlans = async ({ pageSize, companyId, stripeCustomerId }) => {
   const plansController = require("./plans.controller");
+  const emailsSentController = require("./emails-sent.controller");
 
   const promises = [];
 
-  const [stripePlans, dbPlans] = await Promise.all([
+  const [stripePlans, dbPlans, emailSentDocs] = await Promise.all([
     stripe.products.list({
       limit: pageSize,
     }),
     plansController.readAllPlans(),
+    emailsSentController.readEmailsSentByCompanyId({ companyId }),
   ]);
+
+  const totalBandwidthSent = emailSentDocs
+    .map((item) => item.size)
+    .reduce((totalValue, currentValue) => totalValue + currentValue, 0);
 
   let activePlanArray;
 
@@ -168,10 +174,17 @@ const readPlans = async ({ pageSize, stripeCustomerId }) => {
     }
 
     item.price = prices[index];
+    item.price.unit_amount = item.price.unit_amount / 100;
 
-    item.price.unit_amount =
-      ((item.price.unit_amount / 100 - activePlanPrice) / daysInMonth) *
-      (daysInMonth - currentDayOfMonth + 1);
+    if (item.isActivePlan) {
+      item.price.proratedAmount = 0;
+    } else {
+      if (!item.metadata.isAddOn) {
+        item.price.proratedAmount =
+          ((item.price.unit_amount - activePlanPrice) / daysInMonth) *
+          (daysInMonth - currentDayOfMonth + 1);
+      }
+    }
 
     const dbPlan = dbPlans.find((plan) => plan.name === item.name);
 
@@ -183,6 +196,22 @@ const readPlans = async ({ pageSize, stripeCustomerId }) => {
         })} of bandwidth`,
         `${dbPlan.quota.contact} contacts`,
       ];
+
+      if (item.isActivePlan) {
+        if (emailSentDocs.length - dbPlan.quota.email > 0) {
+          item.description.push(
+            `${emailSentDocs.length - dbPlan.quota.email} emails consumed extra`
+          );
+        }
+
+        if (totalBandwidthSent - dbPlan.quota.bandwidth > 0) {
+          item.description.push(
+            `${basicUtil.calculateByteUnit({
+              bytes: totalBandwidthSent - dbPlan.quota.bandwidth,
+            })} bandwidth consumed extra`
+          );
+        }
+      }
     }
   });
 
