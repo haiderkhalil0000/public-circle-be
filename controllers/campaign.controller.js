@@ -482,6 +482,8 @@ const runCampaign = async ({ campaign }) => {
 
   const campaignRunController = require("./campaigns-run.controller");
 
+  let campaignRunDoc = {};
+
   if (campaign.isOnGoing) {
     promises.push(
       campaignRunController.readCampaignRunByCampaignId({
@@ -491,15 +493,17 @@ const runCampaign = async ({ campaign }) => {
 
     const [_, existingCampaignRun] = await Promise.all(promises);
 
-    if (!existingCampaignRun) {
-      promises.length = 0;
+    promises.length = 0;
 
+    if (!existingCampaignRun) {
       promises.push(
         campaignRunController.createCampaignRun({
           companyId: campaign.company,
           campaignId: campaign._id,
         })
       );
+    } else {
+      campaignRunDoc = existingCampaignRun;
     }
 
     //since campaignRun is existing we will not create another campaignRun for ON_GOING
@@ -514,11 +518,9 @@ const runCampaign = async ({ campaign }) => {
 
   const results = await Promise.all(promises);
 
-  let campaignRunDoc = {};
-
   if (results[1]) {
     campaignRunDoc = results[1];
-  } else {
+  } else if (results[0]) {
     campaignRunDoc = results[0];
   }
 
