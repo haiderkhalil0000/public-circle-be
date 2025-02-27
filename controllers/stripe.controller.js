@@ -168,6 +168,7 @@ const readPlans = async ({ pageSize, stripeCustomerId }) => {
     }
 
     item.price = prices[index];
+    item.price.unit_amount / 100;
 
     if (item.isActivePlan) {
       item.price.proratedAmount = 0;
