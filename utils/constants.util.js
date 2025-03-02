@@ -228,6 +228,7 @@ module.exports = {
     FILTER_VALUES_REQUIRED: "Filter values are required!",
     EMAILS_FETCHED: "Emails fetched successfully.",
     FILTER_VALUES_FETCHED: "Filter values fetched successfully.",
+    CONTACT_DUPLICATE_FETCHED: "Contact duplicates fetched successfully.",
   },
 
   INTERACTION_CHANNELS: {
@@ -419,6 +420,7 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
 
   COMPANY_CONTACT_STATUS: {
     ACTIVE: "ACTIVE",
+    PENDING: "PENDING",
     DELETED: "DELETED",
   },
 

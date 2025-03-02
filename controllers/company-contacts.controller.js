@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const createHttpError = require("http-errors");
 const path = require("path");
+const _ = require("lodash");
 
 const { CompanyContact, Company } = require("../models");
 const {
@@ -474,14 +475,40 @@ const findUniqueContacts = async ({ companyId, primaryKey }) => {
   );
 };
 
-const removeDuplicatesWithPrimaryKey = async ({ companyId, primaryKey }) => {
-  const [uniqueContacts, companyContactIds] = await Promise.all([
-    findUniqueContacts({ companyId, primaryKey }),
-    CompanyContact.distinct("_id", { company: companyId }),
-  ]);
+const markContactsPendingWithPrimaryKey = async ({ companyId, primaryKey }) => {
+  let [uniqueContacts, allCompanyContacts, companyContactIds] =
+    await Promise.all([
+      findUniqueContacts({ companyId, primaryKey }),
+      readAllCompanyContacts({ companyId }),
+      CompanyContact.distinct("_id", { company: companyId }),
+    ]);
 
   await CompanyContact.deleteMany({ _id: { $in: companyContactIds } });
-  await CompanyContact.insertMany(uniqueContacts);
+
+  allCompanyContacts.forEach((companyContact) => {
+    const uniqueContact = uniqueContacts.find(
+      (uniqueContact) =>
+        companyContact[primaryKey] === uniqueContact[primaryKey]
+    );
+
+    if (!uniqueContact) {
+      companyContact.status = COMPANY_CONTACT_STATUS.PENDING;
+
+      allCompanyContacts = allCompanyContacts.map((item) => {
+        if (item[primaryKey] === companyContact[primaryKey]) {
+          return { ...item, status: COMPANY_CONTACT_STATUS.PENDING };
+        }
+
+        return item;
+      });
+    } else {
+      uniqueContacts = uniqueContacts.filter(
+        (item) => item[primaryKey] !== uniqueContact[primaryKey]
+      );
+    }
+  });
+
+  await CompanyContact.insertMany(allCompanyContacts);
 };
 
 const createPrimaryKey = async ({ companyId, primaryKey }) => {
@@ -489,7 +516,7 @@ const createPrimaryKey = async ({ companyId, primaryKey }) => {
     contactsPrimaryKey: primaryKey,
   });
 
-  await removeDuplicatesWithPrimaryKey({ companyId, primaryKey });
+  await markContactsPendingWithPrimaryKey({ companyId, primaryKey });
 };
 
 const readPrimaryKey = async ({ companyId }) => {
@@ -505,7 +532,7 @@ const updatePrimaryKey = async ({ companyId, primaryKey }) => {
     contactsPrimaryKey: primaryKey,
   });
 
-  await removeDuplicatesWithPrimaryKey({ companyId, primaryKey });
+  await markContactsPendingWithPrimaryKey({ companyId, primaryKey });
 };
 
 const deletePrimaryKey = async ({ companyId }) =>
@@ -592,6 +619,131 @@ const createMultipleCompanyContacts = ({ contacts }) => {
   CompanyContact.insertMany(contacts);
 };
 
+const readCompanyContactDuplicates = async ({ companyId }) => {
+  const primaryKey = await readPrimaryKey({ companyId });
+
+  const uniquePrimaryKeyContacts = await CompanyContact.distinct(primaryKey, {
+    company: companyId,
+  });
+
+  const promises = [];
+
+  uniquePrimaryKeyContacts.forEach((item) => {
+    promises.push(
+      CompanyContact.find({
+        company: companyId,
+        [primaryKey]: item,
+        status: COMPANY_CONTACT_STATUS.PENDING,
+      })
+    );
+  });
+
+  const results = await Promise.all(promises);
+
+  return results.filter((item) => item.length);
+};
+
+const readPendingContactsCountByCompanyId = ({ companyId }) =>
+  CompanyContact.countDocuments({
+    company: companyId,
+    status: COMPANY_CONTACT_STATUS.PENDING,
+  });
+
+const resolveCompanyContactDuplicates = async ({
+  companyId,
+  isSaveNewContact,
+  contactsToBeSaved,
+}) => {
+  const companiesController = require("./companies.controller");
+
+  const { contactsPrimaryKey } = await companiesController.readCompanyById({
+    companyId,
+  });
+
+  const promises = [];
+
+  if (contactsToBeSaved && contactsToBeSaved.length) {
+    contactsToBeSaved.forEach((contact) => {
+      promises.push(
+        CompanyContact.updateOne(
+          {
+            company: companyId,
+            _id: { $ne: contact._id },
+            [contactsPrimaryKey]: contact[contactsPrimaryKey],
+          },
+          {
+            status: COMPANY_CONTACT_STATUS.DELETED,
+          }
+        )
+      );
+
+      promises.push(
+        CompanyContact.updateOne(
+          {
+            company: companyId,
+            _id: contact._id,
+          },
+          contact
+        )
+      );
+    });
+
+    await Promise.all(promises);
+  } else {
+    const pendingContacts = await CompanyContact.find({
+      company: companyId,
+      status: COMPANY_CONTACT_STATUS.PENDING,
+    });
+
+    const uniquePrimaryKeyContacts = _.uniqBy(
+      pendingContacts,
+      contactsPrimaryKey
+    );
+
+    const contactIdsToBeDeleted = [];
+
+    uniquePrimaryKeyContacts.forEach((upkc) => {
+      const duplicateContact = pendingContacts.find(
+        (dc) =>
+          upkc[contactsPrimaryKey] === dc[contactsPrimaryKey] &&
+          upkc._id !== dc._id
+      );
+
+      const itemCreatedAt = upkc.createdAt.getTime();
+      const duplicateItemCreatedAt = duplicateContact.createdAt.getTime();
+
+      if (itemCreatedAt > duplicateItemCreatedAt) {
+        contactIdsToBeDeleted.push(
+          isSaveNewContact ? upkc._id : duplicateContact._id
+        );
+      } else {
+        contactIdsToBeDeleted.push(
+          isSaveNewContact ? upkc._id : duplicateContact._id
+        );
+      }
+    });
+
+    await CompanyContact.updateMany(
+      {
+        _id: { $in: contactIdsToBeDeleted },
+      },
+      {
+        status: COMPANY_CONTACT_STATUS.DELETED,
+      }
+    );
+  }
+
+  await CompanyContact.updateMany(
+    {
+      company: companyId,
+      status: COMPANY_CONTACT_STATUS.PENDING,
+    },
+    {
+      status: COMPANY_CONTACT_STATUS.ACTIVE,
+    }
+  );
+};
+
 module.exports = {
   readContactKeys,
   readContactValues,
@@ -617,4 +769,7 @@ module.exports = {
   filterContactsBySelectionCriteria,
   createMultipleCompanyContacts,
   getFilterConditionQuery,
+  readCompanyContactDuplicates,
+  readPendingContactsCountByCompanyId,
+  resolveCompanyContactDuplicates,
 };

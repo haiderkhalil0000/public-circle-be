@@ -62,6 +62,26 @@ router.get("/primary-key", authenticate.verifyToken, async (req, res, next) => {
   }
 });
 
+router.get("/duplicates", authenticate.verifyToken, async (req, res, next) => {
+  try {
+    const duplicates =
+      await companyContactsController.readCompanyContactDuplicates({
+        companyId: req.user.company._id,
+      });
+
+    res.status(200).json({
+      message: RESPONSE_MESSAGES.CONTACT_DUPLICATE_FETCHED,
+      data: duplicates,
+    });
+  } catch (err) {
+    // sendErrorReportToSentry(error);
+
+    companyContactsDebugger(err);
+
+    next(err);
+  }
+});
+
 router.post(
   "/primary-key",
   authenticate.verifyToken,
@@ -530,6 +550,36 @@ router.post(
 
       res.status(200).json({
         message: `${noOfAffectedContacts} contacts will be deleted by this action`,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      companyContactsDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.post(
+  "/resolve-duplicates",
+  authenticate.verifyToken,
+  validate({
+    body: Joi.object({
+      isSaveNewContact: Joi.boolean().optional(),
+      contactsToBeSaved: Joi.array().optional(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      await companyContactsController.resolveCompanyContactDuplicates({
+        companyId: req.user.company._id,
+        ...req.body,
+      });
+
+      res.status(200).json({
+        message: `Duplicate resolved successfully.`,
         data: {},
       });
     } catch (err) {
