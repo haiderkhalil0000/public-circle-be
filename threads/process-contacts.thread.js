@@ -3,9 +3,12 @@ const { parentPort } = require("worker_threads");
 const { Readable } = require("stream");
 const csvParser = require("csv-parser");
 const lodash = require("lodash");
-const differenceWith = require("lodash/differenceWith");
 
 const { webhooksController, companiesController } = require("../controllers");
+const {
+  constants: { COMPANY_CONTACT_STATUS },
+} = require("../utils");
+const { CompanyContact } = require("../models");
 
 const { MONGODB_URL } = process.env;
 
@@ -51,17 +54,32 @@ parentPort.on("message", async (message) => {
   try {
     const { companyId, stripeCustomerId, contactsPrimaryKey, file } = message;
 
-    const [_, company, existingCompanyContactsCount, existingCompanyContacts] =
-      await Promise.all([
-        connectDbForThread(),
-        companiesController.readCompanyById({ companyId }),
-        companyContactsController.readCompanyContactsCount({
-          companyId,
-        }),
-        companyContactsController.readAllCompanyContacts({
-          companyId,
-        }),
-      ]);
+    const [
+      _,
+      company,
+      existingCompanyContactsCount,
+      existingCompanyContacts,
+      pendingCompanyContactsCount,
+    ] = await Promise.all([
+      connectDbForThread(),
+      companiesController.readCompanyById({ companyId }),
+      companyContactsController.readCompanyContactsCount({
+        companyId,
+      }),
+      companyContactsController.readAllCompanyContacts({
+        companyId,
+      }),
+      companyContactsController.readPendingContactsCountByCompanyId({
+        companyId,
+      }),
+    ]);
+
+    if (pendingCompanyContactsCount) {
+      parentPort.postMessage({
+        error:
+          "Duplicates found in your existing contacts, please resolve them before importing contacts again!",
+      });
+    }
 
     let contacts = [];
 
@@ -80,18 +98,53 @@ parentPort.on("message", async (message) => {
     await processCSV;
 
     if (contactsPrimaryKey) {
-      contacts = lodash.uniqBy(contacts, "email");
+      let duplicates = lodash
+        .chain(contacts)
+        .groupBy("email")
+        .filter((group) => group.length > 1)
+        .map((group) => group[0].email)
+        .value();
 
-      contacts = differenceWith(
-        contacts,
-        existingCompanyContacts,
-        (contacts, existingCompanyContacts) => {
-          return (
-            contacts[contactsPrimaryKey] ===
-            existingCompanyContacts[contactsPrimaryKey]
-          );
+      contacts = contacts.map((item) => {
+        if (!duplicates.includes(item[contactsPrimaryKey])) {
+          return item;
         }
-      );
+
+        return { ...item, status: COMPANY_CONTACT_STATUS.PENDING };
+      });
+
+      const existingContactsToBePending = [];
+
+      existingCompanyContacts.forEach((ecc) => {
+        const duplicateContact = contacts.find(
+          (c) => c[contactsPrimaryKey] === ecc[contactsPrimaryKey]
+        );
+
+        if (duplicateContact) {
+          contacts = contacts.map((item) => {
+            if (
+              item[contactsPrimaryKey] === duplicateContact[contactsPrimaryKey]
+            ) {
+              return { ...item, status: COMPANY_CONTACT_STATUS.PENDING };
+            }
+            return item;
+          });
+
+          existingContactsToBePending.push(ecc._id);
+        }
+      });
+
+      if (existingContactsToBePending.length) {
+        await CompanyContact.updateMany(
+          {
+            company: companyId,
+            _id: { $in: existingContactsToBePending },
+          },
+          {
+            status: COMPANY_CONTACT_STATUS.PENDING,
+          }
+        );
+      }
     }
 
     if (company.contactSelectionCriteria.length) {
