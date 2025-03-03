@@ -436,11 +436,11 @@ const uploadCsv = async ({
 
     console.log(message);
 
-    // emitMessage({
-    //   socketObj: targetSocket,
-    //   socketChannel: SOCKET_CHANNELS.CONTACTS_UPLOAD_PROGRESS,
-    //   message,
-    // });
+    emitMessage({
+      socketObj: targetSocket,
+      socketChannel: SOCKET_CHANNELS.CONTACTS_UPLOAD_PROGRESS,
+      message,
+    });
   });
 
   worker.on("error", (error) => {
