@@ -100,10 +100,20 @@ parentPort.on("message", async (message) => {
     if (contactsPrimaryKey) {
       let duplicates = lodash
         .chain(contacts)
-        .groupBy("email")
+        .groupBy(contactsPrimaryKey)
         .filter((group) => group.length > 1)
         .map((group) => group[0].email)
         .value();
+
+      contacts = (() => {
+        // Filter contacts, keeping only up to 2 of each email
+        const seen = {};
+        return lodash.filter(contacts, (contact) => {
+          seen[contact[contactsPrimaryKey]] =
+            (seen[contact[contactsPrimaryKey]] || 0) + 1;
+          return seen[contact.email] <= 2;
+        });
+      })();
 
       contacts = contacts.map((item) => {
         if (!duplicates.includes(item[contactsPrimaryKey])) {

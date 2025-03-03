@@ -674,7 +674,10 @@ const readCompanyContactDuplicates = async ({
     companyContactDuplicates.push(obj);
   }
 
-  return { totalRecords, duplicateContacts: companyContactDuplicates };
+  return {
+    totalRecords: totalRecords / 2,
+    duplicateContacts: companyContactDuplicates,
+  };
 };
 
 const readPendingContactsCountByCompanyId = ({ companyId }) =>
