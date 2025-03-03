@@ -634,6 +634,7 @@ const readCompanyContactDuplicates = async ({
       .limit(parseInt(pageSize)),
     CompanyContact.countDocuments({
       company: companyId,
+      status: COMPANY_CONTACT_STATUS.PENDING,
     }),
   ]);
 
