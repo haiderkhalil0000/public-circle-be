@@ -619,12 +619,27 @@ const createMultipleCompanyContacts = ({ contacts }) => {
   CompanyContact.insertMany(contacts);
 };
 
-const readCompanyContactDuplicates = async ({ companyId }) => {
+const readCompanyContactDuplicates = async ({
+  companyId,
+  pageNumber = 1,
+  pageSize = 10,
+}) => {
   const primaryKey = await readPrimaryKey({ companyId });
 
-  const uniquePrimaryKeyContacts = await CompanyContact.distinct(primaryKey, {
-    company: companyId,
-  });
+  const [contacts, totalRecords] = await Promise.all([
+    CompanyContact.find({
+      company: companyId,
+    })
+      .skip((parseInt(pageNumber) - 1) * pageSize)
+      .limit(parseInt(pageSize)),
+    CompanyContact.countDocuments({
+      company: companyId,
+    }),
+  ]);
+
+  const uniquePrimaryKeyContacts = [
+    ...new Set(contacts.map((obj) => obj[primaryKey])),
+  ];
 
   const promises = [];
 
@@ -638,9 +653,27 @@ const readCompanyContactDuplicates = async ({ companyId }) => {
     );
   });
 
-  const results = await Promise.all(promises);
+  let results = await Promise.all(promises);
 
-  return results.filter((item) => item.length);
+  results = results.filter((item) => item.length);
+
+  const companyContactDuplicates = [];
+
+  for (const result of results) {
+    const obj = {};
+
+    if (result[0].createdAt.getTime() < result[1].createdAt.getTime()) {
+      obj.old = result[0];
+      obj.new = result[1];
+    } else {
+      obj.old = result[1];
+      obj.new = result[0];
+    }
+
+    companyContactDuplicates.push(obj);
+  }
+
+  return { totalRecords, duplicateContacts: companyContactDuplicates };
 };
 
 const readPendingContactsCountByCompanyId = ({ companyId }) =>
@@ -683,7 +716,7 @@ const resolveCompanyContactDuplicates = async ({
             company: companyId,
             _id: contact._id,
           },
-          contact
+          { ...contact, status: COMPANY_CONTACT_STATUS.ACTIVE }
         )
       );
     });
@@ -701,6 +734,7 @@ const resolveCompanyContactDuplicates = async ({
     );
 
     const contactIdsToBeDeleted = [];
+    const contactIdsToBeActivated = [];
 
     uniquePrimaryKeyContacts.forEach((upkc) => {
       const duplicateContact = pendingContacts.find(
@@ -716,32 +750,40 @@ const resolveCompanyContactDuplicates = async ({
         contactIdsToBeDeleted.push(
           isSaveNewContact ? upkc._id : duplicateContact._id
         );
+
+        contactIdsToBeActivated.push(
+          isSaveNewContact ? duplicateContact._id : upkc._id
+        );
       } else {
         contactIdsToBeDeleted.push(
           isSaveNewContact ? upkc._id : duplicateContact._id
         );
+
+        contactIdsToBeActivated.push(
+          isSaveNewContact ? duplicateContact._id : upkc._id
+        );
       }
     });
 
-    await CompanyContact.updateMany(
-      {
-        _id: { $in: contactIdsToBeDeleted },
-      },
-      {
-        status: COMPANY_CONTACT_STATUS.DELETED,
-      }
-    );
+    await Promise.all([
+      CompanyContact.updateMany(
+        {
+          _id: { $in: contactIdsToBeDeleted },
+        },
+        {
+          status: COMPANY_CONTACT_STATUS.DELETED,
+        }
+      ),
+      CompanyContact.updateMany(
+        {
+          _id: { $in: contactIdsToBeActivated },
+        },
+        {
+          status: COMPANY_CONTACT_STATUS.ACTIVE,
+        }
+      ),
+    ]);
   }
-
-  await CompanyContact.updateMany(
-    {
-      company: companyId,
-      status: COMPANY_CONTACT_STATUS.PENDING,
-    },
-    {
-      status: COMPANY_CONTACT_STATUS.ACTIVE,
-    }
-  );
 };
 
 module.exports = {
