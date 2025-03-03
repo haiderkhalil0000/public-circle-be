@@ -12,7 +12,13 @@ const {
 } = require("../models");
 const {
   basicUtil,
-  constants: { RESPONSE_MESSAGES, USER_STATUS, CAMPAIGN_STATUS, USER_KIND },
+  constants: {
+    RESPONSE_MESSAGES,
+    USER_STATUS,
+    CAMPAIGN_STATUS,
+    USER_KIND,
+    COMPANY_CONTACT_STATUS,
+  },
   s3Util,
 } = require("../utils");
 
