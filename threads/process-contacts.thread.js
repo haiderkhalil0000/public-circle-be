@@ -79,6 +79,8 @@ parentPort.on("message", async (message) => {
         error:
           "Duplicates found in your existing contacts, please resolve them before importing contacts again!",
       });
+
+      process.exit(1);
     }
 
     let contacts = [];
