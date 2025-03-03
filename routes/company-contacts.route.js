@@ -62,25 +62,36 @@ router.get("/primary-key", authenticate.verifyToken, async (req, res, next) => {
   }
 });
 
-router.get("/duplicates", authenticate.verifyToken, async (req, res, next) => {
-  try {
-    const duplicates =
-      await companyContactsController.readCompanyContactDuplicates({
-        companyId: req.user.company._id,
+router.get(
+  "/duplicates",
+  authenticate.verifyToken,
+  validate({
+    query: Joi.object({
+      pageNumber: Joi.number().optional(),
+      pageSize: Joi.number().optional(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const duplicates =
+        await companyContactsController.readCompanyContactDuplicates({
+          companyId: req.user.company._id,
+          ...req.query,
+        });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.CONTACT_DUPLICATE_FETCHED,
+        data: duplicates,
       });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
 
-    res.status(200).json({
-      message: RESPONSE_MESSAGES.CONTACT_DUPLICATE_FETCHED,
-      data: duplicates,
-    });
-  } catch (err) {
-    // sendErrorReportToSentry(error);
+      companyContactsDebugger(err);
 
-    companyContactsDebugger(err);
-
-    next(err);
+      next(err);
+    }
   }
-});
+);
 
 router.post(
   "/primary-key",
