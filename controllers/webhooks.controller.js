@@ -3,7 +3,10 @@ const _ = require("lodash");
 const recieveCompanyContacts = async ({ companyId, contacts }) => {
   const companyContactsController = require("./company-contacts.controller");
 
-  contacts = contacts.map((item) => ({ ...item, company: companyId }));
+  contacts = contacts.map((item) => ({
+    ...item,
+    public_circles_company: companyId,
+  }));
 
   await companyContactsController.createMultipleCompanyContacts({ contacts });
 };

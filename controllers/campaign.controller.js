@@ -338,15 +338,15 @@ const deleteCampaign = async ({ campaignId }) => {
 
 const mapDynamicValues = async ({ companyId, emailAddress, content }) => {
   let companyContactDoc = await CompanyContact.findOne({
-    company: companyId,
-    status: COMPANY_CONTACT_STATUS.ACTIVE,
+    public_circles_company: companyId,
+    public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
     email: emailAddress,
   }).lean();
 
   if (!companyContactDoc) {
     companyContactDoc = await CompanyContact.findOne({
-      company: companyId,
-      status: COMPANY_CONTACT_STATUS.ACTIVE,
+      public_circles_company: companyId,
+      public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
     }).lean();
   }
 
@@ -539,8 +539,8 @@ const runCampaign = async ({ campaign }) => {
   let emailAddresses = await CompanyContact.find(
     {
       ...query,
-      company: campaign.company,
-      status: COMPANY_CONTACT_STATUS.ACTIVE,
+      public_circles_company: campaign.company,
+      public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
     },
     {
       email: 1,

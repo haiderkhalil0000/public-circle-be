@@ -307,8 +307,8 @@ const readDashboardData = async ({ currentUserId, companyId, graphScope }) => {
       _id: { $ne: currentUserId },
     }),
     CompanyContact.countDocuments({
-      company: companyId,
-      status: COMPANY_CONTACT_STATUS.ACTIVE,
+      public_circles_company: companyId,
+      public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
     }),
     Campaign.countDocuments({
       company: companyId,

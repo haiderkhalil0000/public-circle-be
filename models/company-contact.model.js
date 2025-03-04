@@ -10,13 +10,13 @@ const {
 
 const schema = new mongoose.Schema(
   {
-    company: {
+    public_circles_company: {
       type: ObjectId,
       required: true,
       index: true,
       ref: COMPANY,
     },
-    status: {
+    public_circles_status: {
       type: String,
       required: true,
       enum: Object.values(COMPANY_CONTACT_STATUS),

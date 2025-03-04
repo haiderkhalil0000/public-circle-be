@@ -122,7 +122,10 @@ parentPort.on("message", async (message) => {
           return item;
         }
 
-        return { ...item, status: COMPANY_CONTACT_STATUS.PENDING };
+        return {
+          ...item,
+          public_circles_status: COMPANY_CONTACT_STATUS.PENDING,
+        };
       });
 
       const existingContactsToBePending = [];
@@ -137,7 +140,10 @@ parentPort.on("message", async (message) => {
             if (
               item[contactsPrimaryKey] === duplicateContact[contactsPrimaryKey]
             ) {
-              return { ...item, status: COMPANY_CONTACT_STATUS.PENDING };
+              return {
+                ...item,
+                public_circles_status: COMPANY_CONTACT_STATUS.PENDING,
+              };
             }
             return item;
           });
@@ -149,11 +155,11 @@ parentPort.on("message", async (message) => {
       if (existingContactsToBePending.length) {
         await CompanyContact.updateMany(
           {
-            company: companyId,
+            public_circles_company: companyId,
             _id: { $in: existingContactsToBePending },
           },
           {
-            status: COMPANY_CONTACT_STATUS.PENDING,
+            public_circles_status: COMPANY_CONTACT_STATUS.PENDING,
           }
         );
       }
