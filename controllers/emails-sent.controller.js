@@ -220,8 +220,8 @@ const readEmailAddressesByCampaignId = async ({ campaignId }) => {
   let emailAddresses = await CompanyContact.find(
     {
       ...query,
-      company: campaign.company,
-      status: COMPANY_CONTACT_STATUS.ACTIVE,
+      public_circles_company: campaign.company,
+      public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
     },
     {
       email: 1,

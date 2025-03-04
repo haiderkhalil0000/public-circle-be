@@ -17,13 +17,17 @@ const {
 
 const readContactKeys = async ({ companyId = "" }) => {
   const totalDocs = await CompanyContact.countDocuments({
-    company: companyId,
-    status: COMPANY_CONTACT_STATUS.ACTIVE,
+    public_circles_company: companyId,
+    public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
   });
   const sampleSize = Math.floor(totalDocs * 0.1);
 
   const randomDocuments = await CompanyContact.aggregate([
-    { $match: { company: new mongoose.Types.ObjectId(companyId) } },
+    {
+      $match: {
+        public_circles_company: new mongoose.Types.ObjectId(companyId),
+      },
+    },
     { $sample: { size: sampleSize ? sampleSize : 1 } },
   ]);
 
@@ -37,7 +41,8 @@ const readContactKeys = async ({ companyId = "" }) => {
   }, Object.keys(randomDocuments[0]));
 
   return allKeys.filter(
-    (item) => item !== "_id" && item !== "__v" && item !== "companyId"
+    (item) =>
+      !item.startsWith("public_circles_") && item !== "_id" && item !== "__v"
   );
 };
 
@@ -58,8 +63,8 @@ const readContactValues = async ({
     const regex = new RegExp(`${searchString}`, "i"); // 'i' for case-insensitive
 
     const query = {
-      company: companyId,
-      status: COMPANY_CONTACT_STATUS.ACTIVE,
+      public_circles_company: companyId,
+      public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
       [key]: { $regex: regex },
     };
 
@@ -80,13 +85,19 @@ const readContactValues = async ({
   const [company, results, totalResults] = await Promise.all([
     Company.findById(companyId),
     CompanyContact.find(
-      { company: companyId, status: COMPANY_CONTACT_STATUS.ACTIVE },
+      {
+        public_circles_company: companyId,
+        public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
+      },
       { [key]: 1, _id: 0 }
     )
       .skip((parseInt(pageNumber) - 1) * pageSize)
       .limit(pageSize),
     CompanyContact.countDocuments(
-      { company: companyId, status: COMPANY_CONTACT_STATUS.ACTIVE },
+      {
+        public_circles_company: companyId,
+        public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
+      },
       { [key]: 1, _id: 0 }
     ),
   ]);
@@ -120,8 +131,8 @@ const readFilterCount = ({ filter, companyId }) => {
   }
 
   return CompanyContact.countDocuments({
-    company: companyId,
-    status: COMPANY_CONTACT_STATUS.ACTIVE,
+    public_circles_company: companyId,
+    public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
     ...filter,
   });
 };
@@ -208,8 +219,8 @@ const readFiltersCount = async ({ companyId, filters }) => {
     if (item.values && item.values.length) {
       promises.push(
         CompanyContact.countDocuments({
-          company: companyId,
-          status: COMPANY_CONTACT_STATUS.ACTIVE,
+          public_circles_company: companyId,
+          public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
           [item.key]: { $in: item.values },
         }).then((count) => ({
           key: item.key,
@@ -219,8 +230,8 @@ const readFiltersCount = async ({ companyId, filters }) => {
       );
     } else if (item.conditions && item.conditions.length) {
       const query = {
-        company: companyId,
-        status: COMPANY_CONTACT_STATUS.ACTIVE,
+        public_circles_company: companyId,
+        public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
       };
 
       const filterConditionQueries = getFilterConditionQuery({
@@ -266,8 +277,8 @@ const search = async ({ companyId, searchString, searchFields }) => {
   });
 
   return CompanyContact.find({
-    company: companyId,
-    status: COMPANY_CONTACT_STATUS.ACTIVE,
+    public_circles_company: companyId,
+    public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
     $or: queryArray,
   }).limit(10);
 };
@@ -275,10 +286,11 @@ const search = async ({ companyId, searchString, searchFields }) => {
 const reorderContacts = ({ contacts }) => {
   // Reorder fields to make specific ones appear at the end
   const reorderedContacts = contacts.map((contact) => {
-    const { _id, company, createdAt, updatedAt, __v, ...rest } = contact;
+    const { _id, public_circles_company, createdAt, updatedAt, __v, ...rest } =
+      contact;
 
     // Combine the fields with the rest first, then the specified ones at the end
-    return { ...rest, _id, company, createdAt, updatedAt, __v };
+    return { ...rest, _id, public_circles_company, createdAt, updatedAt, __v };
   });
 
   return reorderedContacts;
@@ -287,8 +299,8 @@ const reorderContacts = ({ contacts }) => {
 const readAllCompanyContacts = async ({ companyId }) => {
   // Fetch the contacts including all fields
   const contacts = await CompanyContact.find({
-    company: companyId,
-    status: COMPANY_CONTACT_STATUS.ACTIVE,
+    public_circles_company: companyId,
+    public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
   }).lean();
 
   return reorderContacts({ contacts });
@@ -301,8 +313,8 @@ const readPaginatedCompanyContacts = async ({
   filters = [],
 }) => {
   const query = {
-    company: companyId,
-    status: COMPANY_CONTACT_STATUS.ACTIVE,
+    public_circles_company: companyId,
+    public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
   };
 
   if (filters.length) {
@@ -327,7 +339,7 @@ const readPaginatedCompanyContacts = async ({
 
 const createCompanyContact = ({ companyId, companyUserData }) => {
   CompanyContact.create({
-    company: companyId,
+    public_circles_company: companyId,
     ...companyUserData,
   });
 };
@@ -339,8 +351,8 @@ const readCompanyContact = async ({ companyId, userId }) => {
 
   const companyContact = await CompanyContact.findOne({
     _id: userId,
-    company: companyId,
-    status: COMPANY_CONTACT_STATUS.ACTIVE,
+    public_circles_company: companyId,
+    public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
   });
 
   if (!companyContact) {
@@ -358,7 +370,7 @@ const updateCompanyContact = async ({ companyId, userId, companyUserData }) => {
   });
 
   const result = await CompanyContact.updateOne(
-    { _id: userId, company: companyId },
+    { _id: userId, public_circles_company: companyId },
     { ...companyUserData }
   );
 
@@ -373,9 +385,9 @@ const deleteCompanyContact = async ({ companyId, userId }) => {
   const result = await CompanyContact.updateOne(
     {
       _id: userId,
-      company: companyId,
+      public_circles_company: companyId,
     },
-    { status: COMPANY_CONTACT_STATUS.DELETED }
+    { public_circles_status: COMPANY_CONTACT_STATUS.DELETED }
   );
 
   if (!result.modifiedCount) {
@@ -394,9 +406,9 @@ const deleteAllCompanyContacts = async ({ companyId, currentUserKind }) => {
 
   const result = await CompanyContact.updateMany(
     {
-      company: companyId,
+      public_circles_company: companyId,
     },
-    { status: COMPANY_CONTACT_STATUS.DELETED }
+    { public_circles_status: COMPANY_CONTACT_STATUS.DELETED }
   );
 
   if (!result.modifiedCount) {
@@ -465,8 +477,8 @@ const uploadCsv = async ({
 
 const findUniqueContacts = async ({ companyId, primaryKey }) => {
   const companyContacts = await CompanyContact.find({
-    company: companyId,
-    status: COMPANY_CONTACT_STATUS.ACTIVE,
+    public_circles_company: companyId,
+    public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
   }).lean();
 
   return basicUtil.filterUniqueObjectsFromArrayByProperty(
@@ -480,7 +492,7 @@ const markContactsPendingWithPrimaryKey = async ({ companyId, primaryKey }) => {
     await Promise.all([
       findUniqueContacts({ companyId, primaryKey }),
       readAllCompanyContacts({ companyId }),
-      CompanyContact.distinct("_id", { company: companyId }),
+      CompanyContact.distinct("_id", { public_circles_company: companyId }),
     ]);
 
   await CompanyContact.deleteMany({ _id: { $in: companyContactIds } });
@@ -492,11 +504,14 @@ const markContactsPendingWithPrimaryKey = async ({ companyId, primaryKey }) => {
     );
 
     if (!uniqueContact) {
-      companyContact.status = COMPANY_CONTACT_STATUS.PENDING;
+      companyContact.public_circles_status = COMPANY_CONTACT_STATUS.PENDING;
 
       allCompanyContacts = allCompanyContacts.map((item) => {
         if (item[primaryKey] === companyContact[primaryKey]) {
-          return { ...item, status: COMPANY_CONTACT_STATUS.PENDING };
+          return {
+            ...item,
+            public_circles_status: COMPANY_CONTACT_STATUS.PENDING,
+          };
         }
 
         return item;
@@ -542,8 +557,8 @@ const deletePrimaryKey = async ({ companyId }) =>
 
 const readCompanyContactsCount = ({ companyId }) =>
   CompanyContact.countDocuments({
-    company: companyId,
-    status: COMPANY_CONTACT_STATUS.ACTIVE,
+    public_circles_company: companyId,
+    public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
   });
 
 const readPrimaryKeyEffect = async ({ companyId, primaryKey }) => {
@@ -561,9 +576,9 @@ const deleteSelectedContacts = async ({ companyId, contactIds }) => {
   const result = await CompanyContact.updateMany(
     {
       _id: { $in: contactIds },
-      company: companyId,
+      public_circles_company: companyId,
     },
-    { status: COMPANY_CONTACT_STATUS.DELETED }
+    { public_circles_status: COMPANY_CONTACT_STATUS.DELETED }
   );
 
   if (!result.modifiedCount) {
@@ -578,8 +593,8 @@ const getSelectionCriteriaEffect = async ({
   contactSelectionCriteria,
 }) => {
   const query = {
-    company: companyId,
-    status: COMPANY_CONTACT_STATUS.ACTIVE,
+    public_circles_company: companyId,
+    public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
     $and: contactSelectionCriteria.map((filter) => ({
       [filter.filterKey]: { $in: filter.filterValues },
     })),
@@ -588,8 +603,8 @@ const getSelectionCriteriaEffect = async ({
   const [filteredContacts, totalContacts] = await Promise.all([
     CompanyContact.countDocuments(query),
     CompanyContact.countDocuments({
-      company: companyId,
-      status: COMPANY_CONTACT_STATUS.ACTIVE,
+      public_circles_company: companyId,
+      public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
     }),
   ]);
 
@@ -601,7 +616,7 @@ const filterContactsBySelectionCriteria = async ({
   contactSelectionCriteria,
 }) => {
   const query = {
-    company: companyId,
+    public_circles_company: companyId,
     $and: contactSelectionCriteria.map((filter) => ({
       [filter.filterKey]: { $in: filter.filterValues },
     })),
@@ -610,8 +625,8 @@ const filterContactsBySelectionCriteria = async ({
   const filteredContactIds = await CompanyContact.distinct("_id", query);
 
   await CompanyContact.updateMany(
-    { _id: { $nin: filteredContactIds }, company: companyId },
-    { status: COMPANY_CONTACT_STATUS.DELETED }
+    { _id: { $nin: filteredContactIds }, public_circles_company: companyId },
+    { public_circles_status: COMPANY_CONTACT_STATUS.DELETED }
   );
 };
 
@@ -628,13 +643,14 @@ const readCompanyContactDuplicates = async ({
 
   const [contacts, totalRecords] = await Promise.all([
     CompanyContact.find({
-      company: companyId,
+      public_circles_company: companyId,
+      public_circles_status: { $ne: COMPANY_CONTACT_STATUS.DELETED },
     })
       .skip((parseInt(pageNumber) - 1) * pageSize)
       .limit(parseInt(pageSize)),
     CompanyContact.countDocuments({
-      company: companyId,
-      status: COMPANY_CONTACT_STATUS.PENDING,
+      public_circles_company: companyId,
+      public_circles_status: COMPANY_CONTACT_STATUS.PENDING,
     }),
   ]);
 
@@ -647,9 +663,9 @@ const readCompanyContactDuplicates = async ({
   uniquePrimaryKeyContacts.forEach((item) => {
     promises.push(
       CompanyContact.find({
-        company: companyId,
+        public_circles_company: companyId,
         [primaryKey]: item,
-        status: COMPANY_CONTACT_STATUS.PENDING,
+        public_circles_status: COMPANY_CONTACT_STATUS.PENDING,
       })
     );
   });
@@ -682,8 +698,8 @@ const readCompanyContactDuplicates = async ({
 
 const readPendingContactsCountByCompanyId = ({ companyId }) =>
   CompanyContact.countDocuments({
-    company: companyId,
-    status: COMPANY_CONTACT_STATUS.PENDING,
+    public_circles_company: companyId,
+    public_circles_status: COMPANY_CONTACT_STATUS.PENDING,
   });
 
 const resolveCompanyContactDuplicates = async ({
@@ -704,12 +720,12 @@ const resolveCompanyContactDuplicates = async ({
       promises.push(
         CompanyContact.updateOne(
           {
-            company: companyId,
+            public_circles_company: companyId,
             _id: { $ne: contact._id },
             [contactsPrimaryKey]: contact[contactsPrimaryKey],
           },
           {
-            status: COMPANY_CONTACT_STATUS.DELETED,
+            public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
           }
         )
       );
@@ -717,10 +733,10 @@ const resolveCompanyContactDuplicates = async ({
       promises.push(
         CompanyContact.updateOne(
           {
-            company: companyId,
+            public_circles_company: companyId,
             _id: contact._id,
           },
-          { ...contact, status: COMPANY_CONTACT_STATUS.ACTIVE }
+          { ...contact, public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE }
         )
       );
     });
@@ -728,8 +744,8 @@ const resolveCompanyContactDuplicates = async ({
     await Promise.all(promises);
   } else {
     const pendingContacts = await CompanyContact.find({
-      company: companyId,
-      status: COMPANY_CONTACT_STATUS.PENDING,
+      public_circles_company: companyId,
+      public_circles_status: COMPANY_CONTACT_STATUS.PENDING,
     });
 
     const uniquePrimaryKeyContacts = _.uniqBy(
@@ -775,7 +791,7 @@ const resolveCompanyContactDuplicates = async ({
           _id: { $in: contactIdsToBeDeleted },
         },
         {
-          status: COMPANY_CONTACT_STATUS.DELETED,
+          public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
         }
       ),
       CompanyContact.updateMany(
@@ -783,7 +799,7 @@ const resolveCompanyContactDuplicates = async ({
           _id: { $in: contactIdsToBeActivated },
         },
         {
-          status: COMPANY_CONTACT_STATUS.ACTIVE,
+          public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
         }
       ),
     ]);
