@@ -113,7 +113,7 @@ parentPort.on("message", async (message) => {
         return lodash.filter(contacts, (contact) => {
           seen[contact[contactsPrimaryKey]] =
             (seen[contact[contactsPrimaryKey]] || 0) + 1;
-          return seen[contact.email] <= 2;
+          return seen[contact[contactsPrimaryKey]] <= 2;
         });
       })();
 
