@@ -107,13 +107,18 @@ parentPort.on("message", async (message) => {
         .map((group) => group[0].email)
         .value();
 
+      const mappedDbContacts = existingCompanyContacts.map(
+        (contact) => contact[contactsPrimaryKey]
+      );
+
       contacts = (() => {
-        // Filter contacts, keeping only up to 2 of each email
         const seen = {};
-        return lodash.filter(contacts, (contact) => {
-          seen[contact[contactsPrimaryKey]] =
-            (seen[contact[contactsPrimaryKey]] || 0) + 1;
-          return seen[contact[contactsPrimaryKey]] <= 2;
+        return contacts.filter((contact) => {
+          const primaryKeyValue = contact[contactsPrimaryKey]; // Get the email value
+          // Check if the email exists in the mappedDbContacts array
+          const maxAllowed = mappedDbContacts.includes(primaryKeyValue) ? 1 : 2;
+          seen[primaryKeyValue] = (seen[primaryKeyValue] || 0) + 1; // Track the count for this email
+          return seen[primaryKeyValue] <= maxAllowed; // Filter based on the count
         });
       })();
 
