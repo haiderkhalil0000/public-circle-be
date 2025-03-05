@@ -59,7 +59,7 @@ parentPort.on("message", async (message) => {
       company,
       existingCompanyContactsCount,
       existingCompanyContacts,
-      pendingCompanyContactsCount,
+      duplicateContactsCount,
     ] = await Promise.all([
       connectDbForThread(),
       companiesController.readCompanyById({ companyId }),
@@ -69,12 +69,12 @@ parentPort.on("message", async (message) => {
       companyContactsController.readAllCompanyContacts({
         companyId,
       }),
-      companyContactsController.readPendingContactsCountByCompanyId({
+      companyContactsController.readDuplicateContactsCountByCompanyId({
         companyId,
       }),
     ]);
 
-    if (pendingCompanyContactsCount) {
+    if (duplicateContactsCount) {
       parentPort.postMessage({
         error:
           "Duplicates found in your existing contacts, please resolve them before importing contacts again!",
@@ -100,13 +100,6 @@ parentPort.on("message", async (message) => {
     await processCSV;
 
     if (contactsPrimaryKey) {
-      let duplicates = lodash
-        .chain(contacts)
-        .groupBy(contactsPrimaryKey)
-        .filter((group) => group.length > 1)
-        .map((group) => group[0].email)
-        .value();
-
       const mappedDbContacts = existingCompanyContacts.map(
         (contact) => contact[contactsPrimaryKey]
       );
@@ -122,17 +115,6 @@ parentPort.on("message", async (message) => {
         });
       })();
 
-      contacts = contacts.map((item) => {
-        if (!duplicates.includes(item[contactsPrimaryKey])) {
-          return item;
-        }
-
-        return {
-          ...item,
-          public_circles_status: COMPANY_CONTACT_STATUS.PENDING,
-        };
-      });
-
       const existingContactsToBePending = [];
 
       existingCompanyContacts.forEach((ecc) => {
@@ -147,7 +129,7 @@ parentPort.on("message", async (message) => {
             ) {
               return {
                 ...item,
-                public_circles_existing_contactId: ecc._id
+                public_circles_existing_contactId: ecc._id,
               };
             }
             return item;
