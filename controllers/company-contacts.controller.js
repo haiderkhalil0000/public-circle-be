@@ -652,63 +652,41 @@ const readCompanyContactDuplicates = async ({
   pageNumber = 1,
   pageSize = 10,
 }) => {
-  const primaryKey = await readPrimaryKey({ companyId });
+  const query = {
+    public_circles_company: companyId,
+    public_circles_status: { $ne: COMPANY_CONTACT_STATUS.DELETED },
+    public_circles_existing_contactId: { $exists: true },
+  };
 
-  const [contacts, totalRecords] = await Promise.all([
-    CompanyContact.find({
-      public_circles_company: companyId,
-      public_circles_status: { $ne: COMPANY_CONTACT_STATUS.DELETED },
-    })
+  const [duplicateContacts, totalRecords] = await Promise.all([
+    CompanyContact.find(query)
       .skip((parseInt(pageNumber) - 1) * pageSize)
       .limit(parseInt(pageSize)),
-    CompanyContact.countDocuments({
-      public_circles_company: companyId,
-      public_circles_status: COMPANY_CONTACT_STATUS.PENDING,
-    }),
+    CompanyContact.countDocuments(query),
   ]);
-
-  const uniquePrimaryKeyContacts = [
-    ...new Set(contacts.map((obj) => obj[primaryKey])),
-  ];
 
   const promises = [];
 
-  uniquePrimaryKeyContacts.forEach((item) => {
+  duplicateContacts.forEach((dc) => {
     promises.push(
-      CompanyContact.find({
+      CompanyContact.findOne({
         public_circles_company: companyId,
-        [primaryKey]: item,
-        public_circles_status: COMPANY_CONTACT_STATUS.PENDING,
+        _id: dc["public_circles_existing_contactId"],
       })
     );
   });
 
-  let results = await Promise.all(promises);
+  const results = await Promise.all(promises);
 
-  results = results.filter((item) => item.length);
+  const duplicates = [];
 
-  const companyContactDuplicates = [];
-
-  for (const result of results) {
-    const obj = {};
-
-    if (
-      result[0]?.public_circles_createdAt?.getTime() <
-      result[1]?.public_circles_createdAt?.getTime()
-    ) {
-      obj.old = result[0];
-      obj.new = result[1];
-    } else {
-      obj.old = result[1];
-      obj.new = result[0];
-    }
-
-    companyContactDuplicates.push(obj);
-  }
+  results.forEach((result, index) => {
+    duplicates.push({ old: result, new: duplicateContacts[index] });
+  });
 
   return {
-    totalRecords: totalRecords / 2,
-    duplicateContacts: companyContactDuplicates,
+    totalRecords: totalRecords,
+    duplicateContacts: duplicates,
   };
 };
 
@@ -752,74 +730,41 @@ const resolveCompanyContactDuplicates = async ({
             public_circles_company: companyId,
             _id: contact._id,
           },
-          { ...contact, public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE }
+          contact
         )
       );
     });
 
     await Promise.all(promises);
   } else {
-    const pendingContacts = await CompanyContact.find({
+    const query = {
       public_circles_company: companyId,
-      public_circles_status: COMPANY_CONTACT_STATUS.PENDING,
-    });
+      public_circles_status: { $ne: COMPANY_CONTACT_STATUS.DELETED },
+      public_circles_existing_contactId: { $exists: true },
+    };
 
-    const uniquePrimaryKeyContacts = _.uniqBy(
-      pendingContacts,
-      contactsPrimaryKey
-    );
+    const duplicateContacts = await CompanyContact.find(query);
 
-    const contactIdsToBeDeleted = [];
-    const contactIdsToBeActivated = [];
+    const contactsToBeDeleted = [];
 
-    uniquePrimaryKeyContacts.forEach((upkc) => {
-      const duplicateContact = pendingContacts.find(
-        (dc) =>
-          upkc[contactsPrimaryKey] === dc[contactsPrimaryKey] &&
-          upkc._id !== dc._id
-      );
+    if (isSaveNewContact) {
+      duplicateContacts.forEach((dc) => {
+        contactsToBeDeleted.push(dc["public_circles_existing_contactId"]);
+      });
+    } else {
+      duplicateContacts.forEach((dc) => {
+        contactsToBeDeleted.push(dc._id);
+      });
+    }
 
-      const itemCreatedAt = upkc.public_circles_createdAt.getTime();
-      const duplicateItemCreatedAt =
-        duplicateContact.public_circles_createdAt.getTime();
-
-      if (itemCreatedAt > duplicateItemCreatedAt) {
-        contactIdsToBeDeleted.push(
-          isSaveNewContact ? upkc._id : duplicateContact._id
-        );
-
-        contactIdsToBeActivated.push(
-          isSaveNewContact ? duplicateContact._id : upkc._id
-        );
-      } else {
-        contactIdsToBeDeleted.push(
-          isSaveNewContact ? upkc._id : duplicateContact._id
-        );
-
-        contactIdsToBeActivated.push(
-          isSaveNewContact ? duplicateContact._id : upkc._id
-        );
+    await CompanyContact.updateMany(
+      {
+        _id: { $in: contactsToBeDeleted },
+      },
+      {
+        public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
       }
-    });
-
-    await Promise.all([
-      CompanyContact.updateMany(
-        {
-          _id: { $in: contactIdsToBeDeleted },
-        },
-        {
-          public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
-        }
-      ),
-      CompanyContact.updateMany(
-        {
-          _id: { $in: contactIdsToBeActivated },
-        },
-        {
-          public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
-        }
-      ),
-    ]);
+    );
   }
 };
 
