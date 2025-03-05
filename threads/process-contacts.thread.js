@@ -147,7 +147,7 @@ parentPort.on("message", async (message) => {
             ) {
               return {
                 ...item,
-                public_circles_status: COMPANY_CONTACT_STATUS.PENDING,
+                public_circles_existing_contactId: ecc._id
               };
             }
             return item;
@@ -156,18 +156,6 @@ parentPort.on("message", async (message) => {
           existingContactsToBePending.push(ecc._id);
         }
       });
-
-      if (existingContactsToBePending.length) {
-        await CompanyContact.updateMany(
-          {
-            public_circles_company: companyId,
-            _id: { $in: existingContactsToBePending },
-          },
-          {
-            public_circles_status: COMPANY_CONTACT_STATUS.PENDING,
-          }
-        );
-      }
     }
 
     if (company.contactSelectionCriteria.length) {

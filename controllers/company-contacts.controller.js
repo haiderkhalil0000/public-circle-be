@@ -693,8 +693,8 @@ const readCompanyContactDuplicates = async ({
     const obj = {};
 
     if (
-      result[0].public_circles_createdAt.getTime() <
-      result[1].public_circles_createdAt.getTime()
+      result[0]?.public_circles_createdAt?.getTime() <
+      result[1]?.public_circles_createdAt?.getTime()
     ) {
       obj.old = result[0];
       obj.new = result[1];
