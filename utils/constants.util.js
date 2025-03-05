@@ -420,7 +420,6 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
 
   COMPANY_CONTACT_STATUS: {
     ACTIVE: "ACTIVE",
-    PENDING: "PENDING",
     DELETED: "DELETED",
   },
 
