@@ -286,11 +286,24 @@ const search = async ({ companyId, searchString, searchFields }) => {
 const reorderContacts = ({ contacts }) => {
   // Reorder fields to make specific ones appear at the end
   const reorderedContacts = contacts.map((contact) => {
-    const { _id, public_circles_company, createdAt, updatedAt, __v, ...rest } =
-      contact;
+    const {
+      _id,
+      public_circles_company,
+      public_circles_createdAt,
+      public_circles_updatedAt,
+      __v,
+      ...rest
+    } = contact;
 
     // Combine the fields with the rest first, then the specified ones at the end
-    return { ...rest, _id, public_circles_company, createdAt, updatedAt, __v };
+    return {
+      ...rest,
+      _id,
+      public_circles_company,
+      public_circles_createdAt,
+      public_circles_updatedAt,
+      __v,
+    };
   });
 
   return reorderedContacts;
@@ -679,7 +692,10 @@ const readCompanyContactDuplicates = async ({
   for (const result of results) {
     const obj = {};
 
-    if (result[0].createdAt.getTime() < result[1].createdAt.getTime()) {
+    if (
+      result[0].public_circles_createdAt.getTime() <
+      result[1].public_circles_createdAt.getTime()
+    ) {
       obj.old = result[0];
       obj.new = result[1];
     } else {
@@ -763,8 +779,9 @@ const resolveCompanyContactDuplicates = async ({
           upkc._id !== dc._id
       );
 
-      const itemCreatedAt = upkc.createdAt.getTime();
-      const duplicateItemCreatedAt = duplicateContact.createdAt.getTime();
+      const itemCreatedAt = upkc.public_circles_createdAt.getTime();
+      const duplicateItemCreatedAt =
+        duplicateContact.public_circles_createdAt.getTime();
 
       if (itemCreatedAt > duplicateItemCreatedAt) {
         contactIdsToBeDeleted.push(
