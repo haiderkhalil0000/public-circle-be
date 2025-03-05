@@ -229,6 +229,7 @@ module.exports = {
     EMAILS_FETCHED: "Emails fetched successfully.",
     FILTER_VALUES_FETCHED: "Filter values fetched successfully.",
     CONTACT_DUPLICATE_FETCHED: "Contact duplicates fetched successfully.",
+    ADD_PRIMARY_KEY_FOR_NEXT_IMPORTS: "Please set primary key first to import new contacts!",
   },
 
   INTERACTION_CHANNELS: {
