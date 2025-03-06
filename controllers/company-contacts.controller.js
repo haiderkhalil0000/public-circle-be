@@ -344,9 +344,24 @@ const readPaginatedCompanyContacts = async ({
       .lean(),
   ]);
 
+  const reorderedContacts = reorderContacts({ contacts: companyContacts });
+
+  const filteredContacts = reorderedContacts.map((user) => {
+    return Object.keys(user).reduce((acc, key) => {
+      if (
+        key === "public_circles_company" ||
+        !key.startsWith("public_circles_")
+      ) {
+        acc[key] = user[key];
+      }
+
+      return acc;
+    }, {});
+  });
+
   return {
     totalRecords,
-    companyContacts: reorderContacts({ contacts: companyContacts }),
+    companyContacts: filteredContacts,
   };
 };
 
@@ -446,7 +461,7 @@ const uploadCsv = async ({
   const contactsPrimaryKey = await readPrimaryKey({ companyId });
   const getCompanyContacts = await readAllCompanyContacts({ companyId });
 
-  if(!contactsPrimaryKey && getCompanyContacts.length) {
+  if (!contactsPrimaryKey && getCompanyContacts.length) {
     throw createHttpError(400, {
       errorMessage: RESPONSE_MESSAGES.ADD_PRIMARY_KEY_FOR_NEXT_IMPORTS,
     });
@@ -649,6 +664,19 @@ const createMultipleCompanyContacts = ({ contacts }) => {
   CompanyContact.insertMany(contacts);
 };
 
+const filterInternalKeys = (obj) => {
+  return Object.keys(obj).reduce((acc, key) => {
+    // Allow "public_circles_company" and exclude other "public_circles_" keys
+    if (
+      key === "public_circles_company" ||
+      !key.startsWith("public_circles_")
+    ) {
+      acc[key] = obj[key];
+    }
+    return acc;
+  }, {});
+};
+
 const readCompanyContactDuplicates = async ({
   companyId,
   pageNumber = 1,
@@ -660,12 +688,9 @@ const readCompanyContactDuplicates = async ({
     public_circles_existing_contactId: { $ne: null },
   };
 
-  const [duplicateContacts, totalRecords] = await Promise.all([
-    CompanyContact.find(query)
-      .skip((parseInt(pageNumber) - 1) * pageSize)
-      .limit(parseInt(pageSize)),
-    CompanyContact.countDocuments(query),
-  ]);
+  const duplicateContacts = await CompanyContact.find(query)
+    .skip((parseInt(pageNumber) - 1) * pageSize)
+    .limit(parseInt(pageSize));
 
   const promises = [];
 
@@ -684,8 +709,11 @@ const readCompanyContactDuplicates = async ({
   const duplicates = [];
 
   results.forEach((result, index) => {
-    if(result && duplicateContacts[index]){
-      duplicates.push({ old: result, new: duplicateContacts[index] });
+    if (result && duplicateContacts[index]) {
+      duplicates.push({
+        old: filterInternalKeys(result.toJSON()),
+        new: filterInternalKeys(duplicateContacts[index].toJSON()),
+      });
     }
   });
 
@@ -726,7 +754,7 @@ const resolveCompanyContactDuplicates = async ({
           },
           {
             public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
-            public_circles_existing_contactId: null
+            public_circles_existing_contactId: null,
           }
         )
       );
@@ -749,7 +777,6 @@ const resolveCompanyContactDuplicates = async ({
       public_circles_status: { $ne: COMPANY_CONTACT_STATUS.DELETED },
       public_circles_existing_contactId: { $ne: null },
     };
-    
 
     const duplicateContacts = await CompanyContact.find(query);
 
@@ -771,15 +798,16 @@ const resolveCompanyContactDuplicates = async ({
       },
       {
         public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
-        public_circles_existing_contactId: null
+        public_circles_existing_contactId: null,
       }
     );
     await CompanyContact.updateMany(
       {
         _id: { $nin: contactsToBeDeleted },
         public_circles_company: companyId,
-      },{
-        public_circles_existing_contactId: null
+      },
+      {
+        public_circles_existing_contactId: null,
       }
     );
   }
