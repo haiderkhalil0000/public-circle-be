@@ -581,10 +581,10 @@ const readPrimaryKeyEffect = async ({ companyId, primaryKey }) => {
     readCompanyContactsCount({ companyId }),
     findUniqueContacts({ companyId, primaryKey }),
   ]);
-
-  return `${allContacts - uniqueContacts.length} ${
-    allContacts - uniqueContacts.length > 1 ? "contacts" : "contact"
-  } will be deleted if you mark “${primaryKey}” as unique key`;
+  const duplicateCount = allContacts - uniqueContacts.length;
+  return `Based on your selection, there will be ${duplicateCount} contact${
+    duplicateCount !== 1 ? "s" : ""
+  } which you will have to review.`;
 };
 
 const deleteSelectedContacts = async ({ companyId, contactIds }) => {
