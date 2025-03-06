@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 const { parentPort } = require("worker_threads");
 const { Readable } = require("stream");
 const csvParser = require("csv-parser");
-const lodash = require("lodash");
 
 const { webhooksController, companiesController } = require("../controllers");
 const {
@@ -92,7 +91,7 @@ parentPort.on("message", async (message) => {
     const processCSV = new Promise((resolve, reject) => {
       fileStream
         .pipe(csvParser())
-        .on("data", (data) => contacts.push(data)) // Collect each row of CSV data
+        .on("data", (data) => contacts.push(data))
         .on("end", () => resolve(contacts))
         .on("error", (err) => reject(err));
     });
@@ -100,18 +99,12 @@ parentPort.on("message", async (message) => {
     await processCSV;
 
     if (contactsPrimaryKey) {
-      const mappedDbContacts = existingCompanyContacts.map(
-        (contact) => contact[contactsPrimaryKey]
-      );
-
       contacts = (() => {
         const seen = {};
         return contacts.filter((contact) => {
-          const primaryKeyValue = contact[contactsPrimaryKey]; // Get the email value
-          // Check if the email exists in the mappedDbContacts array
-          const maxAllowed = mappedDbContacts.includes(primaryKeyValue) ? 1 : 2;
-          seen[primaryKeyValue] = (seen[primaryKeyValue] || 0) + 1; // Track the count for this email
-          return seen[primaryKeyValue] <= maxAllowed; // Filter based on the count
+          const primaryKeyValue = contact[contactsPrimaryKey];
+          seen[primaryKeyValue] = (seen[primaryKeyValue] || 0) + 1;
+          return seen[primaryKeyValue] <= 1;
         });
       })();
 
