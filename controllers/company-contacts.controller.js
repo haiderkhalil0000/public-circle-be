@@ -669,8 +669,7 @@ const filterInternalKeys = (obj) => {
     // Allow "public_circles_company" and exclude other "public_circles_" keys
     if (
       key === "public_circles_company" ||
-      !key.startsWith("public_circles_") ||
-      !key["__v"]
+      (!key.startsWith("public_circles_") && key !== "__v")
     ) {
       acc[key] = obj[key];
     }
