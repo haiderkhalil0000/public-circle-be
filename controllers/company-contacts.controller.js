@@ -525,6 +525,7 @@ const findUniqueContacts = async ({ companyId, primaryKey }) => {
 const markContactsDuplicateWithPrimaryKey = async ({
   companyId,
   primaryKey,
+  getCountsOnly = false
 }) => {
   let [uniqueContacts, allCompanyContacts] = await Promise.all([
     findUniqueContacts({ companyId, primaryKey }),
@@ -533,28 +534,66 @@ const markContactsDuplicateWithPrimaryKey = async ({
 
   const promises = [];
 
-  allCompanyContacts.forEach((uc) => {
-    const duplicateContact = uniqueContacts.find((cc) => {
-      if (
+  let duplicatedCounts = [];
+
+  for (const uc of allCompanyContacts) {
+    const matchingUniqueContact = uniqueContacts.find(
+      (cc) =>
         uc[primaryKey] === cc[primaryKey] &&
         uc._id.toString() !== cc._id.toString()
-      ) {
-        return cc;
-      }
-    });
+    );
 
-    if (duplicateContact) {
-      promises.push(
-        CompanyContact.updateOne(
-          { _id: duplicateContact._id },
-          { public_circles_existing_contactId: uc._id }
-        )
+    if (matchingUniqueContact) {
+      const duplicates = allCompanyContacts.filter(
+        (contact) =>
+          contact[primaryKey] === uc[primaryKey] &&
+          contact._id.toString() !== matchingUniqueContact._id.toString()
       );
-    }
-  });
 
-  await Promise.all(promises);
+      duplicates.sort((a, b) =>
+        a._id.toString().localeCompare(b._id.toString())
+      );
+
+      const acceptedDuplicate = duplicates.shift();
+
+      if (acceptedDuplicate) {
+        promises.push(
+          CompanyContact.updateOne(
+            { _id: acceptedDuplicate._id },
+            {
+              $set: {
+                public_circles_existing_contactId: matchingUniqueContact._id,
+              },
+            }
+          )
+        );
+        duplicatedCounts.push(acceptedDuplicate._id);
+      }
+
+      for (const duplicate of duplicates) {
+        promises.push(
+          CompanyContact.updateOne(
+            { _id: duplicate._id },
+            {
+              $set: {
+                public_circles_existing_contactId: null,
+                public_circles_status: "DELETE",
+              },
+            }
+          )
+        );
+      }
+    }
+  }
+  if(getCountsOnly) {
+    duplicatedCounts =  _.uniq(duplicatedCounts).map((id) => id.toString());
+    return duplicatedCounts.length;
+  }
+  else{
+    await Promise.all(promises);
+  }
 };
+
 
 const createPrimaryKey = async ({ companyId, primaryKey }) => {
   await Company.findByIdAndUpdate(companyId, {
@@ -592,11 +631,8 @@ const readCompanyContactsCount = ({ companyId }) =>
   });
 
 const readPrimaryKeyEffect = async ({ companyId, primaryKey }) => {
-  const [allContacts, uniqueContacts] = await Promise.all([
-    readCompanyContactsCount({ companyId }),
-    findUniqueContacts({ companyId, primaryKey }),
-  ]);
-  const duplicateCount = allContacts - uniqueContacts.length;
+  const duplicateCount = await markContactsDuplicateWithPrimaryKey({ companyId, primaryKey, getCountsOnly: true });
+
   return `Based on your selection, there will be ${duplicateCount} contact${
     duplicateCount !== 1 ? "s" : ""
   } which you will have to review.`;
