@@ -345,20 +345,8 @@ const readPaginatedCompanyContacts = async ({
   ]);
 
   const reorderedContacts = reorderContacts({ contacts: companyContacts });
-
-  const filteredContacts = reorderedContacts.map((user) => {
-    return Object.keys(user).reduce((acc, key) => {
-      if (
-        key === "public_circles_company" ||
-        !key.startsWith("public_circles_")
-      ) {
-        acc[key] = user[key];
-      }
-
-      return acc;
-    }, {});
-  });
-
+  const filteredContacts = reorderedContacts.map(filterInternalKeys);
+  
   return {
     totalRecords,
     companyContacts: filteredContacts,
@@ -644,7 +632,10 @@ const deleteSelectedContacts = async ({ companyId, contactIds }) => {
       _id: { $in: contactIds },
       public_circles_company: companyId,
     },
-    { public_circles_status: COMPANY_CONTACT_STATUS.DELETED }
+    {
+      public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
+      public_circles_existing_contactId: null,
+    }
   );
 
   if (!result.modifiedCount) {
@@ -724,7 +715,8 @@ const readCompanyContactDuplicates = async ({
     public_circles_status: { $ne: COMPANY_CONTACT_STATUS.DELETED },
     public_circles_existing_contactId: { $ne: null },
   };
-
+  const totalDuplicatedContact = await CompanyContact.find(query);
+  
   const duplicateContacts = await CompanyContact.find(query)
     .skip((parseInt(pageNumber) - 1) * pageSize)
     .limit(parseInt(pageSize));
@@ -755,7 +747,7 @@ const readCompanyContactDuplicates = async ({
   });
 
   return {
-    totalRecords: duplicates.length,
+    totalRecords: totalDuplicatedContact.length,
     duplicateContacts: duplicates,
   };
 };
