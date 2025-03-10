@@ -164,145 +164,186 @@ const getFilterConditionQuery = ({ conditions, conditionKey }) => {
       isNumericString(fromValue) ||
       isNumericString(toValue);
 
-    switch (condition.conditionType) {
-      case EQUALS:
-        return numericComparison
-          ? {
-              $expr: {
-                $eq: [{ $toInt: `$${conditionKey}` }, parseInt(value, 10)],
-              },
-            }
-          : { [conditionKey]: { $eq: value } };
-
-      case NOT_EQUALS:
-        return numericComparison
-          ? {
-              $expr: {
-                $ne: [{ $toInt: `$${conditionKey}` }, parseInt(value, 10)],
-              },
-            }
-          : { [conditionKey]: { $ne: value } };
-
-      case GREATER_THAN:
-        return numericComparison
-          ? {
-              $expr: {
-                $gt: [{ $toInt: `$${conditionKey}` }, parseInt(value, 10)],
-              },
-            }
-          : { [conditionKey]: { $gt: value } };
-
-      case LESS_THAN:
-        return numericComparison
-          ? {
-              $expr: {
-                $lt: [{ $toInt: `$${conditionKey}` }, parseInt(value, 10)],
-              },
-            }
-          : { [conditionKey]: { $lt: value } };
-
-      case BETWEEN:
-        return numericComparison
-          ? {
-              $expr: {
-                $and: [
-                  {
-                    $gte: [
-                      {
-                        $convert: {
-                          input: `$${conditionKey}`,
-                          to: "int",
-                          onError: 0,
-                          onNull: 0,
-                        },
+      switch (condition.conditionType) {
+        case EQUALS:
+          return numericComparison
+            ? {
+                $expr: {
+                  $eq: [
+                    {
+                      $convert: {
+                        input: `$${conditionKey}`,
+                        to: "int",
+                        onError: 0,
+                        onNull: 0,
                       },
-                      parseInt(fromValue, 10),
-                    ],
-                  },
-                  {
-                    $lte: [
-                      {
-                        $convert: {
-                          input: `$${conditionKey}`,
-                          to: "int",
-                          onError: 0,
-                          onNull: 0,
-                        },
+                    },
+                    parseInt(value, 10),
+                  ],
+                },
+              }
+            : { [conditionKey]: { $eq: value } };
+      
+        case NOT_EQUALS:
+          return numericComparison
+            ? {
+                $expr: {
+                  $ne: [
+                    {
+                      $convert: {
+                        input: `$${conditionKey}`,
+                        to: "int",
+                        onError: 0,
+                        onNull: 0,
                       },
-                      parseInt(toValue, 10),
-                    ],
-                  },
-                ],
-              },
-            }
-          : {
-              [conditionKey]: {
-                $gte: fromValue,
-                $lte: toValue,
-              },
-            };
-
-      case CONTAINS:
-        return {
-          [conditionKey]: { $regex: value, $options: "i" },
-        };
-
-      case NOT_CONTAINS:
-        return {
-          [conditionKey]: {
-            $not: { $regex: value, $options: "i" },
-          },
-        };
-
-      case IS_TIMESTAMP:
-        return { [conditionKey]: { $type: "date" } };
-
-      case IS_NOT_TIMESTAMP:
-        return { [conditionKey]: { $not: { $type: "date" } } };
-
-      case TIMESTAMP_BEFORE:
-        return {
-          $expr: {
-            $gt: [
-              `$${conditionKey}`,
-              { $dateFromString: { dateString: value } },
-            ],
-          },
-        };
-
-      case TIMESTAMP_AFTER:
-        return {
-          $expr: {
-            $lt: [
-              `$${conditionKey}`,
-              { $dateFromString: { dateString: value } },
-            ],
-          },
-        };
-
-      case TIMESTAMP_BETWEEN:
-        return {
-          $expr: {
-            $and: [
-              {
-                $gte: [
-                  `$${conditionKey}`,
-                  { $dateFromString: { dateString: fromValue } },
-                ],
-              },
-              {
-                $lte: [
-                  `$${conditionKey}`,
-                  { $dateFromString: { dateString: toValue } },
-                ],
-              },
-            ],
-          },
-        };
-
-      default:
-        return {};
-    }
+                    },
+                    parseInt(value, 10),
+                  ],
+                },
+              }
+            : { [conditionKey]: { $ne: value } };
+      
+        case GREATER_THAN:
+          return numericComparison
+            ? {
+                $expr: {
+                  $gt: [
+                    {
+                      $convert: {
+                        input: `$${conditionKey}`,
+                        to: "int",
+                        onError: 0,
+                        onNull: 0,
+                      },
+                    },
+                    parseInt(value, 10),
+                  ],
+                },
+              }
+            : { [conditionKey]: { $gt: value } };
+      
+        case LESS_THAN:
+          return numericComparison
+            ? {
+                $expr: {
+                  $lt: [
+                    {
+                      $convert: {
+                        input: `$${conditionKey}`,
+                        to: "int",
+                        onError: 0,
+                        onNull: 0,
+                      },
+                    },
+                    parseInt(value, 10),
+                  ],
+                },
+              }
+            : { [conditionKey]: { $lt: value } };
+      
+        case BETWEEN:
+          return numericComparison
+            ? {
+                $expr: {
+                  $and: [
+                    {
+                      $gte: [
+                        {
+                          $convert: {
+                            input: `$${conditionKey}`,
+                            to: "int",
+                            onError: 0,
+                            onNull: 0,
+                          },
+                        },
+                        parseInt(fromValue, 10),
+                      ],
+                    },
+                    {
+                      $lte: [
+                        {
+                          $convert: {
+                            input: `$${conditionKey}`,
+                            to: "int",
+                            onError: 0,
+                            onNull: 0,
+                          },
+                        },
+                        parseInt(toValue, 10),
+                      ],
+                    },
+                  ],
+                },
+              }
+            : {
+                [conditionKey]: {
+                  $gte: fromValue,
+                  $lte: toValue,
+                },
+              };
+      
+        case CONTAINS:
+          return {
+            [conditionKey]: { $regex: value, $options: "i" },
+          };
+      
+        case NOT_CONTAINS:
+          return {
+            [conditionKey]: {
+              $not: { $regex: value, $options: "i" },
+            },
+          };
+      
+        case IS_TIMESTAMP:
+          return { [conditionKey]: { $type: "date" } };
+      
+        case IS_NOT_TIMESTAMP:
+          return { [conditionKey]: { $not: { $type: "date" } } };
+      
+        case TIMESTAMP_BEFORE:
+          return {
+            $expr: {
+              $gt: [
+                `$${conditionKey}`,
+                { $dateFromString: { dateString: value } },
+              ],
+            },
+          };
+      
+        case TIMESTAMP_AFTER:
+          return {
+            $expr: {
+              $lt: [
+                `$${conditionKey}`,
+                { $dateFromString: { dateString: value } },
+              ],
+            },
+          };
+      
+        case TIMESTAMP_BETWEEN:
+          return {
+            $expr: {
+              $and: [
+                {
+                  $gte: [
+                    `$${conditionKey}`,
+                    { $dateFromString: { dateString: fromValue } },
+                  ],
+                },
+                {
+                  $lte: [
+                    `$${conditionKey}`,
+                    { $dateFromString: { dateString: toValue } },
+                  ],
+                },
+              ],
+            },
+          };
+      
+        default:
+          return {};
+      }
+      
   });
 };
 
