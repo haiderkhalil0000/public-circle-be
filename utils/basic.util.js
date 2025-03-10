@@ -36,6 +36,10 @@ const calculateByteUnit = ({ bytes }) => {
   return `${bytes} ${units[index]}`;
 };
 
+const isNumericString = (value) => {
+  return typeof value === "string" && !isNaN(value) && value.trim() !== "";
+};
+
 module.exports = {
   validateObjectId,
   decodeJwt,
@@ -43,4 +47,5 @@ module.exports = {
   fiterUniqueStringsFromArray,
   filterUniqueObjectsFromArrayByProperty,
   calculateByteUnit,
+  isNumericString
 };
