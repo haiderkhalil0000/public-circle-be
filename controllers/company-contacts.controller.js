@@ -14,6 +14,7 @@ const {
   },
   basicUtil,
 } = require("../utils");
+const { isNumericString } = require("../utils/basic.util");
 
 const readContactKeys = async ({ companyId = "" }) => {
   const totalDocs = await CompanyContact.countDocuments({
@@ -154,38 +155,91 @@ const getFilterConditionQuery = ({ conditions, conditionKey }) => {
   } = FILTER_CONDITION_CASES;
 
   return conditions.map((condition) => {
+    const value = condition.value;
+    const fromValue = condition.fromValue;
+    const toValue = condition.toValue;
+
+    const numericComparison =
+      isNumericString(value) ||
+      isNumericString(fromValue) ||
+      isNumericString(toValue);
+
     switch (condition.conditionType) {
       case EQUALS:
-        return { [conditionKey]: { $eq: condition.value } };
+        return numericComparison
+          ? {
+              $expr: {
+                $eq: [{ $toInt: `$${conditionKey}` }, parseInt(value, 10)],
+              },
+            }
+          : { [conditionKey]: { $eq: value } };
 
       case NOT_EQUALS:
-        return { [conditionKey]: { $ne: condition.value } };
+        return numericComparison
+          ? {
+              $expr: {
+                $ne: [{ $toInt: `$${conditionKey}` }, parseInt(value, 10)],
+              },
+            }
+          : { [conditionKey]: { $ne: value } };
 
       case GREATER_THAN:
-        return { [conditionKey]: { $gt: condition.value } };
+        return numericComparison
+          ? {
+              $expr: {
+                $gt: [{ $toInt: `$${conditionKey}` }, parseInt(value, 10)],
+              },
+            }
+          : { [conditionKey]: { $gt: value } };
 
       case LESS_THAN:
-        return { [conditionKey]: { $lt: condition.value } };
+        return numericComparison
+          ? {
+              $expr: {
+                $lt: [{ $toInt: `$${conditionKey}` }, parseInt(value, 10)],
+              },
+            }
+          : { [conditionKey]: { $lt: value } };
 
       case BETWEEN:
-        return {
-          [conditionKey]: {
-            $gte: condition.fromValue,
-            $lte: condition.toValue,
-          },
-        };
+        return numericComparison
+          ? {
+              $expr: {
+                $and: [
+                  {
+                    $gte: [
+                      { $toInt: `$${conditionKey}` },
+                      parseInt(fromValue, 10),
+                    ],
+                  },
+                  {
+                    $lte: [
+                      { $toInt: `$${conditionKey}` },
+                      parseInt(toValue, 10),
+                    ],
+                  },
+                ],
+              },
+            }
+          : {
+              [conditionKey]: {
+                $gte: fromValue,
+                $lte: toValue,
+              },
+            };
 
       case CONTAINS:
         return {
-          [conditionKey]: { $regex: condition.value, $options: "i" },
+          [conditionKey]: { $regex: value, $options: "i" },
         };
 
       case NOT_CONTAINS:
         return {
           [conditionKey]: {
-            $not: { $regex: condition.value, $options: "i" },
+            $not: { $regex: value, $options: "i" },
           },
         };
+
       case IS_TIMESTAMP:
         return { [conditionKey]: { $type: "date" } };
 
@@ -193,16 +247,42 @@ const getFilterConditionQuery = ({ conditions, conditionKey }) => {
         return { [conditionKey]: { $not: { $type: "date" } } };
 
       case TIMESTAMP_BEFORE:
-        return { [conditionKey]: { $lt: condition.value } };
+        return {
+          $expr: {
+            $gt: [
+              `$${conditionKey}`,
+              { $dateFromString: { dateString: value } },
+            ],
+          },
+        };
 
       case TIMESTAMP_AFTER:
-        return { [conditionKey]: { $gt: condition.value } };
+        return {
+          $expr: {
+            $lt: [
+              `$${conditionKey}`,
+              { $dateFromString: { dateString: value } },
+            ],
+          },
+        };
 
       case TIMESTAMP_BETWEEN:
         return {
-          [conditionKey]: {
-            $gte: condition.fromValue,
-            $lte: condition.toValue,
+          $expr: {
+            $and: [
+              {
+                $gte: [
+                  `$${conditionKey}`,
+                  { $dateFromString: { dateString: fromValue } },
+                ],
+              },
+              {
+                $lte: [
+                  `$${conditionKey}`,
+                  { $dateFromString: { dateString: toValue } },
+                ],
+              },
+            ],
           },
         };
 
