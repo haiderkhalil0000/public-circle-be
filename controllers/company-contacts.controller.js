@@ -855,7 +855,7 @@ const resolveCompanyContactDuplicates = async ({
   if (contactsToBeSaved && contactsToBeSaved.length) {
     contactsToBeSaved.forEach((contact) => {
       promises.push(
-        CompanyContact.updateOne(
+        CompanyContact.updateMany(
           {
             public_circles_company: companyId,
             _id: { $ne: contact._id },
@@ -883,19 +883,21 @@ const resolveCompanyContactDuplicates = async ({
   } else {
     const query = {
       public_circles_company: companyId,
-      public_circles_status: { $ne: COMPANY_CONTACT_STATUS.DELETED },
-      public_circles_existing_contactId: { $ne: null },
+      public_circles_status: { $ne: COMPANY_CONTACT_STATUS.DELETED }
     };
 
-    const duplicateContacts = await CompanyContact.find(query);
+    let duplicateContacts = [];
 
     const contactsToBeDeleted = [];
 
     if (isSaveNewContact) {
+      await CompanyContact.find(query);
       duplicateContacts.forEach((dc) => {
         contactsToBeDeleted.push(dc["public_circles_existing_contactId"]);
       });
     } else {
+      query.public_circles_existing_contactId = { $ne: null };
+      duplicateContacts = await CompanyContact.find(query)
       duplicateContacts.forEach((dc) => {
         contactsToBeDeleted.push(dc._id);
       });
