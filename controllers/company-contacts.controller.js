@@ -208,13 +208,27 @@ const getFilterConditionQuery = ({ conditions, conditionKey }) => {
                 $and: [
                   {
                     $gte: [
-                      { $toInt: `$${conditionKey}` },
+                      {
+                        $convert: {
+                          input: `$${conditionKey}`,
+                          to: "int",
+                          onError: 0,
+                          onNull: 0,
+                        },
+                      },
                       parseInt(fromValue, 10),
                     ],
                   },
                   {
                     $lte: [
-                      { $toInt: `$${conditionKey}` },
+                      {
+                        $convert: {
+                          input: `$${conditionKey}`,
+                          to: "int",
+                          onError: 0,
+                          onNull: 0,
+                        },
+                      },
                       parseInt(toValue, 10),
                     ],
                   },
