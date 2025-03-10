@@ -91,7 +91,11 @@ parentPort.on("message", async (message) => {
     const processCSV = new Promise((resolve, reject) => {
       fileStream
         .pipe(csvParser())
-        .on("data", (data) => contacts.push(data))
+        .on("data", (data) => {
+          if (Object.values(data).some((value) => value.trim() !== "")) {
+            contacts.push(data);
+          }
+        })
         .on("end", () => resolve(contacts))
         .on("error", (err) => reject(err));
     });
