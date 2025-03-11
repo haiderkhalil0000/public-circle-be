@@ -104,11 +104,28 @@ parentPort.on("message", async (message) => {
 
     if (contactsPrimaryKey) {
       contacts = (() => {
-        const seen = {};
+        if (!contacts.length || !contactsPrimaryKey) return contacts;
+
+        if (!(contactsPrimaryKey in contacts[0])) {
+          return contacts;
+        }
+      
+        const seen = new Set();
         return contacts.filter((contact) => {
-          const primaryKeyValue = contact[contactsPrimaryKey];
-          seen[primaryKeyValue] = (seen[primaryKeyValue] || 0) + 1;
-          return seen[primaryKeyValue] <= 1;
+          let primaryKeyValue = contact[contactsPrimaryKey];
+      
+          if (typeof primaryKeyValue === "string") {
+            primaryKeyValue = primaryKeyValue.trim();
+          }
+      
+          if (!primaryKeyValue) return false;
+      
+          if (seen.has(primaryKeyValue)) {
+            return false;
+          } else {
+            seen.add(primaryKeyValue);
+            return true;
+          }
         });
       })();
 
