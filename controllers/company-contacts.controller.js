@@ -21,25 +21,31 @@ const readContactKeys = async ({ companyId = "" }) => {
     public_circles_company: companyId,
     public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
   });
-  const sampleSize = Math.floor(totalDocs * 0.1);
 
-  const randomDocuments = await CompanyContact.aggregate([
+  const latestDocument = await CompanyContact.aggregate([
     {
       $match: {
         public_circles_company: new mongoose.Types.ObjectId(companyId),
+        public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
       },
     },
-    { $sample: { size: sampleSize ? sampleSize : 1 } },
+    {
+      $sort: { public_circles_createdAt: -1 },
+    },
+    {
+      $limit: 1,
+    },
   ]);
+  
 
-  if (!randomDocuments.length) {
+  if (!latestDocument.length) {
     return [];
   }
 
-  const allKeys = randomDocuments.reduce((commonKeys, doc) => {
+  const allKeys = latestDocument.reduce((commonKeys, doc) => {
     const docKeys = Object.keys(doc);
     return commonKeys.filter((key) => docKeys.includes(key));
-  }, Object.keys(randomDocuments[0]));
+  }, Object.keys(latestDocument[0]));
 
   return allKeys.filter(
     (item) =>
@@ -803,16 +809,16 @@ const getSelectionCriteriaEffect = async ({
   return totalContacts - filteredContacts;
 };
 
-const filterContactsBySelectionCriteria = async ({
-  companyId,
-  contactSelectionCriteria,
-}) => {
+const filterContactsBySelectionCriteria = async ({ companyId, contactSelectionCriteria }) => {
   const query = {
     public_circles_company: companyId,
-    $and: contactSelectionCriteria.map((filter) => ({
-      [filter.filterKey]: { $in: filter.filterValues },
-    })),
   };
+
+  if (contactSelectionCriteria?.length > 0) {
+    query.$and = contactSelectionCriteria.map((filter) => ({
+      [filter.filterKey]: { $in: filter.filterValues },
+    }));
+  }
 
   const filteredContactIds = await CompanyContact.distinct("_id", query);
 
@@ -821,6 +827,7 @@ const filterContactsBySelectionCriteria = async ({
     { public_circles_status: COMPANY_CONTACT_STATUS.DELETED }
   );
 };
+
 
 const createMultipleCompanyContacts = ({ contacts }) => {
   CompanyContact.insertMany(contacts);
