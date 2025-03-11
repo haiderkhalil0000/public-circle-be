@@ -172,43 +172,46 @@ const getFilterConditionQuery = ({ conditions, conditionKey }) => {
 
       switch (condition.conditionType) {
         case EQUALS:
-          return numericComparison
+          return numericComparison && !isNaN(value)
             ? {
                 $expr: {
                   $eq: [
                     {
                       $convert: {
-                        input: `$${conditionKey}`,
-                        to: "int",
-                        onError: 0,
-                        onNull: 0,
+                        input: { $trim: { input: `$${conditionKey}` } },
+                        to: "double",
+                        onError: "$$REMOVE",
+                        onNull: "$$REMOVE",
                       },
                     },
-                    parseInt(value, 10),
+                    parseFloat(value),
                   ],
                 },
               }
-            : { [conditionKey]: { $eq: value } };
-      
+            : {
+                [conditionKey]: value.toString().trim(),
+              };
+        
         case NOT_EQUALS:
-          return numericComparison
+          return numericComparison && !isNaN(value)
             ? {
                 $expr: {
                   $ne: [
                     {
                       $convert: {
-                        input: `$${conditionKey}`,
-                        to: "int",
-                        onError: 0,
-                        onNull: 0,
+                        input: { $trim: { input: `$${conditionKey}` } },
+                        to: "double",
+                        onError: "$$REMOVE",
+                        onNull: "$$REMOVE",
                       },
                     },
-                    parseInt(value, 10),
+                    parseFloat(value),
                   ],
                 },
               }
-            : { [conditionKey]: { $ne: value } };
-      
+            : {
+                [conditionKey]: { $ne: value.toString().trim() },
+              };
         case GREATER_THAN:
           return numericComparison
             ? {
