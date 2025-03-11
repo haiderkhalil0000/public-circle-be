@@ -3,11 +3,7 @@ const { parentPort } = require("worker_threads");
 const { Readable } = require("stream");
 const csvParser = require("csv-parser");
 
-const { webhooksController, companiesController } = require("../controllers");
-const {
-  constants: { COMPANY_CONTACT_STATUS },
-} = require("../utils");
-const { CompanyContact } = require("../models");
+const { webhooksController, companiesController, campaignsController } = require("../controllers");
 
 const { MONGODB_URL } = process.env;
 
@@ -196,6 +192,15 @@ parentPort.on("message", async (message) => {
         });
       }
     });
+
+    const companyActiveCampaigns = await companiesController.readCompanyActiveCampaigns({
+      companyId,
+    });
+    const runActiveCampaigns = [];
+    for (const campaign of companyActiveCampaigns) {
+       runActiveCampaigns.push(campaignsController.runCampaign({ campaign }));
+    }
+    await Promise.all(runActiveCampaigns);
   } catch (error) {
     console.error("Error in worker thread:", error);
   }
