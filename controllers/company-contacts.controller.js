@@ -827,7 +827,7 @@ const filterContactsBySelectionCriteria = async ({ companyId, contactSelectionCr
 
   await CompanyContact.updateMany(
     { _id: { $nin: filteredContactIds }, public_circles_company: companyId },
-    { public_circles_status: COMPANY_CONTACT_STATUS.DELETED }
+    { public_circles_status: COMPANY_CONTACT_STATUS.DELETED, public_circles_existing_contactId: null }
   );
 };
 
