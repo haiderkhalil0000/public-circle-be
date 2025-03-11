@@ -448,7 +448,7 @@ const populateCompanyContactsQuery = ({ segments }) => {
 
   for (const segment of segments) {
     for (const filter of segment.filters) {
-      if (filter.values.length) {
+      if (filter.values.length && !filter.conditions.length) {
         allFilters[filter.key] = { $in: filter.values };
       } else if (filter.conditions.length) {
         const companyContactsController = require("./company-contacts.controller");
