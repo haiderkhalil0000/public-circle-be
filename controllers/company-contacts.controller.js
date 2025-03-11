@@ -956,7 +956,7 @@ const resolveCompanyContactDuplicates = async ({
     const contactsToBeDeleted = [];
 
     if (isSaveNewContact) {
-      await CompanyContact.find(query);
+      duplicateContacts = await CompanyContact.find(query);
       duplicateContacts.forEach((dc) => {
         contactsToBeDeleted.push(dc["public_circles_existing_contactId"]);
       });
