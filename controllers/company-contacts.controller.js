@@ -360,7 +360,7 @@ const readFiltersCount = async ({ companyId, filters }) => {
   const promises = [];
 
   filters.forEach((item) => {
-    if (item.values && item.values.length && item.conditions.length === 0) {
+    if (item.values && item.values.length && !item?.conditions?.length) {
       promises.push(
         CompanyContact.countDocuments({
           public_circles_company: companyId,
