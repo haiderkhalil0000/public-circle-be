@@ -540,6 +540,18 @@ const updateCompanyContact = async ({ companyId, userId, companyUserData }) => {
   }
 };
 
+const updateCompanyContacts = async ({ filter, companyContactData }) => {
+  const result = await CompanyContact.updateMany(filter, {
+    ...companyContactData,
+  });
+
+  if (!result.matchedCount) {
+    throw createHttpError(404, {
+      errorMessage: RESPONSE_MESSAGES.COMPANY_CONTACT_NOT_FOUND,
+    });
+  }
+};
+
 const deleteCompanyContact = async ({ companyId, userId }) => {
   const result = await CompanyContact.updateOne(
     {
@@ -781,9 +793,22 @@ const readPrimaryKey = async ({ companyId }) => {
 };
 
 const updatePrimaryKey = async ({ companyId, currentUserId, primaryKey }) => {
-  await Company.findByIdAndUpdate(companyId, {
-    contactsPrimaryKey: primaryKey,
-  });
+  await Promise.all([
+    Company.findByIdAndUpdate(companyId, {
+      contactsPrimaryKey: primaryKey,
+    }),
+    updateCompanyContacts({
+      filter: {
+        public_circles_company: companyId,
+        public_circles_existing_contactId: {
+          $exists: true,
+        },
+      },
+      companyContactData: {
+        public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
+      },
+    }),
+  ]);
 
   initiateDuplicationMarkingInWorkerThread({
     companyId,
@@ -1050,6 +1075,7 @@ module.exports = {
   createCompanyContact,
   readCompanyContact,
   updateCompanyContact,
+  updateCompanyContacts,
   deleteCompanyContact,
   deleteAllCompanyContacts,
   uploadCsv,
