@@ -56,6 +56,7 @@ const readActivePlansByCustomerId = async ({ stripeCustomerId }) => {
       const priceCurrency = price.currency.toUpperCase();
 
       activePlans.push({
+        subscriptionId: item.subscription,
         productId,
         productName: product.name,
         productPrice: `${priceAmount} ${priceCurrency}`,
@@ -165,16 +166,36 @@ const readPlans = async ({ pageSize, companyId, stripeCustomerId }) => {
   const activePlan = activePlanArray[0];
   const activePlanPrice = Number(activePlan.productPrice.split(" ")[0]);
 
+  const subscription = await stripe.subscriptions.retrieve(
+    activePlan.subscriptionId
+  );
+
+  const periodStart = subscription.current_period_start;
+  const periodEnd = subscription.current_period_end;
+  const today = Math.floor(Date.now() / 1000);
+
+  // Convert timestamps to Date objects
+  const startDate = new Date(periodStart * 1000);
+  const endDate = new Date(periodEnd * 1000);
+  const currentDate = new Date(today * 1000);
+
+  // Calculate total and remaining days
+  const totalDaysInBillingPeriod = Math.ceil(
+    (endDate - startDate) / (1000 * 60 * 60 * 24)
+  ); // Total days in period
+
+  const daysElapsed = Math.ceil(
+    (currentDate - startDate) / (1000 * 60 * 60 * 24)
+  ); // Days from start to today
+
+  const remainingDaysInBillingPeriod =
+    totalDaysInBillingPeriod - daysElapsed + 1;
+
   filteredPlans.forEach((item) => {
     promises.push(stripe.prices.retrieve(item.default_price));
   });
 
   const prices = await Promise.all(promises);
-
-  const today = moment();
-  const currentDayOfMonth = today.date();
-
-  const daysInMonth = moment().daysInMonth();
 
   filteredPlans.forEach((item, index) => {
     if (item.id === activePlan.productId) {
@@ -189,8 +210,9 @@ const readPlans = async ({ pageSize, companyId, stripeCustomerId }) => {
     } else {
       if (!item.metadata.isAddOn) {
         item.price.proratedAmount =
-          ((item.price.unit_amount - activePlanPrice) / daysInMonth) *
-          (daysInMonth - currentDayOfMonth + 1);
+          ((item.price.unit_amount - activePlanPrice) /
+            totalDaysInBillingPeriod) *
+          remainingDaysInBillingPeriod;
       }
     }
 
