@@ -114,9 +114,17 @@ const readPlans = async ({ pageSize, companyId, stripeCustomerId }) => {
   let activePlanArray;
 
   // Exclude the product with the name "Top Up"
-  const filteredPlans = stripePlans.data.filter(
-    (item) => item.name !== "Top Up"
-  );
+  let filteredPlans = stripePlans.data.filter((item) => item.name !== "Top Up");
+
+  filteredPlans = filteredPlans.map((fp) => {
+    const dbPlan = dbPlans.find((dp) => dp.name === fp.name);
+
+    if (dbPlan) {
+      return { ...fp, quota: dbPlan.quota, bundles: dbPlan.bundles };
+    }
+
+    return fp;
+  });
 
   try {
     const activePlanArrayTemp = await readActivePlansByCustomerId({
