@@ -205,8 +205,6 @@ const readPlans = async ({ pageSize, companyId, stripeCustomerId }) => {
           ((item.price.unit_amount - activePlanPrice) /
             totalDaysInBillingPeriod) *
           remainingDaysInBillingPeriod;
-
-        console.log("trapped");
       }
     }
 
