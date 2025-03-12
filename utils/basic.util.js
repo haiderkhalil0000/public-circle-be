@@ -33,7 +33,7 @@ const calculateByteUnit = ({ bytes }) => {
     index++;
   }
 
-  return `${bytes} ${units[index]}`;
+  return `${bytes.toFixed(2)} ${units[index]}`;
 };
 
 const isNumericString = (value) => {
