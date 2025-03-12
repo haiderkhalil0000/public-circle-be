@@ -65,6 +65,11 @@ router.post(
         CAMPAIGN_STATUS.ACTIVE,
         CAMPAIGN_STATUS.DISABLED
       ),
+    }).custom((value, helpers) => {
+      if (value.isOnGoing && value.isRecurring) {
+        return helpers.message("Either isOnGoing or isRecurring can be true, not both.");
+      }
+      return value;
     }),
   }),
   async (req, res, next) => {

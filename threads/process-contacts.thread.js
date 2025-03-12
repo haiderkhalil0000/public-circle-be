@@ -3,11 +3,7 @@ const { parentPort } = require("worker_threads");
 const { Readable } = require("stream");
 const csvParser = require("csv-parser");
 
-const { webhooksController, companiesController } = require("../controllers");
-const {
-  constants: { COMPANY_CONTACT_STATUS },
-} = require("../utils");
-const { CompanyContact } = require("../models");
+const { webhooksController, companiesController, campaignsController } = require("../controllers");
 
 const { MONGODB_URL } = process.env;
 
@@ -91,7 +87,11 @@ parentPort.on("message", async (message) => {
     const processCSV = new Promise((resolve, reject) => {
       fileStream
         .pipe(csvParser())
-        .on("data", (data) => contacts.push(data))
+        .on("data", (data) => {
+          if (Object.values(data).some((value) => value.trim() !== "")) {
+            contacts.push(data);
+          }
+        })
         .on("end", () => resolve(contacts))
         .on("error", (err) => reject(err));
     });
@@ -100,11 +100,28 @@ parentPort.on("message", async (message) => {
 
     if (contactsPrimaryKey) {
       contacts = (() => {
-        const seen = {};
+        if (!contacts.length || !contactsPrimaryKey) return contacts;
+
+        if (!(contactsPrimaryKey in contacts[0])) {
+          return contacts;
+        }
+      
+        const seen = new Set();
         return contacts.filter((contact) => {
-          const primaryKeyValue = contact[contactsPrimaryKey];
-          seen[primaryKeyValue] = (seen[primaryKeyValue] || 0) + 1;
-          return seen[primaryKeyValue] <= 1;
+          let primaryKeyValue = contact[contactsPrimaryKey];
+      
+          if (typeof primaryKeyValue === "string") {
+            primaryKeyValue = primaryKeyValue.trim();
+          }
+      
+          if (!primaryKeyValue) return false;
+      
+          if (seen.has(primaryKeyValue)) {
+            return false;
+          } else {
+            seen.add(primaryKeyValue);
+            return true;
+          }
         });
       })();
 
@@ -175,6 +192,15 @@ parentPort.on("message", async (message) => {
         });
       }
     });
+
+    const companyActiveCampaigns = await companiesController.readCompanyActiveCampaigns({
+      companyId,
+    });
+    const runActiveCampaigns = [];
+    for (const campaign of companyActiveCampaigns) {
+       runActiveCampaigns.push(campaignsController.runCampaign({ campaign }));
+    }
+    await Promise.all(runActiveCampaigns);
   } catch (error) {
     console.error("Error in worker thread:", error);
   }
