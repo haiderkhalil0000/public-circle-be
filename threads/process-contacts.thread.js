@@ -193,9 +193,10 @@ parentPort.on("message", async (message) => {
       }
     });
 
-    const companyActiveCampaigns = await companiesController.readCompanyActiveCampaigns({
+    const companyActiveCampaigns = await companiesController.readCompanyActiveOngoingCampaigns({
       companyId,
     });
+    // validateCampaign
     const runActiveCampaigns = [];
     for (const campaign of companyActiveCampaigns) {
        runActiveCampaigns.push(campaignsController.runCampaign({ campaign }));
