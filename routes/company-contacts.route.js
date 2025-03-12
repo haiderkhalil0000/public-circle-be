@@ -105,6 +105,7 @@ router.post(
     try {
       await companyContactsController.createPrimaryKey({
         companyId: req.user.company._id,
+        currentUserId: req.user._id,
         ...req.body,
       });
 
@@ -134,6 +135,7 @@ router.patch(
     try {
       await companyContactsController.updatePrimaryKey({
         companyId: req.user.company._id,
+        currentUserId: req.user._id,
         ...req.body,
       });
 

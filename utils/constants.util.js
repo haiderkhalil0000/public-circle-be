@@ -229,7 +229,8 @@ module.exports = {
     EMAILS_FETCHED: "Emails fetched successfully.",
     FILTER_VALUES_FETCHED: "Filter values fetched successfully.",
     CONTACT_DUPLICATE_FETCHED: "Contact duplicates fetched successfully.",
-    ADD_PRIMARY_KEY_FOR_NEXT_IMPORTS: "Please set primary key first to import new contacts!",
+    ADD_PRIMARY_KEY_FOR_NEXT_IMPORTS:
+      "Please set primary key first to import new contacts!",
   },
 
   INTERACTION_CHANNELS: {
@@ -417,6 +418,7 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
     CONNECTION: "connection",
     DISCONNECT: "disconnect",
     CONTACTS_UPLOAD_PROGRESS: "contacts-upload-progress",
+    CONTACTS_MARK_DUPLICATE_PROGRESS: "contacts-mark-duplicate-progress",
   },
 
   COMPANY_CONTACT_STATUS: {
