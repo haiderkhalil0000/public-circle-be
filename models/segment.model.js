@@ -24,6 +24,8 @@ const schema = new mongoose.Schema(
       {
         key: { type: String },
         values: { type: Array },
+        type: { type: String, enum: ["CHECK_BOX", "INPUT", "RADIO", "DROP_DOWN"] },
+        count: { type: Number },
         operator: { type: String, enum: ["AND", "OR"] },
         conditions: [
           {
