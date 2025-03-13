@@ -57,53 +57,59 @@ new CronJob(
 
       primaryUsers = await Promise.all(primaryUsers);
 
-      pendingCampaigns.forEach(async (campaign, index) => {
-        if (
-          campaign.runMode === RUN_MODE.SCHEDULE &&
-          campaign.processedCount < 1 &&
-          moment().isSameOrAfter(moment(campaign.runSchedule).startOf("minute"))
-        ) {
-          recordsUpdated++;
-
-          await campaignsController.validateCampaign({
-            campaign,
-            company: campaign.company,
-            primaryUser: primaryUsers[index],
-          });
-
-          campaignsController.runCampaign({ campaign });
-        } else if (campaign.isRecurring) {
+      for(let i = 0; i < pendingCampaigns.length; i++) {
+        try{
+          const campaign = pendingCampaigns[i];
+          const index = i;
           if (
             campaign.runMode === RUN_MODE.SCHEDULE &&
-            moment().isBefore(moment(campaign.runSchedule).startOf("minute"))
+            campaign.processedCount < 1 &&
+            moment().isSameOrAfter(moment(campaign.runSchedule).startOf("minute"))
           ) {
-            return;
-          }
-
-          const campaignRecurring = campaign.recurringPeriod.split(" ");
-
-          const recurringPeriod = moment.duration(
-            parseInt(campaignRecurring[0]),
-            campaignRecurring[1]
-          );
-
-          const lastProcessedTime = moment(campaign.lastProcessed).startOf(
-            "minute"
-          );
-
-          if (moment().isSameOrAfter(lastProcessedTime.add(recurringPeriod))) {
             recordsUpdated++;
-
+    
             await campaignsController.validateCampaign({
               campaign,
               company: campaign.company,
               primaryUser: primaryUsers[index],
             });
-
+    
             campaignsController.runCampaign({ campaign });
+          } else if (campaign.isRecurring) {
+            if (
+              campaign.runMode === RUN_MODE.SCHEDULE &&
+              moment().isBefore(moment(campaign.runSchedule).startOf("minute"))
+            ) {
+              return;
+            }
+    
+            const campaignRecurring = campaign.recurringPeriod.split(" ");
+    
+            const recurringPeriod = moment.duration(
+              parseInt(campaignRecurring[0]),
+              campaignRecurring[1]
+            );
+    
+            const lastProcessedTime = moment(campaign.lastProcessed).startOf(
+              "minute"
+            );
+    
+            if (moment().isSameOrAfter(lastProcessedTime.add(recurringPeriod))) {
+              recordsUpdated++;
+    
+              await campaignsController.validateCampaign({
+                campaign,
+                company: campaign.company,
+                primaryUser: primaryUsers[index],
+              });
+    
+              campaignsController.runCampaign({ campaign });
+            }
           }
+        } catch(err){
+          console.log(err);
         }
-      });
+      }
 
       await Cron.create({
         cronName: CRON_JOBS.RUN_CAMPAIGN,
