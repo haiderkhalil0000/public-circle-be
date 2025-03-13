@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const createHttpError = require("http-errors");
 const path = require("path");
 const _ = require("lodash");
+const { Worker } = require("worker_threads");
 
 const { CompanyContact, Company } = require("../models");
 const {
@@ -36,7 +37,6 @@ const readContactKeys = async ({ companyId = "" }) => {
       $limit: 1,
     },
   ]);
-  
 
   if (!latestDocument.length) {
     return [];
@@ -170,189 +170,188 @@ const getFilterConditionQuery = ({ conditions, conditionKey }) => {
       isNumericString(fromValue) ||
       isNumericString(toValue);
 
-      switch (condition.conditionType) {
-        case EQUALS:
-          return numericComparison && !isNaN(value)
-            ? {
-                $expr: {
-                  $eq: [
-                    {
-                      $convert: {
-                        input: { $trim: { input: `$${conditionKey}` } },
-                        to: "double",
-                        onError: "$$REMOVE",
-                        onNull: "$$REMOVE",
-                      },
+    switch (condition.conditionType) {
+      case EQUALS:
+        return numericComparison && !isNaN(value)
+          ? {
+              $expr: {
+                $eq: [
+                  {
+                    $convert: {
+                      input: { $trim: { input: `$${conditionKey}` } },
+                      to: "double",
+                      onError: "$$REMOVE",
+                      onNull: "$$REMOVE",
                     },
-                    parseFloat(value),
-                  ],
-                },
-              }
-            : {
-                [conditionKey]: value.toString().trim(),
-              };
-        
-        case NOT_EQUALS:
-          return numericComparison && !isNaN(value)
-            ? {
-                $expr: {
-                  $ne: [
-                    {
-                      $convert: {
-                        input: { $trim: { input: `$${conditionKey}` } },
-                        to: "double",
-                        onError: "$$REMOVE",
-                        onNull: "$$REMOVE",
-                      },
+                  },
+                  parseFloat(value),
+                ],
+              },
+            }
+          : {
+              [conditionKey]: value.toString().trim(),
+            };
+
+      case NOT_EQUALS:
+        return numericComparison && !isNaN(value)
+          ? {
+              $expr: {
+                $ne: [
+                  {
+                    $convert: {
+                      input: { $trim: { input: `$${conditionKey}` } },
+                      to: "double",
+                      onError: "$$REMOVE",
+                      onNull: "$$REMOVE",
                     },
-                    parseFloat(value),
-                  ],
-                },
-              }
-            : {
-                [conditionKey]: { $ne: value.toString().trim() },
-              };
-        case GREATER_THAN:
-          return numericComparison
-            ? {
-                $expr: {
-                  $gt: [
-                    {
-                      $convert: {
-                        input: `$${conditionKey}`,
-                        to: "int",
-                        onError: 0,
-                        onNull: 0,
-                      },
+                  },
+                  parseFloat(value),
+                ],
+              },
+            }
+          : {
+              [conditionKey]: { $ne: value.toString().trim() },
+            };
+      case GREATER_THAN:
+        return numericComparison
+          ? {
+              $expr: {
+                $gt: [
+                  {
+                    $convert: {
+                      input: `$${conditionKey}`,
+                      to: "int",
+                      onError: 0,
+                      onNull: 0,
                     },
-                    parseInt(value, 10),
-                  ],
-                },
-              }
-            : { [conditionKey]: { $gt: value } };
-      
-        case LESS_THAN:
-          return numericComparison
-            ? {
-                $expr: {
-                  $lt: [
-                    {
-                      $convert: {
-                        input: `$${conditionKey}`,
-                        to: "int",
-                        onError: 0,
-                        onNull: 0,
-                      },
+                  },
+                  parseInt(value, 10),
+                ],
+              },
+            }
+          : { [conditionKey]: { $gt: value } };
+
+      case LESS_THAN:
+        return numericComparison
+          ? {
+              $expr: {
+                $lt: [
+                  {
+                    $convert: {
+                      input: `$${conditionKey}`,
+                      to: "int",
+                      onError: 0,
+                      onNull: 0,
                     },
-                    parseInt(value, 10),
-                  ],
-                },
-              }
-            : { [conditionKey]: { $lt: value } };
-      
-        case BETWEEN:
-          return numericComparison
-            ? {
-                $expr: {
-                  $and: [
-                    {
-                      $gte: [
-                        {
-                          $convert: {
-                            input: `$${conditionKey}`,
-                            to: "int",
-                            onError: 0,
-                            onNull: 0,
-                          },
+                  },
+                  parseInt(value, 10),
+                ],
+              },
+            }
+          : { [conditionKey]: { $lt: value } };
+
+      case BETWEEN:
+        return numericComparison
+          ? {
+              $expr: {
+                $and: [
+                  {
+                    $gte: [
+                      {
+                        $convert: {
+                          input: `$${conditionKey}`,
+                          to: "int",
+                          onError: 0,
+                          onNull: 0,
                         },
-                        parseInt(fromValue, 10),
-                      ],
-                    },
-                    {
-                      $lte: [
-                        {
-                          $convert: {
-                            input: `$${conditionKey}`,
-                            to: "int",
-                            onError: 0,
-                            onNull: 0,
-                          },
+                      },
+                      parseInt(fromValue, 10),
+                    ],
+                  },
+                  {
+                    $lte: [
+                      {
+                        $convert: {
+                          input: `$${conditionKey}`,
+                          to: "int",
+                          onError: 0,
+                          onNull: 0,
                         },
-                        parseInt(toValue, 10),
-                      ],
-                    },
-                  ],
-                },
-              }
-            : {
-                [conditionKey]: {
-                  $gte: fromValue,
-                  $lte: toValue,
-                },
-              };
-      
-        case CONTAINS:
-          return {
-            [conditionKey]: { $regex: value, $options: "i" },
-          };
-      
-        case NOT_CONTAINS:
-          return {
-            [conditionKey]: {
-              $not: { $regex: value, $options: "i" },
-            },
-          };
-      
-        case IS_TIMESTAMP:
-          return { [conditionKey]: { $type: "date" } };
-      
-        case IS_NOT_TIMESTAMP:
-          return { [conditionKey]: { $not: { $type: "date" } } };
-      
-        case TIMESTAMP_BEFORE:
-          return {
-            $expr: {
-              $gt: [
-                `$${conditionKey}`,
-                { $dateFromString: { dateString: value } },
-              ],
-            },
-          };
-      
-        case TIMESTAMP_AFTER:
-          return {
-            $expr: {
-              $lt: [
-                `$${conditionKey}`,
-                { $dateFromString: { dateString: value } },
-              ],
-            },
-          };
-      
-        case TIMESTAMP_BETWEEN:
-          return {
-            $expr: {
-              $and: [
-                {
-                  $gte: [
-                    `$${conditionKey}`,
-                    { $dateFromString: { dateString: fromValue } },
-                  ],
-                },
-                {
-                  $lte: [
-                    `$${conditionKey}`,
-                    { $dateFromString: { dateString: toValue } },
-                  ],
-                },
-              ],
-            },
-          };
-      
-        default:
-          return {};
-      }
-      
+                      },
+                      parseInt(toValue, 10),
+                    ],
+                  },
+                ],
+              },
+            }
+          : {
+              [conditionKey]: {
+                $gte: fromValue,
+                $lte: toValue,
+              },
+            };
+
+      case CONTAINS:
+        return {
+          [conditionKey]: { $regex: value, $options: "i" },
+        };
+
+      case NOT_CONTAINS:
+        return {
+          [conditionKey]: {
+            $not: { $regex: value, $options: "i" },
+          },
+        };
+
+      case IS_TIMESTAMP:
+        return { [conditionKey]: { $type: "date" } };
+
+      case IS_NOT_TIMESTAMP:
+        return { [conditionKey]: { $not: { $type: "date" } } };
+
+      case TIMESTAMP_BEFORE:
+        return {
+          $expr: {
+            $gt: [
+              `$${conditionKey}`,
+              { $dateFromString: { dateString: value } },
+            ],
+          },
+        };
+
+      case TIMESTAMP_AFTER:
+        return {
+          $expr: {
+            $lt: [
+              `$${conditionKey}`,
+              { $dateFromString: { dateString: value } },
+            ],
+          },
+        };
+
+      case TIMESTAMP_BETWEEN:
+        return {
+          $expr: {
+            $and: [
+              {
+                $gte: [
+                  `$${conditionKey}`,
+                  { $dateFromString: { dateString: fromValue } },
+                ],
+              },
+              {
+                $lte: [
+                  `$${conditionKey}`,
+                  { $dateFromString: { dateString: toValue } },
+                ],
+              },
+            ],
+          },
+        };
+
+      default:
+        return {};
+    }
   });
 };
 
@@ -490,7 +489,7 @@ const readPaginatedCompanyContacts = async ({
 
   const reorderedContacts = reorderContacts({ contacts: companyContacts });
   const filteredContacts = reorderedContacts.map(filterInternalKeys);
-  
+
   return {
     totalRecords,
     companyContacts: filteredContacts,
@@ -533,6 +532,18 @@ const updateCompanyContact = async ({ companyId, userId, companyUserData }) => {
     { _id: userId, public_circles_company: companyId },
     { ...companyUserData }
   );
+
+  if (!result.matchedCount) {
+    throw createHttpError(404, {
+      errorMessage: RESPONSE_MESSAGES.COMPANY_CONTACT_NOT_FOUND,
+    });
+  }
+};
+
+const updateCompanyContacts = async ({ filter, companyContactData }) => {
+  const result = await CompanyContact.updateMany(filter, {
+    ...companyContactData,
+  });
 
   if (!result.matchedCount) {
     throw createHttpError(404, {
@@ -599,8 +610,6 @@ const uploadCsv = async ({
     });
   }
 
-  const { Worker } = require("worker_threads");
-
   const workerPath = path.resolve(
     __dirname,
     "../threads/process-contacts.thread.js"
@@ -642,27 +651,23 @@ const uploadCsv = async ({
   });
 };
 
-const findUniqueContacts = async ({ companyId, primaryKey }) => {
-  const companyContacts = await CompanyContact.find({
-    public_circles_company: companyId,
-    public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
-  }).lean();
-
-  return basicUtil.filterUniqueObjectsFromArrayByProperty(
-    companyContacts,
+const findUniqueContacts = async ({ allCompanyContacts, primaryKey }) =>
+  basicUtil.filterUniqueObjectsFromArrayByProperty(
+    allCompanyContacts,
     primaryKey
   );
-};
 
 const markContactsDuplicateWithPrimaryKey = async ({
   companyId,
   primaryKey,
-  getCountsOnly = false
+  getCountsOnly = false,
 }) => {
-  let [uniqueContacts, allCompanyContacts] = await Promise.all([
-    findUniqueContacts({ companyId, primaryKey }),
-    readAllCompanyContacts({ companyId }),
-  ]);
+  const allCompanyContacts = await readAllCompanyContacts({ companyId });
+
+  const uniqueContacts = await findUniqueContacts({
+    allCompanyContacts,
+    primaryKey,
+  });
 
   const promises = [];
 
@@ -717,22 +722,66 @@ const markContactsDuplicateWithPrimaryKey = async ({
       }
     }
   }
-  if(getCountsOnly) {
-    duplicatedCounts =  _.uniq(duplicatedCounts).map((id) => id.toString());
+  if (getCountsOnly) {
+    duplicatedCounts = _.uniq(duplicatedCounts).map((id) => id.toString());
     return duplicatedCounts.length;
-  }
-  else{
+  } else {
     await Promise.all(promises);
   }
 };
 
+const initiateDuplicationMarkingInWorkerThread = ({
+  companyId,
+  currentUserId,
+  primaryKey,
+}) => {
+  const workerPath = path.resolve(
+    __dirname,
+    "../threads/mark-duplicates.thread.js"
+  );
 
-const createPrimaryKey = async ({ companyId, primaryKey }) => {
+  const worker = new Worker(workerPath);
+
+  const { emitMessage, getSocket } = require("../socket");
+
+  worker.on("message", (message) => {
+    const targetSocket = getSocket({ userId: currentUserId });
+
+    console.log(message);
+
+    emitMessage({
+      socketObj: targetSocket,
+      socketChannel: SOCKET_CHANNELS.CONTACTS_MARK_DUPLICATE_PROGRESS,
+      message,
+    });
+  });
+
+  worker.on("error", (error) => {
+    console.error("Worker error:", error);
+  });
+
+  worker.on("exit", (code) => {
+    if (code !== 0) {
+      console.error(`Worker stopped with exit code ${code}`);
+    }
+  });
+
+  worker.postMessage({
+    companyId: companyId.toString(),
+    primaryKey,
+  });
+};
+
+const createPrimaryKey = async ({ companyId, currentUserId, primaryKey }) => {
   await Company.findByIdAndUpdate(companyId, {
     contactsPrimaryKey: primaryKey,
   });
 
-  await markContactsDuplicateWithPrimaryKey({ companyId, primaryKey });
+  initiateDuplicationMarkingInWorkerThread({
+    companyId,
+    currentUserId,
+    primaryKey,
+  });
 };
 
 const readPrimaryKey = async ({ companyId }) => {
@@ -743,12 +792,29 @@ const readPrimaryKey = async ({ companyId }) => {
   return companyDoc.contactsPrimaryKey;
 };
 
-const updatePrimaryKey = async ({ companyId, primaryKey }) => {
-  await Company.findByIdAndUpdate(companyId, {
-    contactsPrimaryKey: primaryKey,
-  });
+const updatePrimaryKey = async ({ companyId, currentUserId, primaryKey }) => {
+  await Promise.all([
+    Company.findByIdAndUpdate(companyId, {
+      contactsPrimaryKey: primaryKey,
+    }),
+    updateCompanyContacts({
+      filter: {
+        public_circles_company: companyId,
+        public_circles_existing_contactId: {
+          $exists: true,
+        },
+      },
+      companyContactData: {
+        public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
+      },
+    }),
+  ]);
 
-  await markContactsDuplicateWithPrimaryKey({ companyId, primaryKey });
+  initiateDuplicationMarkingInWorkerThread({
+    companyId,
+    currentUserId,
+    primaryKey,
+  });
 };
 
 const deletePrimaryKey = async ({ companyId }) =>
@@ -763,7 +829,11 @@ const readCompanyContactsCount = ({ companyId }) =>
   });
 
 const readPrimaryKeyEffect = async ({ companyId, primaryKey }) => {
-  const duplicateCount = await markContactsDuplicateWithPrimaryKey({ companyId, primaryKey, getCountsOnly: true });
+  const duplicateCount = await markContactsDuplicateWithPrimaryKey({
+    companyId,
+    primaryKey,
+    getCountsOnly: true,
+  });
 
   return `Based on your selection, there will be ${duplicateCount} contact${
     duplicateCount !== 1 ? "s" : ""
@@ -812,7 +882,10 @@ const getSelectionCriteriaEffect = async ({
   return totalContacts - filteredContacts;
 };
 
-const filterContactsBySelectionCriteria = async ({ companyId, contactSelectionCriteria }) => {
+const filterContactsBySelectionCriteria = async ({
+  companyId,
+  contactSelectionCriteria,
+}) => {
   const query = {
     public_circles_company: companyId,
   };
@@ -827,10 +900,12 @@ const filterContactsBySelectionCriteria = async ({ companyId, contactSelectionCr
 
   await CompanyContact.updateMany(
     { _id: { $nin: filteredContactIds }, public_circles_company: companyId },
-    { public_circles_status: COMPANY_CONTACT_STATUS.DELETED, public_circles_existing_contactId: null }
+    {
+      public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
+      public_circles_existing_contactId: null,
+    }
   );
 };
-
 
 const createMultipleCompanyContacts = ({ contacts }) => {
   CompanyContact.insertMany(contacts);
@@ -861,7 +936,7 @@ const readCompanyContactDuplicates = async ({
     public_circles_existing_contactId: { $ne: null },
   };
   const totalDuplicatedContact = await CompanyContact.find(query);
-  
+
   const duplicateContacts = await CompanyContact.find(query)
     .skip((parseInt(pageNumber) - 1) * pageSize)
     .limit(parseInt(pageSize));
@@ -948,7 +1023,7 @@ const resolveCompanyContactDuplicates = async ({
   } else {
     const query = {
       public_circles_company: companyId,
-      public_circles_status: { $ne: COMPANY_CONTACT_STATUS.DELETED }
+      public_circles_status: { $ne: COMPANY_CONTACT_STATUS.DELETED },
     };
 
     let duplicateContacts = [];
@@ -962,7 +1037,7 @@ const resolveCompanyContactDuplicates = async ({
       });
     } else {
       query.public_circles_existing_contactId = { $ne: null };
-      duplicateContacts = await CompanyContact.find(query)
+      duplicateContacts = await CompanyContact.find(query);
       duplicateContacts.forEach((dc) => {
         contactsToBeDeleted.push(dc._id);
       });
@@ -1000,6 +1075,7 @@ module.exports = {
   createCompanyContact,
   readCompanyContact,
   updateCompanyContact,
+  updateCompanyContacts,
   deleteCompanyContact,
   deleteAllCompanyContacts,
   uploadCsv,
@@ -1017,4 +1093,5 @@ module.exports = {
   readCompanyContactDuplicates,
   readDuplicateContactsCountByCompanyId,
   resolveCompanyContactDuplicates,
+  markContactsDuplicateWithPrimaryKey,
 };

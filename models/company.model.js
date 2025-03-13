@@ -30,6 +30,11 @@ const schema = new mongoose.Schema(
         filterValues: [{ type: String }],
       },
     ],
+    isMarkingDuplicates: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
   },
   { timestamps: true }
 );
