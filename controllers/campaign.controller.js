@@ -725,16 +725,17 @@ const readCampaignRecipientsCount = async ({ campaign }) => {
 
   filters.forEach((filter) => {
     promises.push(
-      companyContactsController.readFilterCount({
-        filter,
+      companyContactsController.readFiltersCount({
         companyId: campaign.company,
+        filters: filter,
       })
     );
   });
 
   let filterCounts = await Promise.all(promises);
 
-  return filterCounts.reduce((total, current) => total + current, 0);
+  return filterCounts
+  .flat().reduce((total, current) => total + (current.filterCount || 0), 0);
 };
 
 const calculateEmailOverageCharge = ({ unpaidEmailsCount, plan }) => {

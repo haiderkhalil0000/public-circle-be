@@ -358,7 +358,7 @@ const getFilterConditionQuery = ({ conditions, conditionKey }) => {
 const readFiltersCount = async ({ companyId, filters }) => {
   const promises = [];
 
-  filters.forEach((item) => {
+  filters?.forEach((item) => {
     if (item.values && item.values.length && !item?.conditions?.length) {
       promises.push(
         CompanyContact.countDocuments({
