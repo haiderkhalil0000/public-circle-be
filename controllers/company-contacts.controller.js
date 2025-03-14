@@ -965,82 +965,89 @@ const resolveCompanyContactDuplicates = async ({
   contactsToBeSaved,
 }) => {
   const companiesController = require("./companies.controller");
-
   const { contactsPrimaryKey } = await companiesController.readCompanyById({
     companyId,
   });
 
-  const promises = [];
+  const baseQuery = {
+    public_circles_company: companyId,
+    public_circles_status: { $ne: COMPANY_CONTACT_STATUS.DELETED },
+    s,
+  };
 
-  if (contactsToBeSaved && contactsToBeSaved.length) {
-    contactsToBeSaved.forEach((contact) => {
-      promises.push(
-        CompanyContact.updateMany(
-          {
+  // Handle bulk contact updates
+  if (contactsToBeSaved?.length) {
+    const bulkOps = [];
+
+    for (const contact of contactsToBeSaved) {
+      // Delete duplicates
+      bulkOps.push({
+        updateMany: {
+          filter: {
             public_circles_company: companyId,
             _id: { $ne: contact._id },
             [contactsPrimaryKey]: contact[contactsPrimaryKey],
           },
-          {
-            public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
-            public_circles_existing_contactId: null,
-          }
-        )
-      );
+          update: {
+            $set: {
+              public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
+              public_circles_existing_contactId: null,
+            },
+          },
+        },
+      });
+
+      // Update current contact
       contact.public_circles_existing_contactId = null;
-      promises.push(
-        CompanyContact.updateOne(
-          {
+      bulkOps.push({
+        updateOne: {
+          filter: {
             public_circles_company: companyId,
             _id: contact._id,
           },
-          contact
-        )
-      );
-    });
-
-    await Promise.all(promises);
-  } else {
-    const query = {
-      public_circles_company: companyId,
-      public_circles_status: { $ne: COMPANY_CONTACT_STATUS.DELETED },
-    };
-
-    let duplicateContacts = [];
-
-    const contactsToBeDeleted = [];
-
-    if (isSaveNewContact) {
-      duplicateContacts = await CompanyContact.find(query);
-      duplicateContacts.forEach((dc) => {
-        contactsToBeDeleted.push(dc["public_circles_existing_contactId"]);
-      });
-    } else {
-      query.public_circles_existing_contactId = { $ne: null };
-      duplicateContacts = await CompanyContact.find(query);
-      duplicateContacts.forEach((dc) => {
-        contactsToBeDeleted.push(dc._id);
+          update: { $set: contact },
+        },
       });
     }
 
-    await CompanyContact.updateMany(
-      {
-        _id: { $in: contactsToBeDeleted },
-      },
-      {
-        public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
-        public_circles_existing_contactId: null,
-      }
-    );
-    await CompanyContact.updateMany(
-      {
-        _id: { $nin: contactsToBeDeleted },
-        public_circles_company: companyId,
-      },
-      {
-        public_circles_existing_contactId: null,
-      }
-    );
+    await CompanyContact.bulkWrite(bulkOps);
+  } else {
+    // Handle single contact case
+    const query = { ...baseQuery };
+    if (!isSaveNewContact) {
+      query.public_circles_existing_contactId = { $ne: null };
+    }
+
+    const duplicateContacts = await CompanyContact.find(query)
+      .select("_id public_circles_existing_contactId")
+      .lean();
+
+    const contactsToBeDeleted = duplicateContacts
+      .map((dc) =>
+        isSaveNewContact ? dc.public_circles_existing_contactId : dc._id
+      )
+      .filter((id) => id);
+
+    // Execute both updates in parallel
+    await Promise.all([
+      contactsToBeDeleted.length &&
+        CompanyContact.updateMany(
+          { _id: { $in: contactsToBeDeleted } },
+          {
+            $set: {
+              public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
+              public_circles_existing_contactId: null,
+            },
+          }
+        ),
+      CompanyContact.updateMany(
+        {
+          _id: { $nin: contactsToBeDeleted },
+          public_circles_company: companyId,
+        },
+        { $set: { public_circles_existing_contactId: null } }
+      ),
+    ]);
   }
 };
 
