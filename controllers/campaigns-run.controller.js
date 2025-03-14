@@ -21,8 +21,7 @@ const readCampaignRunsStats = async ({ campaignId, graphScope }) => {
     graphData,
   ] = await Promise.all([
     EmailSent.countDocuments({
-      ...query,
-      "emailEvents.Send": { $exists: true },
+      ...query
     }),
     EmailSent.countDocuments({
       ...query,
@@ -74,8 +73,7 @@ const readPaginatedCampaignsRun = async ({
   const promises = campaignRuns.map((item) =>
     Promise.all([
       EmailSent.countDocuments({
-        campaignRun: item._id,
-        "emailEvents.Send": { $exists: true },
+        campaignRun: item._id
       }),
       EmailSent.countDocuments({
         campaignRun: item._id,
