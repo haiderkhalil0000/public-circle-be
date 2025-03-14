@@ -18,11 +18,6 @@ const {
 const { isNumericString } = require("../utils/basic.util");
 
 const readContactKeys = async ({ companyId = "" }) => {
-  const totalDocs = await CompanyContact.countDocuments({
-    public_circles_company: companyId,
-    public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
-  });
-
   const latestDocument = await CompanyContact.aggregate([
     {
       $match: {
@@ -645,82 +640,73 @@ const uploadCsv = async ({
   });
 };
 
-const findUniqueContacts = async ({ allCompanyContacts, primaryKey }) =>
-  basicUtil.filterUniqueObjectsFromArrayByProperty(
-    allCompanyContacts,
-    primaryKey
-  );
-
 const markContactsDuplicateWithPrimaryKey = async ({
   companyId,
   primaryKey,
   getCountsOnly = false,
 }) => {
+  // Fetch all contacts
   const allCompanyContacts = await readAllCompanyContacts({ companyId });
 
-  const uniqueContacts = await findUniqueContacts({
-    allCompanyContacts,
-    primaryKey,
-  });
+  // Build a map for O(1) lookups by primaryKey
+  const contactMap = new Map();
+  for (const contact of allCompanyContacts) {
+    const key = contact[primaryKey];
+    if (!contactMap.has(key)) {
+      contactMap.set(key, []);
+    }
+    contactMap.get(key).push(contact);
+  }
 
-  const promises = [];
-
+  const updates = [];
   let duplicatedCounts = [];
 
-  for (const uc of allCompanyContacts) {
-    const matchingUniqueContact = uniqueContacts.find(
-      (cc) =>
-        uc[primaryKey] === cc[primaryKey] &&
-        uc._id.toString() !== cc._id.toString()
-    );
+  // Process each group of contacts with the same primaryKey
+  for (const [key, contacts] of contactMap) {
+    if (contacts.length <= 1) continue; // Skip if no duplicates
 
-    if (matchingUniqueContact) {
-      const duplicates = allCompanyContacts.filter(
-        (contact) =>
-          contact[primaryKey] === uc[primaryKey] &&
-          contact._id.toString() !== matchingUniqueContact._id.toString()
-      );
+    // Sort by _id (assuming ObjectId; use timestamp for consistency)
+    contacts.sort((a, b) => a._id.getTimestamp() - b._id.getTimestamp());
+    const primaryContact = contacts.shift(); // First contact is "unique"
 
-      duplicates.sort((a, b) =>
-        a._id.toString().localeCompare(b._id.toString())
-      );
-
-      const acceptedDuplicate = duplicates.shift();
-
-      if (acceptedDuplicate) {
-        promises.push(
-          CompanyContact.updateOne(
-            { _id: acceptedDuplicate._id },
-            {
+    // Process duplicates
+    for (const duplicate of contacts) {
+      if (!duplicatedCounts.length || duplicate === contacts[0]) {
+        // First duplicate links to primary
+        updates.push({
+          updateOne: {
+            filter: { _id: duplicate._id },
+            update: {
               $set: {
-                public_circles_existing_contactId: matchingUniqueContact._id,
+                public_circles_existing_contactId: primaryContact._id,
               },
-            }
-          )
-        );
-        duplicatedCounts.push(acceptedDuplicate._id);
-      }
-
-      for (const duplicate of duplicates) {
-        promises.push(
-          CompanyContact.updateOne(
-            { _id: duplicate._id },
-            {
+            },
+          },
+        });
+        duplicatedCounts.push(duplicate._id);
+      } else {
+        // Remaining duplicates marked for deletion
+        updates.push({
+          updateOne: {
+            filter: { _id: duplicate._id },
+            update: {
               $set: {
                 public_circles_existing_contactId: null,
                 public_circles_status: "DELETE",
               },
-            }
-          )
-        );
+            },
+          },
+        });
       }
     }
   }
+
   if (getCountsOnly) {
-    duplicatedCounts = _.uniq(duplicatedCounts).map((id) => id.toString());
-    return duplicatedCounts.length;
+    return duplicatedCounts.length; // No need for _.uniq; _ids are unique
   } else {
-    await Promise.all(promises);
+    if (updates.length > 0) {
+      await CompanyContact.bulkWrite(updates); // Batch updates
+    }
   }
 };
 
