@@ -972,7 +972,6 @@ const resolveCompanyContactDuplicates = async ({
   const baseQuery = {
     public_circles_company: companyId,
     public_circles_status: { $ne: COMPANY_CONTACT_STATUS.DELETED },
-    s,
   };
 
   // Handle bulk contact updates
