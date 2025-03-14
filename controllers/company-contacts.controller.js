@@ -541,15 +541,9 @@ const updateCompanyContact = async ({ companyId, userId, companyUserData }) => {
 };
 
 const updateCompanyContacts = async ({ filter, companyContactData }) => {
-  const result = await CompanyContact.updateMany(filter, {
+  await CompanyContact.updateMany(filter, {
     ...companyContactData,
   });
-
-  if (!result.matchedCount) {
-    throw createHttpError(404, {
-      errorMessage: RESPONSE_MESSAGES.COMPANY_CONTACT_NOT_FOUND,
-    });
-  }
 };
 
 const deleteCompanyContact = async ({ companyId, userId }) => {
