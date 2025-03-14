@@ -3,206 +3,165 @@ const { parentPort } = require("worker_threads");
 const { Readable } = require("stream");
 const csvParser = require("csv-parser");
 
-const { webhooksController, companiesController, campaignsController } = require("../controllers");
+const {
+  webhooksController,
+  companiesController,
+  campaignsController,
+  companyContactsController,
+  stripeController,
+} = require("../controllers");
 
 const { MONGODB_URL } = process.env;
 
 const connectDbForThread = async () => {
   const options = {
-    serverSelectionTimeoutMS: 30000, // Increase to 30 seconds
-    socketTimeoutMS: 45000, // Increase to 45 seconds
+    serverSelectionTimeoutMS: 30000,
+    socketTimeoutMS: 45000,
   };
-
-  try {
-    await mongoose.connect(MONGODB_URL, options);
-  } catch (err) {
-    console.log(err);
-  }
+  return mongoose.connect(MONGODB_URL, options).catch(console.error);
 };
 
 const splitArrayIntoParts = (array, numberOfParts) => {
-  const partSize = Math.ceil(array.length / numberOfParts); // Size of each part
-  const parts = [];
-
-  for (let i = 0; i < numberOfParts; i++) {
-    const start = i * partSize; // Start index of the current part
-    const end = start + partSize; // End index of the current part
-    const part = array.slice(start, end); // Extract the part
-    parts.push(part);
-  }
-
-  return parts;
+  const partSize = Math.ceil(array.length / numberOfParts);
+  return Array.from({ length: numberOfParts }, (_, i) =>
+    array.slice(i * partSize, (i + 1) * partSize)
+  ).filter((part) => part.length);
 };
 
-function filterContacts({ contacts, criteria }) {
-  return contacts.filter((contact) => {
-    return criteria.every((criterion) => {
-      const { filterKey, filterValues } = criterion;
-      return filterValues.includes(contact[filterKey]);
-    });
+const filterContacts = ({ contacts, criteria }) => {
+  const criteriaMap = new Map(
+    criteria.map((c) => [c.filterKey, new Set(c.filterValues)])
+  );
+  return contacts.filter((contact) =>
+    [...criteriaMap].every(([key, values]) => values.has(contact[key]))
+  );
+};
+
+const processCSVStream = (buffer) =>
+  new Promise((resolve, reject) => {
+    const contacts = [];
+    Readable.from(Buffer.from(buffer, "base64"))
+      .pipe(csvParser())
+      .on("data", (data) => {
+        if (Object.values(data).some((value) => value.trim())) {
+          contacts.push(data);
+        }
+      })
+      .on("end", () => resolve(contacts))
+      .on("error", reject);
   });
-}
 
-parentPort.on("message", async (message) => {
-  const companyContactsController = require("../controllers/company-contacts.controller");
+const deduplicateContacts = (contacts, primaryKey) => {
+  if (!contacts.length || !primaryKey || !(primaryKey in contacts[0])) {
+    return contacts;
+  }
 
-  try {
-    const { companyId, stripeCustomerId, contactsPrimaryKey, file } = message;
+  const seen = new Map();
+  return contacts.filter((contact) => {
+    const key = contact[primaryKey]?.toString().trim();
+    if (!key || seen.has(key)) return false;
+    seen.set(key, true);
+    return true;
+  });
+};
 
-    const [
-      _,
-      company,
-      existingCompanyContactsCount,
-      existingCompanyContacts,
-      duplicateContactsCount,
-    ] = await Promise.all([
-      connectDbForThread(),
-      companiesController.readCompanyById({ companyId }),
-      companyContactsController.readCompanyContactsCount({
-        companyId,
-      }),
-      companyContactsController.readAllCompanyContacts({
-        companyId,
-      }),
-      companyContactsController.readDuplicateContactsCountByCompanyId({
-        companyId,
-      }),
-    ]);
+const markDuplicateContacts = (contacts, existingContacts, primaryKey) => {
+  const existingMap = new Map(
+    existingContacts.map((c) => [c[primaryKey], c._id])
+  );
+  return contacts.map((contact) => {
+    const existingId = existingMap.get(contact[primaryKey]);
+    return existingId
+      ? { ...contact, public_circles_existing_contactId: existingId }
+      : contact;
+  });
+};
 
-    if (duplicateContactsCount) {
-      parentPort.postMessage({
-        error:
-          "Duplicates found in your existing contacts, please resolve them before importing contacts again!",
-      });
-
-      process.exit(1);
-    }
-
-    let contacts = [];
-
-    file.buffer = Buffer.from(file.buffer, "base64");
-
-    const fileStream = Readable.from(file.buffer);
-
-    const processCSV = new Promise((resolve, reject) => {
-      fileStream
-        .pipe(csvParser())
-        .on("data", (data) => {
-          if (Object.values(data).some((value) => value.trim() !== "")) {
-            contacts.push(data);
-          }
-        })
-        .on("end", () => resolve(contacts))
-        .on("error", (err) => reject(err));
-    });
-
-    await processCSV;
-
-    if (contactsPrimaryKey) {
-      contacts = (() => {
-        if (!contacts.length || !contactsPrimaryKey) return contacts;
-
-        if (!(contactsPrimaryKey in contacts[0])) {
-          return contacts;
-        }
-      
-        const seen = new Set();
-        return contacts.filter((contact) => {
-          let primaryKeyValue = contact[contactsPrimaryKey];
-      
-          if (typeof primaryKeyValue === "string") {
-            primaryKeyValue = primaryKeyValue.trim();
-          }
-      
-          if (!primaryKeyValue) return false;
-      
-          if (seen.has(primaryKeyValue)) {
-            return false;
-          } else {
-            seen.add(primaryKeyValue);
-            return true;
-          }
-        });
-      })();
-
-      const existingContactsToBePending = [];
-
-      existingCompanyContacts.forEach((ecc) => {
-        const duplicateContact = contacts.find(
-          (c) => c[contactsPrimaryKey] === ecc[contactsPrimaryKey]
-        );
-
-        if (duplicateContact) {
-          contacts = contacts.map((item) => {
-            if (
-              item[contactsPrimaryKey] === duplicateContact[contactsPrimaryKey]
-            ) {
-              return {
-                ...item,
-                public_circles_existing_contactId: ecc._id,
-              };
-            }
-            return item;
-          });
-
-          existingContactsToBePending.push(ecc._id);
-        }
-      });
-    }
-
-    if (company.contactSelectionCriteria.length) {
-      contacts = filterContacts({
-        contacts,
-        criteria: company.contactSelectionCriteria,
-      });
-    }
-
-    let parts = splitArrayIntoParts(contacts, 10);
-
-    parts = parts.filter((part) => part.length);
-
-    if (!parts.length) {
-      parentPort.postMessage({
-        progress: 100,
-      });
-    }
-
-    let iteratedProgress = 0;
-
-    const stripeController = require("../controllers/stripe.controller");
-
-    parts.forEach(async (part) => {
-      await webhooksController.recieveCompanyContacts({
-        companyId,
-        contacts: part,
-      });
-
-      iteratedProgress = iteratedProgress + part.length;
-
-      parentPort.postMessage({
-        progress: (iteratedProgress / contacts.length) * 100,
-      });
-
-      if ((iteratedProgress / contacts.length) * 100 === 100) {
-        stripeController.calculateAndChargeContactOverage({
+parentPort.on(
+  "message",
+  async ({ companyId, stripeCustomerId, contactsPrimaryKey, file }) => {
+    try {
+      const [
+        company,
+        existingCompanyContactsCount,
+        existingCompanyContacts,
+        duplicateContactsCount,
+      ] = await Promise.all([
+        companiesController.readCompanyById({ companyId }),
+        companyContactsController.readCompanyContactsCount({ companyId }),
+        companyContactsController.readAllCompanyContacts({ companyId }),
+        companyContactsController.readDuplicateContactsCountByCompanyId({
           companyId,
-          stripeCustomerId,
-          importedContactsCount: contacts.length,
-          existingContactsCount: existingCompanyContactsCount,
+        }),
+        connectDbForThread(),
+      ]);
+
+      if (duplicateContactsCount) {
+        throw new Error("Duplicates found in existing contacts");
+      }
+
+      let contacts = await processCSVStream(file.buffer);
+
+      if (contactsPrimaryKey) {
+        contacts = deduplicateContacts(contacts, contactsPrimaryKey);
+        contacts = markDuplicateContacts(
+          contacts,
+          existingCompanyContacts,
+          contactsPrimaryKey
+        );
+      }
+
+      if (company.contactSelectionCriteria.length) {
+        contacts = filterContacts({
+          contacts,
+          criteria: company.contactSelectionCriteria,
         });
       }
-    });
 
-    const companyActiveCampaigns = await companiesController.readCompanyActiveOngoingCampaigns({
-      companyId,
-    });
-    // validateCampaign
-    const runActiveCampaigns = [];
-    for (const campaign of companyActiveCampaigns) {
-       runActiveCampaigns.push(campaignsController.runCampaign({ campaign }));
+      const parts = splitArrayIntoParts(contacts, 10);
+      if (!parts.length) {
+        parentPort.postMessage({ progress: 100 });
+        return;
+      }
+
+      const totalContacts = contacts.length;
+      let processedCount = 0;
+
+      // Process parts in parallel with controlled concurrency
+      await Promise.all(
+        parts.map(async (part) => {
+          await webhooksController.recieveCompanyContacts({
+            companyId,
+            contacts: part,
+          });
+          processedCount += part.length;
+          const progress = (processedCount / totalContacts) * 100;
+          parentPort.postMessage({ progress });
+
+          if (progress === 100) {
+            stripeController.calculateAndChargeContactOverage({
+              companyId,
+              stripeCustomerId,
+              importedContactsCount: totalContacts,
+              existingContactsCount: existingCompanyContactsCount,
+            });
+          }
+        })
+      );
+
+      const companyActiveCampaigns =
+        await companiesController.readCompanyActiveOngoingCampaigns({
+          companyId,
+        });
+      await Promise.all(
+        companyActiveCampaigns.map((campaign) =>
+          campaignsController.runCampaign({ campaign })
+        )
+      );
+    } catch (error) {
+      parentPort.postMessage({ error: error.message });
+      console.error("Worker thread error:", error);
+      process.exit(1);
     }
-    await Promise.all(runActiveCampaigns);
-  } catch (error) {
-    console.error("Error in worker thread:", error);
   }
-});
+);
