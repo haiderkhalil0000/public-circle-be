@@ -591,9 +591,8 @@ const uploadCsv = async ({
   }
 
   const contactsPrimaryKey = await readPrimaryKey({ companyId });
-  const getCompanyContacts = await readAllCompanyContacts({ companyId });
-
-  if (!contactsPrimaryKey && getCompanyContacts.length) {
+  const companyContactsCount = await readCompanyContactsCount({ companyId });
+  if (!contactsPrimaryKey && companyContactsCount) {
     throw createHttpError(400, {
       errorMessage: RESPONSE_MESSAGES.ADD_PRIMARY_KEY_FOR_NEXT_IMPORTS,
     });
