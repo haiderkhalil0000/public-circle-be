@@ -189,9 +189,9 @@ const readPaginatedCampaigns = async ({
       promises.push(
         companyContactsController
           .readFiltersCount({ filters: segment.filters, companyId })
-          .then((item) => ({
+          .then((items) => ({
             campaignId: campaign._id.toString(),
-            usersCount: item[0].filterCount,
+            usersCount: items.reduce((sum, item) => sum + item.filterCount, 0),
           }))
       );
     }
