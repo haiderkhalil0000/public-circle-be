@@ -32,6 +32,17 @@ const schema = new mongoose.Schema(
   }
 );
 
+schema.pre("insertMany", function (next, docs) {
+	docs.forEach((doc) => {
+		Object.keys(doc).forEach((key) => {
+			if (typeof doc[key] === "string" && !isNaN(Date.parse(doc[key]))) {
+				doc[key] = new mongoose.Types.Date(new Date(doc[key]));
+			}
+		});
+	});
+	next();
+});
+
 const model = mongoose.model(COMPANY_CONTACT, schema);
 
 module.exports = model;

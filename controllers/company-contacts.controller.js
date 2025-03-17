@@ -307,7 +307,7 @@ const getFilterConditionQuery = ({ conditions, conditionKey }) => {
       case TIMESTAMP_BEFORE:
         return {
           $expr: {
-            $gt: [
+            $lt: [
               `$${conditionKey}`,
               { $dateFromString: { dateString: value } },
             ],
@@ -317,7 +317,7 @@ const getFilterConditionQuery = ({ conditions, conditionKey }) => {
       case TIMESTAMP_AFTER:
         return {
           $expr: {
-            $lt: [
+            $gt: [
               `$${conditionKey}`,
               { $dateFromString: { dateString: value } },
             ],
