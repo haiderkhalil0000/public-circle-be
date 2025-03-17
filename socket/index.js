@@ -17,7 +17,9 @@ const initializeSocket = (httpServer) => {
 };
 
 const emitMessage = ({ socketObj, socketChannel, message }) => {
-  socketObj.emit(socketChannel, message);
+  if (socketObj) {
+    socketObj.emit(socketChannel, message);
+  }
 };
 
 const registerEvents = () => {
