@@ -173,7 +173,13 @@ const getFilterConditionQuery = ({ conditions, conditionKey }) => {
                 $eq: [
                   {
                     $convert: {
-                      input: { $trim: { input: `$${conditionKey}` } },
+                      input: {
+                        $trim: {
+                          input: {
+                            $toString: `$${conditionKey}`,
+                          },
+                        },
+                      },
                       to: "double",
                       onError: "$$REMOVE",
                       onNull: "$$REMOVE",
@@ -194,7 +200,13 @@ const getFilterConditionQuery = ({ conditions, conditionKey }) => {
                 $ne: [
                   {
                     $convert: {
-                      input: { $trim: { input: `$${conditionKey}` } },
+                      input: {
+                        $trim: {
+                          input: {
+                            $toString: `$${conditionKey}`,
+                          },
+                        },
+                      },
                       to: "double",
                       onError: "$$REMOVE",
                       onNull: "$$REMOVE",
