@@ -38,6 +38,8 @@ parentPort.on("message", async (message) => {
       progress: 100,
     });
   } catch (error) {
+    await Company.findByIdAndUpdate(companyId, { isMarkingDuplicates: false });
+
     console.error("Error in worker thread:", error);
   }
 });
