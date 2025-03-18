@@ -1,8 +1,7 @@
-const mongoose = require("mongoose");
 const { parentPort } = require("worker_threads");
 const { Readable } = require("stream");
 const csvParser = require("csv-parser");
-
+const { connectDbForThread, disconnectDbForThread } = require("./db-connection-thread");
 const {
   webhooksController,
   companiesController,
@@ -11,15 +10,7 @@ const {
   stripeController,
 } = require("../controllers");
 
-const { MONGODB_URL } = process.env;
 
-const connectDbForThread = async () => {
-  const options = {
-    serverSelectionTimeoutMS: 30000,
-    socketTimeoutMS: 45000,
-  };
-  return mongoose.connect(MONGODB_URL, options).catch(console.error);
-};
 
 const splitArrayIntoParts = (array, numberOfParts) => {
   const partSize = Math.ceil(array.length / numberOfParts);
@@ -139,7 +130,7 @@ parentPort.on(
           parentPort.postMessage({ progress });
 
           if (progress === 100) {
-            stripeController.calculateAndChargeContactOverage({
+            await stripeController.calculateAndChargeContactOverage({
               companyId,
               stripeCustomerId,
               importedContactsCount: totalContacts,
@@ -162,6 +153,8 @@ parentPort.on(
       parentPort.postMessage({ error: error.message });
       console.error("Worker thread error:", error);
       process.exit(1);
+    } finally {
+        await disconnectDbForThread();
     }
   }
 );

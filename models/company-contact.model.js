@@ -32,16 +32,20 @@ const schema = new mongoose.Schema(
   }
 );
 
-// schema.pre("insertMany", function (next, docs) {
-// 	docs.forEach((doc) => {
-// 		Object.keys(doc).forEach((key) => {
-// 			if (typeof doc[key] === "string" && !isNaN(Date.parse(doc[key]))) {
-// 				doc[key] = new mongoose.Types.Date(new Date(doc[key]));
-// 			}
-// 		});
-// 	});
-// 	next();
-// });
+schema.pre("insertMany", function (next, docs) {
+	docs.forEach((doc) => {
+		Object.keys(doc).forEach((key) => {
+      try {
+        if (typeof doc[key] === "string" && !isNaN(Date.parse(doc[key]))) {
+          doc[key] = new Date(doc[key]);
+        }
+      } catch (error) {
+        console.log("error ins pre insertMany hook of company users", error.message);
+      }
+		});
+	});
+	next();
+});
 
 const model = mongoose.model(COMPANY_CONTACT, schema);
 

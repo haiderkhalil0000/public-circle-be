@@ -173,7 +173,13 @@ const getFilterConditionQuery = ({ conditions, conditionKey }) => {
                 $eq: [
                   {
                     $convert: {
-                      input: { $trim: { input: `$${conditionKey}` } },
+                      input: {
+                        $trim: {
+                          input: {
+                            $toString: `$${conditionKey}`,
+                          },
+                        },
+                      },
                       to: "double",
                       onError: "$$REMOVE",
                       onNull: "$$REMOVE",
@@ -194,7 +200,13 @@ const getFilterConditionQuery = ({ conditions, conditionKey }) => {
                 $ne: [
                   {
                     $convert: {
-                      input: { $trim: { input: `$${conditionKey}` } },
+                      input: {
+                        $trim: {
+                          input: {
+                            $toString: `$${conditionKey}`,
+                          },
+                        },
+                      },
                       to: "double",
                       onError: "$$REMOVE",
                       onNull: "$$REMOVE",
@@ -742,12 +754,16 @@ const initiateDuplicationMarkingInWorkerThread = ({
   worker.on("error", (error) => {
     updateMarkingDuplicatesStatus({ companyId, status: false });
 
+    emitMessage({
+      socketObj: targetSocket,
+      socketChannel: SOCKET_CHANNELS.CONTACTS_MARK_DUPLICATE_PROGRESS,
+      message: error,
+    });
+
     console.error("Worker error:", error);
   });
 
   worker.on("exit", (code) => {
-    updateMarkingDuplicatesStatus({ companyId, status: false });
-
     if (code !== 0) {
       console.error(`Worker stopped with exit code ${code}`);
     }
