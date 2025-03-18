@@ -575,7 +575,8 @@ const readCustomerPaidInvoices = async ({
       }, "")
       .trimStart(),
     totalCost: item.total / 100,
-    status: item.total > 0 ? item.status : "Refunded",
+    status:
+      item.total > 0 ? item.status : item.total === 0 ? "Paid" : "Refunded",
     currency: item.currency,
     hostedInvoiceUrl: item.hosted_invoice_url,
     invoicePdf: item.invoice_pdf,
