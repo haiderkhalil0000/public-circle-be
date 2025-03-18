@@ -709,6 +709,10 @@ const markContactsDuplicateWithPrimaryKey = async ({
   }
 };
 
+const updateMarkingDuplicatesStatus = async ({ companyId, status }) => {
+  await Company.findByIdAndUpdate(companyId, { isMarkingDuplicates: status });
+};
+
 const initiateDuplicationMarkingInWorkerThread = ({
   companyId,
   currentUserId,
@@ -736,10 +740,14 @@ const initiateDuplicationMarkingInWorkerThread = ({
   });
 
   worker.on("error", (error) => {
+    updateMarkingDuplicatesStatus({ companyId, status: false });
+
     console.error("Worker error:", error);
   });
 
   worker.on("exit", (code) => {
+    updateMarkingDuplicatesStatus({ companyId, status: false });
+
     if (code !== 0) {
       console.error(`Worker stopped with exit code ${code}`);
     }
@@ -1079,4 +1087,5 @@ module.exports = {
   readDuplicateContactsCountByCompanyId,
   resolveCompanyContactDuplicates,
   markContactsDuplicateWithPrimaryKey,
+  updateMarkingDuplicatesStatus,
 };

@@ -25,21 +25,32 @@ parentPort.on("message", async (message) => {
   try {
     await connectDbForThread();
 
-    await Company.findByIdAndUpdate(companyId, { isMarkingDuplicates: true });
+    await companyContactsController.updateMarkingDuplicatesStatus({
+      companyId,
+      status: true,
+    });
 
     await companyContactsController.markContactsDuplicateWithPrimaryKey({
       companyId,
       primaryKey,
     });
 
-    await Company.findByIdAndUpdate(companyId, { isMarkingDuplicates: false });
+    await companyContactsController.updateMarkingDuplicatesStatus({
+      companyId,
+      status: false,
+    });
 
     parentPort.postMessage({
       progress: 100,
     });
   } catch (error) {
-    await Company.findByIdAndUpdate(companyId, { isMarkingDuplicates: false });
+    await companyContactsController.updateMarkingDuplicatesStatus({
+      companyId,
+      status: false,
+    });
 
     console.error("Error in worker thread:", error);
+
+    throw error;
   }
 });
