@@ -735,7 +735,8 @@ const readCampaignRecipientsCount = async ({ campaign }) => {
   let filterCounts = await Promise.all(promises);
 
   return filterCounts
-  .flat().reduce((total, current) => total + (current.filterCount || 0), 0);
+    .flat()
+    .reduce((total, current) => total + (current.filterCount || 0), 0);
 };
 
 const calculateEmailOverageCharge = ({ unpaidEmailsCount, plan }) => {
@@ -759,6 +760,22 @@ const disableCampaign = ({ campaignId }) =>
 
 const validateCampaign = async ({ campaign, company, primaryUser }) => {
   const stripeController = require("./stripe.controller");
+  const companyContactsController = require("./company-contacts.controller");
+
+  if (campaign.isOnGoing) {
+    const { totalRecords } =
+      await companyContactsController.readCompanyContactDuplicates({
+        companyId: campaign.company,
+      });
+
+    if (totalRecords) {
+      await disableCampaign({ campaignId: campaign._id });
+
+      throw createHttpError(400, {
+        errorMessage: RESPONSE_MESSAGES.CONTACT_DUPLICATES_NOT_RESOLVED,
+      });
+    }
+  }
 
   //adding email template details in the campaign parameter
   campaign = await Campaign.findById(campaign._id).populate("emailTemplate");

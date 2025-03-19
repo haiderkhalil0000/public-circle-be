@@ -232,6 +232,8 @@ module.exports = {
     CONTACT_DUPLICATE_FETCHED: "Contact duplicates fetched successfully.",
     ADD_PRIMARY_KEY_FOR_NEXT_IMPORTS:
       "Please set primary key first to import new contacts!",
+    CONTACT_DUPLICATES_NOT_RESOLVED:
+      "We have restricted your campaign from running because you have duplicates in your contacts, please resolve those duplicates and resume the campaign.",
   },
 
   INTERACTION_CHANNELS: {
