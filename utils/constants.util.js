@@ -63,8 +63,9 @@ module.exports = {
     INTERACTION_SUCCESSFULL: "Interaction successful.",
     DUPLICATE_CONFIGURATION: "Configuration exists already!",
     CONFIGURATION_CREATED: "Configuration created successfully.",
-    DUPLICATE_DOMAIN: "This domain is already added!",
-    DUPLICATE_EMAIL: "This email address is already added!",
+    DUPLICATE_DOMAIN: "This domain is already added by you are someone else!",
+    DUPLICATE_EMAIL:
+      "This email address is already added by you are someone else!",
     EMAIL_NOT_FOUND: "Email address not found!",
     DOMAIN_NOT_FOUND: "Domain not found!",
     EMAIL_DELETED: "Email address deleted successfully.",

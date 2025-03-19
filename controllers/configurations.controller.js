@@ -17,7 +17,40 @@ const addDataInCompanyConfigurations = async ({
   emailAddress,
   emailDomain,
 }) => {
-  const configuration = await Configuration.findOne({ company: companyId });
+  const query = { company: { $ne: companyId } };
+  let errorMessage = "";
+
+  if (emailAddress) {
+    query["emailConfigurations.addresses"] = {
+      $elemMatch: {
+        emailAddress,
+        isVerified: true,
+      },
+    };
+
+    errorMessage = RESPONSE_MESSAGES.DUPLICATE_EMAIL;
+  } else if (emailDomain) {
+    query["emailConfigurations.domains"] = {
+      $elemMatch: {
+        emailDomain,
+        isVerified: true,
+      },
+    };
+
+    errorMessage = RESPONSE_MESSAGES.DUPLICATE_DOMAIN;
+  }
+
+  const [configuration, isEmailOrDomainVerifiedByOtherCompany] =
+    await Promise.all([
+      Configuration.findOne({ company: companyId }),
+      Configuration.findOne(query),
+    ]);
+
+  if (isEmailOrDomainVerifiedByOtherCompany) {
+    throw createHttpError(400, {
+      errorMessage,
+    });
+  }
 
   if (!configuration) {
     await Configuration.create({
