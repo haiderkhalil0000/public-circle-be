@@ -29,7 +29,7 @@ const {
   },
 } = require("../utils");
 
-const { PUBLIC_CIRCLES_EMAIL_ADDRESS } = process.env;
+const { PUBLIC_CIRCLES_EMAIL_ADDRESS, PUBLIC_CIRCLES_WEB_URL } = process.env;
 
 const validateSourceEmailAddress = async ({
   companyId,
@@ -839,7 +839,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
         the new campaign. As your quota for ${plan.name} is fully consumed. So we recommend you to top-up
         into your account by visiting the link below and try again.
 
-        https://publiccircles.netlify.app/dashboard/subscription
+        ${PUBLIC_CIRCLES_WEB_URL}/dashboard/subscription
         `,
         contentType: TEMPLATE_CONTENT_TYPE.TEXT,
       });
@@ -873,7 +873,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
         the new campaign. As your quota for ${plan.name} is fully consumed. So we recommend you to top-up
         into your account by visiting the link below and try again.
 
-        https://publiccircles.netlify.app/dashboard/subscription
+        ${PUBLIC_CIRCLES_WEB_URL}/dashboard/subscription
         `,
         contentType: TEMPLATE_CONTENT_TYPE.TEXT,
       });
