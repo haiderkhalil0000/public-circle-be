@@ -721,6 +721,10 @@ const markContactsDuplicateWithPrimaryKey = async ({
   }
 };
 
+const updateMarkingDuplicatesStatus = async ({ companyId, status }) => {
+  await Company.findByIdAndUpdate(companyId, { isMarkingDuplicates: status });
+};
+
 const initiateDuplicationMarkingInWorkerThread = ({
   companyId,
   currentUserId,
@@ -748,6 +752,14 @@ const initiateDuplicationMarkingInWorkerThread = ({
   });
 
   worker.on("error", (error) => {
+    updateMarkingDuplicatesStatus({ companyId, status: false });
+
+    emitMessage({
+      socketObj: targetSocket,
+      socketChannel: SOCKET_CHANNELS.CONTACTS_MARK_DUPLICATE_PROGRESS,
+      message: error,
+    });
+
     console.error("Worker error:", error);
   });
 
@@ -1091,4 +1103,5 @@ module.exports = {
   readDuplicateContactsCountByCompanyId,
   resolveCompanyContactDuplicates,
   markContactsDuplicateWithPrimaryKey,
+  updateMarkingDuplicatesStatus,
 };
