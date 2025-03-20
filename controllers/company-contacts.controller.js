@@ -535,6 +535,9 @@ const updateCompanyContact = async ({ companyId, userId, companyUserData }) => {
     inputString: userId,
   });
 
+  delete companyUserData.public_circles_company;
+  delete companyUserData._id;
+
   const result = await CompanyContact.updateOne(
     { _id: userId, public_circles_company: companyId },
     { ...companyUserData }
