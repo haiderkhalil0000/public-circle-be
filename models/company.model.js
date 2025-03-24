@@ -35,6 +35,9 @@ const schema = new mongoose.Schema(
       required: true,
       default: false,
     },
+    emailKey: {
+      type: String,
+    },
   },
   { timestamps: true }
 );

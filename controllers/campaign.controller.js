@@ -536,19 +536,24 @@ const runCampaign = async ({ campaign }) => {
 
   const query = populateCompanyContactsQuery({ segments });
 
-  let emailAddresses = await CompanyContact.find(
-    {
-      ...query,
-      public_circles_company: campaign.company,
-      public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
-    },
-    {
-      email: 1,
-    }
-  ).lean();
+  let [emailAddresses, company] = await Promise.all([
+    CompanyContact.find(
+      {
+        ...query,
+        public_circles_company: campaign.company,
+        public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
+      },
+      {
+        email: 1,
+      }
+    ).lean(),
+    Company.findById(campaign.company),
+  ]);
+
+  const { emailKey } = company;
 
   emailAddresses = basicUtil.fiterUniqueStringsFromArray(
-    emailAddresses.map((item) => item.email)
+    emailAddresses.map((item) => item[emailKey])
   );
 
   if (campaign.frequency === CAMPAIGN_FREQUENCIES.ONE_TIME) {
@@ -775,6 +780,12 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
         errorMessage: RESPONSE_MESSAGES.CONTACT_DUPLICATES_NOT_RESOLVED,
       });
     }
+  }
+
+  if (!company.emailKey) {
+    throw createHttpError(400, {
+      errorMessage: RESPONSE_MESSAGES.EMAIL_KEY_NOT_FOUND,
+    });
   }
 
   //adding email template details in the campaign parameter
