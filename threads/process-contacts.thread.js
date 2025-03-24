@@ -1,7 +1,11 @@
 const { parentPort } = require("worker_threads");
 const { Readable } = require("stream");
 const csvParser = require("csv-parser");
-const { connectDbForThread, disconnectDbForThread } = require("./db-connection-thread");
+const {
+  connectDbForThread,
+  disconnectDbForThread,
+} = require("./db-connection-thread");
+const { Company } = require("../models");
 const {
   webhooksController,
   companiesController,
@@ -9,8 +13,6 @@ const {
   companyContactsController,
   stripeController,
 } = require("../controllers");
-
-
 
 const splitArrayIntoParts = (array, numberOfParts) => {
   const partSize = Math.ceil(array.length / numberOfParts);
@@ -109,7 +111,26 @@ parentPort.on(
         });
       }
 
+      let companyModelUpdates;
+
+      if (contacts[0]["email"]) {
+        companyModelUpdates = { emailKey: "email" };
+      } else if (contacts[0]["Email"]) {
+        companyModelUpdates = { emailKey: "Email" };
+      } else if (contacts[0]["EMAIL"]) {
+        companyModelUpdates = { emailKey: "EMAIL" };
+      } else if (contacts[0]["emailAddress"]) {
+        companyModelUpdates = { emailKey: "emailAddress" };
+      } else if (contacts[0]["Email Address"]) {
+        companyModelUpdates = { emailKey: "Email Address" };
+      } else if (contacts[0]["EMAIL ADDRESS"]) {
+        companyModelUpdates = { emailKey: "EMAIL ADDRESS" };
+      }
+
+      Company.updateOne({ _id: companyId }, companyModelUpdates);
+
       const parts = splitArrayIntoParts(contacts, 10);
+
       if (!parts.length) {
         parentPort.postMessage({ progress: 100 });
         return;
@@ -154,7 +175,7 @@ parentPort.on(
       console.error("Worker thread error:", error);
       process.exit(1);
     } finally {
-        await disconnectDbForThread();
+      await disconnectDbForThread();
     }
   }
 );

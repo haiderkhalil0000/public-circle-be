@@ -234,6 +234,7 @@ module.exports = {
       "Please set primary key first to import new contacts!",
     CONTACT_DUPLICATES_NOT_RESOLVED:
       "We have restricted your campaign from running because you have duplicates in your contacts, please resolve those duplicates and resume the campaign.",
+    EMAIL_KEY_NOT_FOUND: "Can't run campaign, email key not found!",
   },
 
   INTERACTION_CHANNELS: {
