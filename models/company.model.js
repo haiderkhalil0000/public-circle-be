@@ -15,6 +15,7 @@ const schema = new mongoose.Schema(
     city: { type: String },
     province: { type: String },
     country: { type: String },
+    region: { type: String, default: "" },
     stripeCustomerId: { type: String },
     contactsPrimaryKey: { type: String },
     contactsDisplayOrder: [
@@ -37,6 +38,7 @@ const schema = new mongoose.Schema(
     },
     emailKey: {
       type: String,
+      default: "",
     },
   },
   { timestamps: true }
