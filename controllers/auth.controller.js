@@ -82,8 +82,8 @@ const login = async ({ emailAddress, password }) => {
   const topupController = require("./topup.controller");
 
   topupController.syncTopups({
-    companyId: user.company._id,
-    stripeCustomerId: user.company.stripeCustomerId,
+    companyId: user?.company?._id,
+    stripeCustomerId: user?.company?.stripeCustomerId,
   });
 
   return user;
