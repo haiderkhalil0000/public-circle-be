@@ -5,7 +5,7 @@ const momentTz = require("moment-timezone");
 
 const { ReferralCode, User, Reward, Plan } = require("../models");
 const {
-  constants: { RESPONSE_MESSAGES },
+  constants: { RESPONSE_MESSAGES, REGIONS },
   basicUtil,
 } = require("../utils");
 
@@ -97,15 +97,17 @@ const readActiveBillingCycleDates = async ({ stripeCustomerId }) => {
 const readPlans = async ({ pageSize, companyId, stripeCustomerId }) => {
   const plansController = require("./plans.controller");
   const emailsSentController = require("./emails-sent.controller");
+  const companyController = require("./companies.controller");
 
   const promises = [];
 
-  const [stripePlans, dbPlans, emailSentDocs] = await Promise.all([
+  const [stripePlans, dbPlans, emailSentDocs, companyDoc] = await Promise.all([
     stripe.products.list({
       limit: pageSize,
     }),
     plansController.readAllPlans(),
     emailsSentController.readEmailsSentByCompanyId({ companyId }),
+    companyController.readCompanyById({ companyId }),
   ]);
 
   const totalBandwidthSent = emailSentDocs
@@ -138,13 +140,15 @@ const readPlans = async ({ pageSize, companyId, stripeCustomerId }) => {
 
     if (err.errorMessage.includes("No active plan found!")) {
       filteredPlans.forEach((item) => {
-        promises.push(stripe.prices.retrieve(item.default_price));
+        promises.push(stripe.prices.list({
+          product: item.id,
+        }));
       });
 
       const prices = await Promise.all(promises);
 
       filteredPlans.forEach((item, index) => {
-        item.price = prices[index];
+        item.price = getPriceForRegion(prices[index], companyDoc.region);
 
         const dbPlan = dbPlans.find((plan) => plan.name === item.name);
 
@@ -191,18 +195,19 @@ const readPlans = async ({ pageSize, companyId, stripeCustomerId }) => {
   const remainingDaysInBillingPeriod =
     totalDaysInBillingPeriod - daysElapsed + 1;
 
-  filteredPlans.forEach((item) => {
-    promises.push(stripe.prices.retrieve(item.default_price));
-  });
+    filteredPlans.forEach((item) => {
+      promises.push(stripe.prices.list({
+        product: item.id,
+      }));
+    });
 
   const prices = await Promise.all(promises);
-
   filteredPlans.forEach((item, index) => {
     if (item.id === activePlan.productId) {
       item.isActivePlan = true;
     }
 
-    item.price = prices[index];
+    item.price = getPriceForRegion(prices[index], companyDoc.region);
     item.price.unit_amount = item.price.unit_amount / 100;
 
     if (item.isActivePlan) {
@@ -246,6 +251,16 @@ const readPlans = async ({ pageSize, companyId, stripeCustomerId }) => {
   });
 
   return filteredPlans;
+};
+
+const getPriceForRegion = (prices, region) => {
+  const currency = region === REGIONS.CANADA ? 'cad' : 'usd';
+  const priceInCurrency = prices.data.find(price => price.currency === currency);
+  if (priceInCurrency) {
+    return priceInCurrency;
+  } else {
+    return prices.data.find(price => price.currency === 'usd');
+  }
 };
 
 const createSubscription = async ({
@@ -440,12 +455,16 @@ const createATopUpInCustomerBalance = async ({
   stripeCustomerId,
   amount,
 }) => {
+  const companyController = require("./companies.controller");
+  const companyDoc = await companyController.readCompanyById({ companyId });
+
+  const currency = companyDoc.region === REGIONS.CANADA ? "cad" : "usd";
+
   const price = await stripe.prices.create({
     product: "prod_RXLIDbemHmqlfQ",
     unit_amount: amount * 100, //passing amount in cents
-    currency: "cad",
+    currency: currency,
   });
-
   const draftInvoice = await stripe.invoices.create({
     customer: stripeCustomerId,
     auto_advance: false,

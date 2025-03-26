@@ -449,4 +449,8 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
     ONE_TIME: "ONE_TIME",
     MANY_TIMES: "MANY_TIMES",
   },
+
+  REGIONS: {
+    CANADA: "CA",
+  },
 };
