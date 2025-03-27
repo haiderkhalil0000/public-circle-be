@@ -6,6 +6,8 @@ const {
 
 const readCompanyById = ({ companyId }) => Company.findById(companyId).lean();
 
+const readCompanyByStripeCustomerId = ({ stripeCustomerId }) => Company.findOne({ stripeCustomerId }).lean();
+
 const readCompanyActiveOngoingCampaigns = async ({ companyId }) => {
   return Campaign.aggregate([
 		{
@@ -62,5 +64,6 @@ const readCompanyActiveOngoingCampaigns = async ({ companyId }) => {
 
 module.exports = {
   readCompanyById,
-  readCompanyActiveOngoingCampaigns,
+  readCompanyByStripeCustomerId,
+  readCompanyActiveOngoingCampaigns,  
 };
