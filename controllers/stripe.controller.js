@@ -140,9 +140,11 @@ const readPlans = async ({ pageSize, companyId, stripeCustomerId }) => {
 
     if (err.errorMessage.includes("No active plan found!")) {
       filteredPlans.forEach((item) => {
-        promises.push(stripe.prices.list({
-          product: item.id,
-        }));
+        promises.push(
+          stripe.prices.list({
+            product: item.id,
+          })
+        );
       });
 
       const prices = await Promise.all(promises);
@@ -195,11 +197,13 @@ const readPlans = async ({ pageSize, companyId, stripeCustomerId }) => {
   const remainingDaysInBillingPeriod =
     totalDaysInBillingPeriod - daysElapsed + 1;
 
-    filteredPlans.forEach((item) => {
-      promises.push(stripe.prices.list({
+  filteredPlans.forEach((item) => {
+    promises.push(
+      stripe.prices.list({
         product: item.id,
-      }));
-    });
+      })
+    );
+  });
 
   const prices = await Promise.all(promises);
   filteredPlans.forEach((item, index) => {
@@ -254,12 +258,14 @@ const readPlans = async ({ pageSize, companyId, stripeCustomerId }) => {
 };
 
 const getPriceForRegion = (prices, region) => {
-  const currency = region === REGIONS.CANADA ? 'cad' : 'usd';
-  const priceInCurrency = prices.data.find(price => price.currency === currency);
+  const currency = region === REGIONS.CANADA ? "cad" : "usd";
+  const priceInCurrency = prices.data.find(
+    (price) => price.currency === currency
+  );
   if (priceInCurrency) {
     return priceInCurrency;
   } else {
-    return prices.data.find(price => price.currency === 'usd');
+    return prices.data.find((price) => price.currency === "usd");
   }
 };
 
@@ -552,6 +558,10 @@ const generateImmediateChargeInvoice = async ({
   stripeCustomerId,
   amountInCents,
 }) => {
+  const companyController = require("./companies.controller");
+  const companyDoc = await companyController.readCompanyByStripeCustomerId({
+    stripeCustomerId,
+  });
   const invoice = await stripe.invoices.create({
     customer: stripeCustomerId,
     collection_method: "charge_automatically",
@@ -562,7 +572,7 @@ const generateImmediateChargeInvoice = async ({
     customer: stripeCustomerId,
     invoice: invoice.id,
     amount: amountInCents,
-    currency: "cad",
+    currency: companyDoc.region === REGIONS.CANADA ? "cad" : "usd",
     description: "Extra quota charges",
   });
 
@@ -687,13 +697,18 @@ const createPendingInvoiceItem = async ({
   stripeCustomerId,
   price,
   description,
-}) =>
-  stripe.invoiceItems.create({
+}) => {
+  const companyController = require("./companies.controller");
+  const companyDoc = await companyController.readCompanyByStripeCustomerId({
+    stripeCustomerId,
+  });
+  return stripe.invoiceItems.create({
     customer: stripeCustomerId,
     amount: price,
-    currency: "cad",
+    currency: companyDoc.region === REGIONS.CANADA ? "cad" : "usd",
     description,
   });
+};
 
 const chargeCustomerFromBalance = ({
   stripeCustomerId,
@@ -1113,7 +1128,7 @@ const calculateAndChargeContactOverage = async ({
         description: "Overage charge for importing contacts above quota.",
         contactOverage: `${unpaidContacts} contacts`,
         contactOverageCharge,
-        stripeInvoiceItemId: pendingInvoiceItem.id,
+        stripeInvoiceItemId: pendingInvoiceItem?.id,
       });
     }
   }
