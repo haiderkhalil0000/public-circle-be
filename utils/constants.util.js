@@ -453,4 +453,7 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
   REGIONS: {
     CANADA: "CA",
   },
+  ERROR_CODES: {
+    LINK_EXPIRED: "LINK_EXPIRED",
+  },
 };

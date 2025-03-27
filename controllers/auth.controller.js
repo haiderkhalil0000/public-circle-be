@@ -15,6 +15,7 @@ const {
     PASSWORD_RESET_CONTENT,
     EMAIL_KIND,
     USER_STATUS,
+    ERROR_CODES,
   },
   sesUtil,
 } = require("../utils");
@@ -142,13 +143,12 @@ const verifyJwtToken = async ({ token, source }) => {
         errorMessage: RESPONSE_MESSAGES.TOKEN_IS_INVALID_OR_EXPIRED,
       });
     }
-
-    await User.findOneAndUpdate(
-      { emailAddress: decodedToken.emailAddress },
-      { isEmailVerified: true, signUpStepsCompleted: 2 }
-    );
-
-    if (source === "reset-password") {
+    if (source !== "reset-password") {
+      await User.findOneAndUpdate(
+        { emailAddress: decodedToken.emailAddress },
+        { isEmailVerified: true, signUpStepsCompleted: 2 }
+      );
+    } else {
       const userDoc = await User.findOne({
         emailAddress: decodedToken.emailAddress,
         isResetPasswordRequested: true,
@@ -157,23 +157,23 @@ const verifyJwtToken = async ({ token, source }) => {
       if (!userDoc) {
         throw createHttpError(403, {
           errorMessage: RESPONSE_MESSAGES.TOKEN_IS_INVALID_OR_EXPIRED,
+          errorCode: ERROR_CODES.LINK_EXPIRED,
         });
       }
-
       return decodedToken;
     }
   } catch (err) {
-    if (err.name === "TokenExpiredError") {
+    if (
+      err.message === "TokenExpiredError" ||
+      err.message === "JsonWebTokenError" ||
+      err.message === "Forbidden"
+    ) {
       throw createHttpError(403, {
         errorMessage: RESPONSE_MESSAGES.TOKEN_IS_INVALID_OR_EXPIRED,
+        errorCode: ERROR_CODES.LINK_EXPIRED,
       });
-    } else if (err.name === "JsonWebTokenError") {
-      throw createHttpError(403, {
-        errorMessage: RESPONSE_MESSAGES.TOKEN_IS_INVALID_OR_EXPIRED,
-      });
-    } else {
-      throw { errorMessage: err.message };
     }
+    throw { errorMessage: err.message || "An error occurred" };
   }
 };
 
