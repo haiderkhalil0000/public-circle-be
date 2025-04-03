@@ -94,6 +94,27 @@ router.get(
 );
 
 router.post(
+  "/finalize-contact",
+  authenticate.verifyToken,
+  async (req, res, next) => {
+    try {
+      await companyContactsController.finalizeCompanyContact({
+        companyId: req.user.company._id
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.CONTACTS_FINALIZED,
+        data: {},
+      });
+    } catch (err) {
+      companyContactsDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.post(
   "/primary-key",
   authenticate.verifyToken,
   validate({

@@ -127,7 +127,8 @@ parentPort.on(
         companyModelUpdates = { emailKey: "EMAIL ADDRESS" };
       }
 
-      Company.updateOne({ _id: companyId }, companyModelUpdates);
+      companyModelUpdates.isContactFinalize = false;
+      await Company.updateOne({ _id: companyId }, companyModelUpdates);
 
       const parts = splitArrayIntoParts(contacts, 10);
 
@@ -150,14 +151,6 @@ parentPort.on(
           const progress = (processedCount / totalContacts) * 100;
           parentPort.postMessage({ progress });
 
-          if (progress === 100) {
-            await stripeController.calculateAndChargeContactOverage({
-              companyId,
-              stripeCustomerId,
-              importedContactsCount: totalContacts,
-              existingContactsCount: existingCompanyContactsCount,
-            });
-          }
         })
       );
 
