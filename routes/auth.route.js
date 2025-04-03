@@ -52,7 +52,7 @@ router.post(
     try {
       await authController.verifyJwtToken({
         ...req.body,
-        soure: "verify-email",
+        source: "verify-email",
       });
 
       res.status(200).json({
