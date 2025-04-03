@@ -40,6 +40,10 @@ const schema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    isContactFinalize: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

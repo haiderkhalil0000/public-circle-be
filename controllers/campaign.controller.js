@@ -767,6 +767,11 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
   const stripeController = require("./stripe.controller");
   const companyContactsController = require("./company-contacts.controller");
 
+  if(!company.isContactFinalize){
+    throw createHttpError(400, {
+      errorMessage: RESPONSE_MESSAGES.CONTACTS_ARE_NOT_FINALIZE,
+    });
+  }
   if (campaign.isOnGoing) {
     const { totalRecords } =
       await companyContactsController.readCompanyContactDuplicates({
