@@ -138,14 +138,6 @@ const verifyJwtToken = async ({ token, source }) => {
   try {
     const decodedToken = decodeToken(token);
 
-    const currentTime = Math.floor(Date.now() / 1000);
-    if (decodedToken.exp < currentTime) {
-      throw createHttpError(403, {
-        errorMessage: RESPONSE_MESSAGES.TOKEN_IS_INVALID_OR_EXPIRED,
-        errorCode: ERROR_CODES.LINK_EXPIRED,
-      });
-    }
-
     if (!decodedToken.emailAddress) {
       throw createHttpError(403, {
         errorMessage: RESPONSE_MESSAGES.TOKEN_IS_INVALID_OR_EXPIRED,
@@ -172,7 +164,7 @@ const verifyJwtToken = async ({ token, source }) => {
     }
   } catch (err) {
     if (
-      err.message === "TokenExpiredError" ||
+      err.name === "TokenExpiredError" ||
       err.message === "JsonWebTokenError" ||
       err.message === "Forbidden"
     ) {
