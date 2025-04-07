@@ -234,6 +234,11 @@ module.exports = {
       "Please set primary key first to import new contacts!",
     CONTACT_DUPLICATES_NOT_RESOLVED:
       "We have restricted your campaign from running because you have duplicates in your contacts, please resolve those duplicates and resume the campaign.",
+    EMAIL_KEY_NOT_FOUND: "Can't run campaign, email key not found!",
+    CONTACTS_ARE_NOT_FINALIZE: "Please finalize contact to run campaign.",
+    PLEASE_RESOLVE_DUPLICATES_BEFORE_FINALIZING: "Please resolve your contacts duplication before finalizing them.",
+    CONTACTS_FINALIZED: "Contacts finalized successfully.",
+    ADD_PRIMARY_KEY_FOR_FINALIZATION_IMPORTS: "Please set primary key first to finalize contacts!",
   },
 
   INTERACTION_CHANNELS: {
@@ -447,5 +452,12 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
   CAMPAIGN_FREQUENCIES: {
     ONE_TIME: "ONE_TIME",
     MANY_TIMES: "MANY_TIMES",
+  },
+
+  REGIONS: {
+    CANADA: "CA",
+  },
+  ERROR_CODES: {
+    LINK_EXPIRED: "LINK_EXPIRED",
   },
 };

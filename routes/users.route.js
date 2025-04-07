@@ -93,6 +93,8 @@ router.patch(
           filterValues: Joi.array().required(),
         })
       ),
+      emailKey: Joi.string(),
+      region: Joi.string(),
     }),
   }),
   async (req, res, next) => {

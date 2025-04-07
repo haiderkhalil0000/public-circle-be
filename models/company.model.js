@@ -15,6 +15,7 @@ const schema = new mongoose.Schema(
     city: { type: String },
     province: { type: String },
     country: { type: String },
+    region: { type: String, default: "" },
     stripeCustomerId: { type: String },
     contactsPrimaryKey: { type: String },
     contactsDisplayOrder: [
@@ -33,6 +34,14 @@ const schema = new mongoose.Schema(
     isMarkingDuplicates: {
       type: Boolean,
       required: true,
+      default: false,
+    },
+    emailKey: {
+      type: String,
+      default: "",
+    },
+    isContactFinalize: {
+      type: Boolean,
       default: false,
     },
   },

@@ -45,6 +45,8 @@ const updateUser = async ({
   currentUser,
   contactsDisplayOrder,
   contactSelectionCriteria,
+  emailKey,
+  region
 }) => {
   let companyDoc;
   const promises = [];
@@ -121,7 +123,9 @@ const updateUser = async ({
     province ||
     country ||
     contactsDisplayOrder ||
-    contactSelectionCriteria
+    contactSelectionCriteria ||
+    emailKey ||
+    region
   ) {
     promises.push(
       Company.updateOne(
@@ -135,6 +139,8 @@ const updateUser = async ({
           country,
           contactsDisplayOrder,
           contactSelectionCriteria,
+          emailKey,
+          region,
         }
       )
     );

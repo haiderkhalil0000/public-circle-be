@@ -535,6 +535,9 @@ const updateCompanyContact = async ({ companyId, userId, companyUserData }) => {
     inputString: userId,
   });
 
+  delete companyUserData.public_circles_company;
+  delete companyUserData._id;
+
   const result = await CompanyContact.updateOne(
     { _id: userId, public_circles_company: companyId },
     { ...companyUserData }
@@ -1073,6 +1076,40 @@ const resolveCompanyContactDuplicates = async ({
   }
 };
 
+const finalizeCompanyContact = async ({ companyId }) => {
+  const contactController = require("./company-contacts.controller");
+  const stripeController = require("./stripe.controller");
+  const companiesController = require("./companies.controller");
+
+  const { totalRecords } =
+    await contactController.readCompanyContactDuplicates({companyId});
+
+  if (totalRecords) {
+    throw createHttpError(400, {
+      errorMessage:
+        RESPONSE_MESSAGES.PLEASE_RESOLVE_DUPLICATES_BEFORE_FINALIZING,
+    });
+  }
+  const companyDoc = await companiesController.readCompanyById({ companyId });
+  if(!companyDoc.contactsPrimaryKey || !companyDoc.contactsPrimaryKey === ""){
+    throw createHttpError(400, {
+      errorMessage: RESPONSE_MESSAGES.ADD_PRIMARY_KEY_FOR_FINALIZATION_IMPORTS,
+    });
+  }
+
+  const companyExistingContacts =
+    await contactController.readCompanyContactsCount({ companyId });
+
+  await stripeController.calculateAndChargeContactOverage({
+    companyId,
+    stripeCustomerId: companyDoc.stripeCustomerId,
+    importedContactsCount: 0,
+    existingContactsCount: companyExistingContacts,
+  });
+
+  await Company.updateOne({ _id: companyId }, { isContactFinalize: true });
+};
+
 module.exports = {
   readContactKeys,
   readContactValues,
@@ -1104,4 +1141,5 @@ module.exports = {
   resolveCompanyContactDuplicates,
   markContactsDuplicateWithPrimaryKey,
   updateMarkingDuplicatesStatus,
+  finalizeCompanyContact
 };

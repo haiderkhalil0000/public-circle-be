@@ -1,16 +1,17 @@
 const { parentPort } = require("worker_threads");
 const { Readable } = require("stream");
 const csvParser = require("csv-parser");
-const { connectDbForThread, disconnectDbForThread } = require("./db-connection-thread");
+const {
+  connectDbForThread,
+  disconnectDbForThread,
+} = require("./db-connection-thread");
+const { Company } = require("../models");
 const {
   webhooksController,
   companiesController,
   campaignsController,
-  companyContactsController,
-  stripeController,
+  companyContactsController
 } = require("../controllers");
-
-
 
 const splitArrayIntoParts = (array, numberOfParts) => {
   const partSize = Math.ceil(array.length / numberOfParts);
@@ -70,21 +71,19 @@ const markDuplicateContacts = (contacts, existingContacts, primaryKey) => {
 
 parentPort.on(
   "message",
-  async ({ companyId, stripeCustomerId, contactsPrimaryKey, file }) => {
+  async ({ companyId, contactsPrimaryKey, file }) => {
     try {
+      await connectDbForThread();
       const [
         company,
-        existingCompanyContactsCount,
         existingCompanyContacts,
         duplicateContactsCount,
       ] = await Promise.all([
         companiesController.readCompanyById({ companyId }),
-        companyContactsController.readCompanyContactsCount({ companyId }),
         companyContactsController.readAllCompanyContacts({ companyId }),
         companyContactsController.readDuplicateContactsCountByCompanyId({
           companyId,
         }),
-        connectDbForThread(),
       ]);
 
       if (duplicateContactsCount) {
@@ -109,7 +108,27 @@ parentPort.on(
         });
       }
 
+      let companyModelUpdates;
+
+      if (contacts[0]["email"]) {
+        companyModelUpdates = { emailKey: "email" };
+      } else if (contacts[0]["Email"]) {
+        companyModelUpdates = { emailKey: "Email" };
+      } else if (contacts[0]["EMAIL"]) {
+        companyModelUpdates = { emailKey: "EMAIL" };
+      } else if (contacts[0]["emailAddress"]) {
+        companyModelUpdates = { emailKey: "emailAddress" };
+      } else if (contacts[0]["Email Address"]) {
+        companyModelUpdates = { emailKey: "Email Address" };
+      } else if (contacts[0]["EMAIL ADDRESS"]) {
+        companyModelUpdates = { emailKey: "EMAIL ADDRESS" };
+      }
+
+      companyModelUpdates.isContactFinalize = false;
+      await Company.updateOne({ _id: companyId }, companyModelUpdates);
+
       const parts = splitArrayIntoParts(contacts, 10);
+
       if (!parts.length) {
         parentPort.postMessage({ progress: 100 });
         return;
@@ -129,14 +148,6 @@ parentPort.on(
           const progress = (processedCount / totalContacts) * 100;
           parentPort.postMessage({ progress });
 
-          if (progress === 100) {
-            await stripeController.calculateAndChargeContactOverage({
-              companyId,
-              stripeCustomerId,
-              importedContactsCount: totalContacts,
-              existingContactsCount: existingCompanyContactsCount,
-            });
-          }
         })
       );
 
@@ -154,7 +165,8 @@ parentPort.on(
       console.error("Worker thread error:", error);
       process.exit(1);
     } finally {
-        await disconnectDbForThread();
+      // Will move to AWS lambda
+      // await disconnectDbForThread();
     }
   }
 );
