@@ -10,8 +10,7 @@ const {
   webhooksController,
   companiesController,
   campaignsController,
-  companyContactsController,
-  stripeController,
+  companyContactsController
 } = require("../controllers");
 
 const splitArrayIntoParts = (array, numberOfParts) => {
@@ -72,21 +71,19 @@ const markDuplicateContacts = (contacts, existingContacts, primaryKey) => {
 
 parentPort.on(
   "message",
-  async ({ companyId, stripeCustomerId, contactsPrimaryKey, file }) => {
+  async ({ companyId, contactsPrimaryKey, file }) => {
     try {
+      await connectDbForThread();
       const [
         company,
-        existingCompanyContactsCount,
         existingCompanyContacts,
         duplicateContactsCount,
       ] = await Promise.all([
         companiesController.readCompanyById({ companyId }),
-        companyContactsController.readCompanyContactsCount({ companyId }),
         companyContactsController.readAllCompanyContacts({ companyId }),
         companyContactsController.readDuplicateContactsCountByCompanyId({
           companyId,
         }),
-        connectDbForThread(),
       ]);
 
       if (duplicateContactsCount) {
@@ -168,7 +165,8 @@ parentPort.on(
       console.error("Worker thread error:", error);
       process.exit(1);
     } finally {
-      await disconnectDbForThread();
+      // Will move to AWS lambda
+      // await disconnectDbForThread();
     }
   }
 );
