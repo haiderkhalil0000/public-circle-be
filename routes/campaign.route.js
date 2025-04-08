@@ -59,8 +59,12 @@ router.post(
       isOnGoing: Joi.boolean(),
       recurringPeriod: Joi.string(),
       frequency: Joi.string()
-        .valid(CAMPAIGN_FREQUENCIES.ONE_TIME, CAMPAIGN_FREQUENCIES.MANY_TIMES)
-        .required(),
+      .valid(CAMPAIGN_FREQUENCIES.ONE_TIME, CAMPAIGN_FREQUENCIES.MANY_TIMES)
+      .when("runMode", {
+        is: RUN_MODE.SCHEDULE,
+        then: Joi.required(),
+        otherwise: Joi.optional()
+      }),
       status: Joi.string().valid(
         CAMPAIGN_STATUS.ACTIVE,
         CAMPAIGN_STATUS.DISABLED

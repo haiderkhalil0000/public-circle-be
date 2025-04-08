@@ -86,41 +86,60 @@ const readContactValues = async ({
 
   const [company, results, totalResults] = await Promise.all([
     Company.findById(companyId),
-    CompanyContact.find(
+    CompanyContact.aggregate([
       {
-        public_circles_company: companyId,
-        public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
+        $match: {
+          public_circles_company: companyId,
+          public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
+          [key]: { $nin: [null, undefined, ""] },
+        },
       },
-      { [key]: 1, _id: 0 }
-    )
-      .skip((parseInt(pageNumber) - 1) * pageSize)
-      .limit(pageSize),
-    CompanyContact.countDocuments(
       {
-        public_circles_company: companyId,
-        public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
+        $group: {
+          _id: `$${key}`,
+        },
       },
-      { [key]: 1, _id: 0 }
-    ),
+      {
+        $skip: (parseInt(pageNumber) - 1) * parseInt(pageSize),
+      },
+      {
+        $limit: parseInt(pageSize),
+      },
+    ]),
+    CompanyContact.aggregate([
+      {
+        $match: {
+          public_circles_company: companyId,
+          public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
+          [key]: { $nin: [null, undefined ,""] },
+        },
+      },
+      {
+        $group: {
+          _id: `$${key}`,
+        },
+      },
+      {
+        $count: "totalCount",
+      },
+    ]),
   ]);
-
+  const total = totalResults.length > 0 ? totalResults[0].totalCount : 0;
   if (!company.contactsPrimaryKey) {
     throw createHttpError(403, {
       errorMessage: RESPONSE_MESSAGES.PRIMARY_KEY_NOT_FOUND,
     });
   }
 
-  let values = results.map((item) => item[key]);
+  let uniqueValues = results.map((item) => item._id);
 
   // If total results are more than 500, sample 10% of the values
-  if (values.length > 500) {
-    const sampleSize = Math.ceil(values.length * 0.1); // Take 10% of the current page's values
-    values = getRandomSample(values, sampleSize);
+  if (uniqueValues.length > 500) {
+    const sampleSize = Math.ceil(uniqueValues.length * 0.1); // Take 10% of the current page's values
+    uniqueValues = getRandomSample(uniqueValues, sampleSize);
   }
 
-  const uniqueValues = [...new Set(values)];
-
-  return { contactValues: uniqueValues, totalResults };
+  return { contactValues: uniqueValues, totalResults: total };
 };
 
 const readFilterCount = ({ filter, companyId }) => {
