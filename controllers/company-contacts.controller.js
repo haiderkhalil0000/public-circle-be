@@ -91,7 +91,7 @@ const readContactValues = async ({
         $match: {
           public_circles_company: companyId,
           public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
-          [key]: { $nin: [null, undefined] },
+          [key]: { $nin: [null, undefined, ""] },
         },
       },
       {
@@ -111,7 +111,7 @@ const readContactValues = async ({
         $match: {
           public_circles_company: companyId,
           public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
-          [key]: { $nin: [null, undefined] },
+          [key]: { $nin: [null, undefined ,""] },
         },
       },
       {
