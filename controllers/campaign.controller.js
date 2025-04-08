@@ -28,6 +28,7 @@ const {
     CAMPAIGN_FREQUENCIES,
   },
 } = require("../utils");
+const { REGIONS } = require("../utils/constants.util");
 
 const { PUBLIC_CIRCLES_EMAIL_ADDRESS, PUBLIC_CIRCLES_WEB_URL } = process.env;
 
@@ -861,7 +862,9 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
       });
 
       throw createHttpError(400, {
-        errorMessage: RESPONSE_MESSAGES.EMAIL_LIMIT_REACHED,
+        errorMessage: `${RESPONSE_MESSAGES.EMAIL_LIMIT_REACHED} Minimum ${
+          company?.region === REGIONS.CANADA ? "CAD" : "USD"
+        } ${parseInt(emailOverageCharge) / 100} credits required`,
         errorKind: "EMAIL_LIMIT_REACHED",
       });
     }
@@ -895,7 +898,9 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
       });
 
       throw createHttpError(400, {
-        errorMessage: RESPONSE_MESSAGES.BANDWIDTH_LIMIT_REACHED,
+        errorMessage: `${RESPONSE_MESSAGES.BANDWIDTH_LIMIT_REACHED} Minimum ${
+          company?.region === REGIONS.CANADA ? "CAD" : "USD"
+        } ${parseInt(bandwidthOverageCharge) / 100} credits required`,
         errorKind: "BANDWIDTH_LIMIT_REACHED",
       });
     }
