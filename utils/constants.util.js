@@ -200,9 +200,9 @@ module.exports = {
     CUSTOMER_BALANCE_HISTORY_FETCHED:
       "Customer balance history fetched successfully.",
     EMAIL_LIMIT_REACHED:
-      "Email sending limit reached for your current subscription!",
+      "Email sending limit reached for your current subscription.",
     BANDWIDTH_LIMIT_REACHED:
-      "Bandwidth limit reached for your current subscription!",
+      "Bandwidth limit reached for your current subscription.",
     INVOICES_FETCHED: "Invoices fetched successfully.",
     RECEIPTS_FETCHED: "Receipts fetched successfully.",
     DEFAULT_PAYMENT_METHOD_FETCHED:
