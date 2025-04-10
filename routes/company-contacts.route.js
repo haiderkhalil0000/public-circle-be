@@ -583,7 +583,7 @@ router.post(
         });
 
       res.status(200).json({
-        message: `${noOfAffectedContacts} contacts will be deleted by this action`,
+        message: `${noOfAffectedContacts} contacts will be removed by this action`,
         data: {},
       });
     } catch (err) {
