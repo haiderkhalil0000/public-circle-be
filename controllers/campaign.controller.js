@@ -645,7 +645,6 @@ const runCampaign = async ({ campaign }) => {
   const queueUrl = getQueueUrl();
 
   await axios.post(queueUrl,reqBody);
-  console.log("Campaign run successfully");
 
     await Campaign.updateOne(
       { _id: campaign._id },
