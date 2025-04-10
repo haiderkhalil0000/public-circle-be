@@ -582,8 +582,10 @@ router.post(
           ...req.body,
         });
 
+      const contactWord = noOfAffectedContacts === 1 ? "contact" : "contacts";
+
       res.status(200).json({
-        message: `${noOfAffectedContacts} contacts will be removed by this action`,
+        message: `${noOfAffectedContacts} ${contactWord} will be removed by this action`,
         data: {},
       });
     } catch (err) {
