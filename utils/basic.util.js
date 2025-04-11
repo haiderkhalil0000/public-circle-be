@@ -38,7 +38,7 @@ const calculateByteUnit = ({ bytes }) => {
 
 const isNumericString = (value) => {
   return typeof value === "string" && !isNaN(value) && value.trim() !== "";
-};
+}
 
 module.exports = {
   validateObjectId,

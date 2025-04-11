@@ -66,9 +66,9 @@ const {
   constants: { ENVIRONMENT },
 } = require("./utils");
 
-if (process.env.ENVIRONMENT === ENVIRONMENT.PRODUCTION) {
+if (process.env.ENVIRONMENT !== ENVIRONMENT.LOCAL) {
   //cronJobs
-  require("./cron-jobs/run-campaign.cron");
+  require("./cron-jobs");
 }
 
 const { PORT = 80 } = process.env;

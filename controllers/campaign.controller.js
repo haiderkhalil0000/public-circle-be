@@ -29,6 +29,7 @@ const {
   },
 } = require("../utils");
 const { REGIONS } = require("../utils/constants.util");
+const { default: axios } = require("axios");
 
 const { PUBLIC_CIRCLES_EMAIL_ADDRESS, PUBLIC_CIRCLES_WEB_URL } = process.env;
 
@@ -444,6 +445,40 @@ const sendTestEmail = async ({
   await Promise.all(promises);
 };
 
+const sendSstEmail = async ({
+  companyId,
+  campaignId,
+  campaignRunId,
+  kind,
+  emailFrom,
+  emailTo,
+  emailSubject,
+  emailContent,
+  emailTemplateSize,
+  emailContentType,
+}) => {
+  const result = await sesUtil.sendEmail({
+    fromEmailAddress: emailFrom,
+    toEmailAddress: emailTo,
+    subject: emailSubject,
+    content: emailContent,
+    contentType: emailContentType,
+  });
+
+  EmailSent.create({
+    company: companyId,
+    campaign: campaignId,
+    campaignRun: campaignRunId,
+    kind: kind,
+    fromEmailAddress: emailFrom,
+    toEmailAddress: emailTo,
+    emailSubject,
+    emailContent: emailContent,
+    size: emailTemplateSize,
+    sesMessageId: result.MessageId,
+  });
+};
+
 const populateCompanyContactsQuery = ({ segments }) => {
   let allFilters = {};
 
@@ -596,57 +631,35 @@ const runCampaign = async ({ campaign }) => {
 
   const mappedContentArray = await Promise.all(promises);
 
-  promises.length = 0;
+  const reqBody = {
+    campaignId: campaign._id,
+    companyId: campaign.company,
+    campaignRunId: campaignRunDoc._id,
+    kind: EMAIL_KIND.REGULAR,
+    emailAddresses: emailAddresses,
+    emailFrom: campaign.sourceEmailAddress,
+    emailSubject: campaign.emailSubject,
+    mappedContentArray: mappedContentArray,
+    emailTemplateSize: template.size,
+    emailContentType: TEMPLATE_CONTENT_TYPE.HTML,
+  }
+  
+  const queueUrl = getQueueUrl();
 
-  emailAddresses.forEach((item, index) => {
-    promises.push(
-      sesUtil.sendEmail({
-        fromEmailAddress: campaign.sourceEmailAddress,
-        toEmailAddress: item,
-        subject: campaign.emailSubject,
-        content: mappedContentArray[index],
-        contentType: TEMPLATE_CONTENT_TYPE.HTML,
-      })
-    );
-  });
-
-  const result = await Promise.all(promises);
-
-  promises.length = 0;
-
-  result.forEach((item, index) => {
-    promises.push(
-      EmailSent.create({
-        company: campaign.company,
-        campaign: campaign._id,
-        campaignRun: campaignRunDoc._id,
-        kind: EMAIL_KIND.REGULAR,
-        fromEmailAddress: campaign.sourceEmailAddress,
-        toEmailAddress: emailAddresses[index],
-        emailSubject: campaign.emailSubject,
-        emailContent: mappedContentArray[index],
-        size: template.size,
-        sesMessageId: item.MessageId,
-      })
-    );
-  });
-
-  promises.push(
-    Campaign.updateOne(
-      { _id: campaign._id },
-      {
-        [!campaign.isRecurring && !campaign.isOnGoing ? "status" : undefined]:
-          !campaign.isRecurring && !campaign.isOnGoing
-            ? CAMPAIGN_STATUS.DISABLED
-            : undefined,
-        cronStatus: CRON_STATUS.PROCESSED,
-        lastProcessed: moment().format(),
-        $inc: { processedCount: 1 },
-      }
-    )
+  
+  await Campaign.updateOne(
+    { _id: campaign._id },
+    {
+      [!campaign.isRecurring && !campaign.isOnGoing ? "status" : undefined]:
+      !campaign.isRecurring && !campaign.isOnGoing
+      ? CAMPAIGN_STATUS.DISABLED
+      : undefined,
+      cronStatus: CRON_STATUS.PROCESSED,
+      lastProcessed: moment().format(),
+      $inc: { processedCount: 1 },
+    }
   );
-
-  await Promise.all(promises);
+  axios.post(queueUrl,reqBody);
 };
 
 const readPaginatedCampaignLogs = async ({
@@ -1088,6 +1101,18 @@ const readCampaignUsageDetails = async ({ companyId, stripeCustomerId }) => {
   return emailUsage;
 };
 
+const getQueueUrl = () => {
+  const env = process.env.ENVIRONMENT;
+
+  const queueUrls = {
+    LOCAL: process.env.AWS_QUEUE_URL_LOCAL,
+    STAGING: process.env.AWS_QUEUE_URL_STAGING,
+    PRODUCTION: process.env.AWS_QUEUE_URL_PRODUCTION,
+  };
+
+  return queueUrls[env];
+};
+
 module.exports = {
   createCampaign,
   readCampaign,
@@ -1096,6 +1121,7 @@ module.exports = {
   updateCampaign,
   deleteCampaign,
   sendTestEmail,
+  sendSstEmail,
   runCampaign,
   readPaginatedCampaignLogs,
   readAllCampaignLogs,

@@ -111,6 +111,7 @@ module.exports = {
     CAMPAIGN_DELETED_ALREADY: "Campaign deleted already!",
     INVALID_CAMPAIGN_ID: "Invalid campaign id!",
     TEST_EMAIL_SENT: "Test email sent successfully.",
+    EMAIL_SENT: "Email sent successfully.",
     COMPANY_CONTACT_DELETED_ALREADY: "Company contact deleted already!",
     COMPANY_CONTACTS_DELETED_ALREADY: "Company contacts deleted already!",
     COMPANY_CONTACTS_DELETED: "Company contacts deleted successfully.",
