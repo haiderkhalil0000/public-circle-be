@@ -68,7 +68,7 @@ const {
 
 if (process.env.ENVIRONMENT !== ENVIRONMENT.LOCAL) {
   //cronJobs
-  require("./cron-jobs/run-campaign.cron");
+  require("./cron-jobs");
 }
 
 const { PORT = 80 } = process.env;
