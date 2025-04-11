@@ -10,7 +10,7 @@ const schema = new mongoose.Schema(
   {
     name: { type: String, index: true, required: true },
     companySize: { type: String },
-    postalCode: { type: Number },
+    postalCode: { type: String },
     address: { type: String },
     city: { type: String },
     province: { type: String },
