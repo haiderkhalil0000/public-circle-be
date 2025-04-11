@@ -75,7 +75,7 @@ router.patch(
       secondaryEmail: Joi.string(),
       companySize: Joi.string(),
       address: Joi.string(),
-      postalCode: Joi.number().positive().strict(),
+      postalCode: Joi.string().required(),
       city: Joi.string(),
       province: Joi.string(),
       country: Joi.string(),
