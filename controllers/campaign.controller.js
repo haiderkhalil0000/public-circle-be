@@ -30,7 +30,6 @@ const {
 } = require("../utils");
 const { REGIONS } = require("../utils/constants.util");
 const { default: axios } = require("axios");
-const { isValidEmail } = require("../utils/basic.util");
 
 const { PUBLIC_CIRCLES_EMAIL_ADDRESS, PUBLIC_CIRCLES_WEB_URL } = process.env;
 
@@ -449,6 +448,8 @@ const sendTestEmail = async ({
 const sendSstEmail = async ({
   companyId,
   campaignId,
+  campaignRunId,
+  kind,
   emailFrom,
   emailTo,
   emailSubject,
@@ -467,7 +468,8 @@ const sendSstEmail = async ({
   EmailSent.create({
     company: companyId,
     campaign: campaignId,
-    kind: EMAIL_KIND.TEST,
+    campaignRun: campaignRunId,
+    kind: kind,
     fromEmailAddress: emailFrom,
     toEmailAddress: emailTo,
     emailSubject,
@@ -629,12 +631,12 @@ const runCampaign = async ({ campaign }) => {
 
   const mappedContentArray = await Promise.all(promises);
 
-  const validEmailAddresses = emailAddresses.filter(isValidEmail);
-
   const reqBody = {
     campaignId: campaign._id,
     companyId: campaign.company,
-    emailAddresses: validEmailAddresses,
+    campaignRunId: campaignRunDoc._id,
+    kind: EMAIL_KIND.REGULAR,
+    emailAddresses: emailAddresses,
     emailFrom: campaign.sourceEmailAddress,
     emailSubject: campaign.emailSubject,
     mappedContentArray: mappedContentArray,
@@ -644,20 +646,20 @@ const runCampaign = async ({ campaign }) => {
   
   const queueUrl = getQueueUrl();
 
-  await axios.post(queueUrl,reqBody);
-
-    await Campaign.updateOne(
-      { _id: campaign._id },
-      {
-        [!campaign.isRecurring && !campaign.isOnGoing ? "status" : undefined]:
-          !campaign.isRecurring && !campaign.isOnGoing
-            ? CAMPAIGN_STATUS.DISABLED
-            : undefined,
-        cronStatus: CRON_STATUS.PROCESSED,
-        lastProcessed: moment().format(),
-        $inc: { processedCount: 1 },
-      }
-    );
+  
+  await Campaign.updateOne(
+    { _id: campaign._id },
+    {
+      [!campaign.isRecurring && !campaign.isOnGoing ? "status" : undefined]:
+      !campaign.isRecurring && !campaign.isOnGoing
+      ? CAMPAIGN_STATUS.DISABLED
+      : undefined,
+      cronStatus: CRON_STATUS.PROCESSED,
+      lastProcessed: moment().format(),
+      $inc: { processedCount: 1 },
+    }
+  );
+  axios.post(queueUrl,reqBody);
 };
 
 const readPaginatedCampaignLogs = async ({
