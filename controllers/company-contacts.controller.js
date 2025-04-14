@@ -1129,6 +1129,14 @@ const finalizeCompanyContact = async ({ companyId }) => {
   await Company.updateOne({ _id: companyId }, { isContactFinalize: true });
 };
 
+const unSubscribeFromEmail = async ({ companyContactId }) => {
+  await CompanyContact.updateOne(
+    { _id: companyContactId },
+    { is_unsubscribed: true }
+  );
+  return true;
+}
+
 module.exports = {
   readContactKeys,
   readContactValues,
@@ -1160,5 +1168,6 @@ module.exports = {
   resolveCompanyContactDuplicates,
   markContactsDuplicateWithPrimaryKey,
   updateMarkingDuplicatesStatus,
-  finalizeCompanyContact
+  finalizeCompanyContact,
+  unSubscribeFromEmail
 };
