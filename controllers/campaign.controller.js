@@ -355,9 +355,13 @@ const mapDynamicValues = async ({ companyId, emailAddress, content }) => {
   if (!companyContactDoc) {
     return content;
   }
-
+  
   let modifiedContent = content;
-
+  const unSubscribeLink = `${PUBLIC_CIRCLES_WEB_URL}/unsubscribe?companyContactId=${companyContactDoc._id}`;
+  modifiedContent = modifiedContent.replace(
+    new RegExp("{{UNSUBSCRIBE_LINK}}", "g"),
+    unSubscribeLink
+  );
   for (const [key, value] of Object.entries(companyContactDoc)) {
     const placeholder = `{{${key}}}`;
 
@@ -366,7 +370,6 @@ const mapDynamicValues = async ({ companyId, emailAddress, content }) => {
       value
     );
   }
-
   return modifiedContent;
 };
 
@@ -580,6 +583,7 @@ const runCampaign = async ({ campaign }) => {
         ...query,
         public_circles_company: campaign.company,
         public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
+        is_unsubscribed: false || null,
       },
       {
         email: 1,

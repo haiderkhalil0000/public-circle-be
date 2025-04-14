@@ -105,17 +105,17 @@ const readAllTemplates = async ({ companyId, kind }) => {
 
   const allTemplates = await Template.find(query).lean();
 
-  allTemplates.forEach((item) => {
-    if (
-      item.body.includes("unsubscribe") ||
-      item.body.includes("Unsubscribe") ||
-      item.body.includes("UnSubscribe")
-    ) {
-      item.isUnSubPresent = true;
-    } else {
-      item.isUnSubPresent = false;
-    }
-  });
+  // allTemplates.forEach((item) => {
+  //   if (
+  //     item.body.includes("unsubscribe") ||
+  //     item.body.includes("Unsubscribe") ||
+  //     item.body.includes("UnSubscribe")
+  //   ) {
+  //     item.isUnSubPresent = true;
+  //   } else {
+  //     item.isUnSubPresent = false;
+  //   }
+  // });
 
   return allTemplates;
 };
