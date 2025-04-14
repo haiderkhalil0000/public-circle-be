@@ -453,10 +453,16 @@ const sendSstEmail = async ({
   emailFrom,
   emailTo,
   emailSubject,
-  emailContent,
-  emailTemplateSize,
+  templateId,
   emailContentType,
 }) => {
+  const template = await Template.findById({ _id: templateId });
+  
+  const emailContent = await mapDynamicValues({
+    companyId: companyId,
+    emailAddress: emailTo,
+    content: template.body,
+  })
   const result = await sesUtil.sendEmail({
     fromEmailAddress: emailFrom,
     toEmailAddress: emailTo,
@@ -474,7 +480,7 @@ const sendSstEmail = async ({
     toEmailAddress: emailTo,
     emailSubject,
     emailContent: emailContent,
-    size: emailTemplateSize,
+    size: template.size,
     sesMessageId: result.MessageId,
   });
 };
@@ -564,11 +570,7 @@ const runCampaign = async ({ campaign }) => {
     segmentPromises.push(Segment.findById(segment));
   }
 
-  const queryArray = [Promise.all(segmentPromises)];
-
-  queryArray.push(Template.findById({ _id: campaign.emailTemplate }));
-
-  const [segments, template] = await Promise.all(queryArray);
+  const segments = await Promise.all(segmentPromises);
 
   const query = populateCompanyContactsQuery({ segments });
 
@@ -617,20 +619,6 @@ const runCampaign = async ({ campaign }) => {
     );
   }
 
-  promises.length = 0;
-
-  for (const address of emailAddresses) {
-    promises.push(
-      mapDynamicValues({
-        companyId: campaign.company,
-        emailAddress: address,
-        content: template.body,
-      })
-    );
-  }
-
-  const mappedContentArray = await Promise.all(promises);
-
   const reqBody = {
     campaignId: campaign._id,
     companyId: campaign.company,
@@ -639,8 +627,7 @@ const runCampaign = async ({ campaign }) => {
     emailAddresses: emailAddresses,
     emailFrom: campaign.sourceEmailAddress,
     emailSubject: campaign.emailSubject,
-    mappedContentArray: mappedContentArray,
-    emailTemplateSize: template.size,
+    templateId: campaign.emailTemplate,
     emailContentType: TEMPLATE_CONTENT_TYPE.HTML,
   }
   
