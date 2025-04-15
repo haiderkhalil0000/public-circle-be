@@ -10,7 +10,8 @@ const {
   webhooksController,
   companiesController,
   campaignsController,
-  companyContactsController
+  companyContactsController,
+  stripeController,
 } = require("../controllers");
 
 const splitArrayIntoParts = (array, numberOfParts) => {
@@ -160,6 +161,10 @@ parentPort.on(
           campaignsController.runCampaign({ campaign })
         )
       );
+      company.stripeCustomerId &&
+        (await stripeController.readActivePlansByCustomerId({
+          stripeCustomerId: company.stripeCustomerId,
+        }));
     } catch (error) {
       parentPort.postMessage({ error: error.message });
       console.error("Worker thread error:", error);
