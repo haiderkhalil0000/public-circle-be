@@ -22,6 +22,10 @@ const schema = new mongoose.Schema(
       enum: Object.values(COMPANY_CONTACT_STATUS),
       default: COMPANY_CONTACT_STATUS.ACTIVE,
     },
+    is_unsubscribed: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: {

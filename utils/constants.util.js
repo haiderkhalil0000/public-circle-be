@@ -240,6 +240,7 @@ module.exports = {
     PLEASE_RESOLVE_DUPLICATES_BEFORE_FINALIZING: "Please resolve your contacts duplication before finalizing them.",
     CONTACTS_FINALIZED: "Contacts finalized successfully.",
     ADD_PRIMARY_KEY_FOR_FINALIZATION_IMPORTS: "Please set primary key first to finalize contacts!",
+    UNSUBSCRIBED: "Unsubscribed successfully.",
   },
 
   INTERACTION_CHANNELS: {

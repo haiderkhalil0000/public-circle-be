@@ -115,6 +115,32 @@ router.post(
 );
 
 router.post(
+  "/un-subscribe",
+  validate({
+    body: Joi.object({
+      companyContactId: Joi.string().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      await companyContactsController.unSubscribeFromEmail({
+        companyContactId: req.body.companyContactId,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.UNSUBSCRIBED,
+        data: {},
+      });
+    } catch (err) {
+      companyContactsDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+
+router.post(
   "/primary-key",
   authenticate.verifyToken,
   validate({
