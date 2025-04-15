@@ -44,6 +44,10 @@ const schema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    purchasedPlan: {
+      type: Array,
+      default: [],
+    }
   },
   { timestamps: true }
 );

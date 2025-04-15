@@ -28,7 +28,7 @@ const {
     CAMPAIGN_FREQUENCIES,
   },
 } = require("../utils");
-const { REGIONS } = require("../utils/constants.util");
+const { REGIONS, PLAN_NAMES, POWERED_BY } = require("../utils/constants.util");
 const { default: axios } = require("axios");
 
 const { PUBLIC_CIRCLES_EMAIL_ADDRESS, PUBLIC_CIRCLES_WEB_URL } = process.env;
@@ -344,7 +344,15 @@ const mapDynamicValues = async ({ companyId, emailAddress, content }) => {
     public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
     email: emailAddress,
   }).lean();
-
+  
+  const companyDoc = await Company.findOne({
+    _id: companyId,
+  });
+  
+  const hasPurchasedPublicCircleAddon = companyDoc.purchasedPlan.some(
+    (plan) => plan.productName === PLAN_NAMES.PUBLIC_CIRCLE_ADD_ON_PLAN_NAME
+  );  
+  
   if (!companyContactDoc) {
     companyContactDoc = await CompanyContact.findOne({
       public_circles_company: companyId,
@@ -355,7 +363,6 @@ const mapDynamicValues = async ({ companyId, emailAddress, content }) => {
   if (!companyContactDoc) {
     return content;
   }
-  
   let modifiedContent = content;
   const unSubscribeLink = `${PUBLIC_CIRCLES_WEB_URL}/un-sub?ccid=${companyContactDoc._id}`;
   modifiedContent = modifiedContent.replace(
@@ -369,6 +376,24 @@ const mapDynamicValues = async ({ companyId, emailAddress, content }) => {
       new RegExp(placeholder, "g"),
       value
     );
+  }
+
+  if (!hasPurchasedPublicCircleAddon) {
+    const CLASS_NAME = POWERED_BY.COMMON_CLASS_NAME;
+    const partialHTML = POWERED_BY.POWERED_BY_PARTIAL_HTML;
+    const fullHTML = POWERED_BY.POWERED_BY_FULL_HTML;
+
+    if (modifiedContent.includes(`class="${CLASS_NAME}"`)) {
+      modifiedContent = modifiedContent.replace(
+        /(<div class="unsubscribe-section"[^>]*>\s*<span>\s*)(<a[\s\S]*?Unsubscribe)/,
+        `$1${partialHTML}$2`
+      );
+    } else {
+      modifiedContent = modifiedContent.replace(
+        /<\/body>/i,
+        `${fullHTML}</body>`
+      );
+    }
   }
   return modifiedContent;
 };

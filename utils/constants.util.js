@@ -237,9 +237,11 @@ module.exports = {
       "We have restricted your campaign from running because you have duplicates in your contacts, please resolve those duplicates and resume the campaign.",
     EMAIL_KEY_NOT_FOUND: "Can't run campaign, email key not found!",
     CONTACTS_ARE_NOT_FINALIZE: "Please finalize contact to run campaign.",
-    PLEASE_RESOLVE_DUPLICATES_BEFORE_FINALIZING: "Please resolve your contacts duplication before finalizing them.",
+    PLEASE_RESOLVE_DUPLICATES_BEFORE_FINALIZING:
+      "Please resolve your contacts duplication before finalizing them.",
     CONTACTS_FINALIZED: "Contacts finalized successfully.",
-    ADD_PRIMARY_KEY_FOR_FINALIZATION_IMPORTS: "Please set primary key first to finalize contacts!",
+    ADD_PRIMARY_KEY_FOR_FINALIZATION_IMPORTS:
+      "Please set primary key first to finalize contacts!",
     UNSUBSCRIBED: "Unsubscribed successfully.",
   },
 
@@ -462,4 +464,18 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
   ERROR_CODES: {
     LINK_EXPIRED: "LINK_EXPIRED",
   },
+  PLAN_NAMES: {    
+    PUBLIC_CIRCLE_ADD_ON_PLAN_NAME : "No Public Circle Reference",
+    DEDICATED_IP_ADD_ON_PLAN_NAME : "Dedicated IP",
+  },
+  POWERED_BY: {
+    POWERED_BY_FULL_HTML: `<div class="unsubscribe-section" style="width: 100%; background-color: #1e1e1e; text-align: center; padding: 20px; font-size: 12px; color: #e0e0e0;">
+                    <span>
+                      Powered by 
+                      <a href="https://publiccircles.com" style="color: #ffffff; text-decoration: underline; font-weight: 500;">Public Circles</a>
+                    </span>
+                  </div>`,
+    POWERED_BY_PARTIAL_HTML: `Powered by <a href="https://publiccircles.com" style="color: #ffffff; text-decoration: underline; font-weight: 500;">Public Circles</a> | `,
+    COMMON_CLASS_NAME: "unsubscribe-section",
+  }
 };
