@@ -798,8 +798,10 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
   const companyContactsController = require("./company-contacts.controller");
 
   if(!company.isContactFinalize){
+    await disableCampaign({ campaignId: campaign._id });
     throw createHttpError(400, {
       errorMessage: RESPONSE_MESSAGES.CONTACTS_ARE_NOT_FINALIZE,
+      errorCode: `Campaign created with id ${campaign._id}`,
     });
   }
   if (campaign.isOnGoing) {
@@ -813,13 +815,16 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
 
       throw createHttpError(400, {
         errorMessage: RESPONSE_MESSAGES.CONTACT_DUPLICATES_NOT_RESOLVED,
+        errorCode: `Campaign created with id ${campaign._id}`,
       });
     }
   }
 
   if (!company.emailKey) {
+    await disableCampaign({ campaignId: campaign._id });
     throw createHttpError(400, {
       errorMessage: RESPONSE_MESSAGES.EMAIL_KEY_NOT_FOUND,
+      errorCode: `Campaign created with id ${campaign._id}`,
     });
   }
 
@@ -895,6 +900,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
           company?.region === REGIONS.CANADA ? "CAD" : "USD"
         } ${parseInt(emailOverageCharge - companyBalance) / 100} credits required.`,
         errorKind: "EMAIL_LIMIT_REACHED",
+        errorCode: `Campaign created with id ${campaign._id}`,
       });
     }
   }
@@ -931,6 +937,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
           company?.region === REGIONS.CANADA ? "CAD" : "USD"
         } ${parseInt(bandwidthOverageCharge - companyBalance) / 100} credits required.`,
         errorKind: "BANDWIDTH_LIMIT_REACHED",
+        errorCode: `Campaign created with id ${campaign._id}`,
       });
     }
   }
