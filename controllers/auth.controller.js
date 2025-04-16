@@ -19,6 +19,7 @@ const {
   },
   sesUtil,
 } = require("../utils");
+const stripeController = require("./stripe.controller");
 
 const {
   PUBLIC_CIRCLES_WEB_URL,
@@ -79,6 +80,11 @@ const login = async ({ emailAddress, password }) => {
   user.lastLoginAt = moment().format();
 
   user.save();
+
+  // Sync Plans
+  user?.company?.stripeCustomerId && await stripeController.readActivePlansByCustomerId({
+    stripeCustomerId: user?.company?.stripeCustomerId,
+  });
 
   const topupController = require("./topup.controller");
 

@@ -3,7 +3,7 @@ const _ = require("lodash");
 const moment = require("moment");
 const momentTz = require("moment-timezone");
 
-const { ReferralCode, User, Reward, Plan } = require("../models");
+const { ReferralCode, User, Reward, Plan, Company } = require("../models");
 const {
   constants: { RESPONSE_MESSAGES, REGIONS },
   basicUtil,
@@ -62,7 +62,16 @@ const readActivePlansByCustomerId = async ({ stripeCustomerId }) => {
         productPrice: `${priceAmount} ${priceCurrency}`,
       });
     }
-
+    // Sync plans with DB
+    await Company.updateOne(
+      { stripeCustomerId },
+      {
+        $set: {
+          purchasedPlan: activePlans,
+        },
+      }
+    );
+  
     return activePlans;
   } else {
     throw createHttpError(400, {
