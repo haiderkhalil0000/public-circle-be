@@ -23,6 +23,7 @@ module.exports = {
     PLAN: "plan",
     OVERAGE_CONSUMPTION: "overage-comsumption",
     TOPUP: "topup",
+    DEDICATED_IP_REQUEST: "dedicated-ip-request"
   },
 
   RESPONSE_MESSAGES: {
@@ -243,6 +244,8 @@ module.exports = {
     ADD_PRIMARY_KEY_FOR_FINALIZATION_IMPORTS:
       "Please set primary key first to finalize contacts!",
     UNSUBSCRIBED: "Unsubscribed successfully.",
+    DEDICATED_IP_REQUEST_EXISTS: "Dedicated IP request exists already!",
+    DEDICATED_IP_REQUEST_CREATED: "Dedicated IP request created successfully.",
   },
 
   INTERACTION_CHANNELS: {
