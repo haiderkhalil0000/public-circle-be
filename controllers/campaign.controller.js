@@ -350,7 +350,7 @@ const mapDynamicValues = async ({ companyId, emailAddress, content }) => {
   });
   
   const hasPurchasedPublicCircleAddon = companyDoc.purchasedPlan.some(
-    (plan) => plan.productName === PLAN_NAMES.PUBLIC_CIRCLE_ADD_ON_PLAN_NAME
+    (plan) => plan.productId === PLAN_NAMES.PUBLIC_CIRCLE_ADD_ON_ID
   );  
   
   if (!companyContactDoc) {
