@@ -240,6 +240,7 @@ module.exports = {
     CONTACTS_ARE_NOT_FINALIZE: "Please finalize contact to run campaign.",
     PLEASE_RESOLVE_DUPLICATES_BEFORE_FINALIZING:
       "Please resolve your contacts duplication before finalizing them.",
+    PLEASE_RESOLVE_DUPLICATES_BEFORE_CREATING_FILTER: "Please resolve your contacts duplication before creating filter.",
     CONTACTS_FINALIZED: "Contacts finalized successfully.",
     ADD_PRIMARY_KEY_FOR_FINALIZATION_IMPORTS:
       "Please set primary key first to finalize contacts!",
