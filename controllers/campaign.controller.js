@@ -312,7 +312,7 @@ const updateCampaign = async ({ companyId, campaignId, campaignData }) => {
     new: true,
   });
 
-  if (campaign.status === CAMPAIGN_STATUS.ACTIVE) {
+  if (campaign.status === CAMPAIGN_STATUS.ACTIVE || campaignData.status === CAMPAIGN_STATUS.ACTIVE) {
     await validateCampaign({ campaign, company, primaryUser });
 
     if (campaign.runMode === RUN_MODE.INSTANT) {
