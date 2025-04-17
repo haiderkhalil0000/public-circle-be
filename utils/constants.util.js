@@ -23,6 +23,7 @@ module.exports = {
     PLAN: "plan",
     OVERAGE_CONSUMPTION: "overage-comsumption",
     TOPUP: "topup",
+    DEDICATED_IP_REQUEST: "dedicated-ip-request"
   },
 
   RESPONSE_MESSAGES: {
@@ -243,6 +244,8 @@ module.exports = {
     ADD_PRIMARY_KEY_FOR_FINALIZATION_IMPORTS:
       "Please set primary key first to finalize contacts!",
     UNSUBSCRIBED: "Unsubscribed successfully.",
+    DEDICATED_IP_REQUEST_EXISTS: "Dedicated IP request exists already!",
+    DEDICATED_IP_REQUEST_CREATED: "Dedicated IP request created successfully.",
   },
 
   INTERACTION_CHANNELS: {
@@ -465,8 +468,8 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
     LINK_EXPIRED: "LINK_EXPIRED",
   },
   PLAN_NAMES: {    
-    PUBLIC_CIRCLE_ADD_ON_PLAN_NAME : "No Public Circle Reference",
-    DEDICATED_IP_ADD_ON_PLAN_NAME : "Dedicated IP",
+    PUBLIC_CIRCLE_ADD_ON_ID : "prod_RAsd2NfHUEV8rE",
+    DEDICATED_IP_ADD_ON_ID : "prod_RAsdFI6JBO7gch",
   },
   POWERED_BY: {
     POWERED_BY_FULL_HTML: `<div class="unsubscribe-section" style="width: 100%; background-color: #1e1e1e; text-align: center; padding: 20px; font-size: 12px; color: #e0e0e0;">

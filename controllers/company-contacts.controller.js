@@ -4,7 +4,7 @@ const path = require("path");
 const _ = require("lodash");
 const { Worker } = require("worker_threads");
 
-const { CompanyContact, Company } = require("../models");
+const { CompanyContact, Company, DedicatedIpRequest } = require("../models");
 const {
   constants: {
     RESPONSE_MESSAGES,
@@ -1137,6 +1137,24 @@ const unSubscribeFromEmail = async ({ companyContactId }) => {
   return true;
 }
 
+const dedicatedIpRequest = async ({ companyId }) => {
+  const requestExists = await DedicatedIpRequest.findOne({
+    companyId
+  });
+  if (requestExists) {
+    throw createHttpError(400, {
+      errorMessage: RESPONSE_MESSAGES.DEDICATED_IP_REQUEST_EXISTS,
+    });
+  }
+  await DedicatedIpRequest.create({
+    companyId
+  });
+  await Company.findByIdAndUpdate(companyId, {
+    isRequestedForDedicatedIp: true,
+  });
+  return true;
+}
+
 module.exports = {
   readContactKeys,
   readContactValues,
@@ -1169,5 +1187,6 @@ module.exports = {
   markContactsDuplicateWithPrimaryKey,
   updateMarkingDuplicatesStatus,
   finalizeCompanyContact,
-  unSubscribeFromEmail
+  unSubscribeFromEmail,
+  dedicatedIpRequest
 };

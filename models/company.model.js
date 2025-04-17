@@ -47,7 +47,11 @@ const schema = new mongoose.Schema(
     purchasedPlan: {
       type: Array,
       default: [],
-    }
+    },
+    isRequestedForDedicatedIp: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
