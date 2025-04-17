@@ -139,6 +139,32 @@ router.post(
   }
 );
 
+router.post(
+  "/dedicated-ip-request",
+  authenticate.verifyToken,
+  validate({
+    body: Joi.object({
+      companyId: Joi.string().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      await companyContactsController.dedicatedIpRequest({
+        companyId: req.body.companyId,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.DEDICATED_IP_REQUEST_CREATED,
+        data: {},
+      });
+    } catch (err) {
+      companyContactsDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 
 router.post(
   "/primary-key",

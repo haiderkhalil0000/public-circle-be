@@ -5,6 +5,7 @@ module.exports = {
   Configuration: require("./configuration.model"),
   Campaign: require("./campaign.model"),
   CampaignRun: require("./campaign-run.model"),
+  DedicatedIpRequest: require("./dedicated-ip-request.model"),
   Segment: require("./segment.model"),
   Template: require("./template.model"),
   Cron: require("./cron.model"),
