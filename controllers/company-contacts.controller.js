@@ -61,6 +61,14 @@ const readContactValues = async ({
   pageSize = 100,
   searchString,
 }) => {
+  const isDuplicateExists = await readCompanyContactDuplicates({  
+    companyId,
+  });
+  if (isDuplicateExists.totalRecords) {
+    throw createHttpError(400, {
+      errorMessage: RESPONSE_MESSAGES.PLEASE_RESOLVE_DUPLICATES_BEFORE_CREATING_FILTER,
+    });
+  }
   if (searchString) {
     const regex = new RegExp(`${searchString}`, "i"); // 'i' for case-insensitive
 
