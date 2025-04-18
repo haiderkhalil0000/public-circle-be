@@ -4,7 +4,7 @@ const path = require("path");
 const _ = require("lodash");
 const { Worker } = require("worker_threads");
 
-const { CompanyContact, Company, DedicatedIpRequest } = require("../models");
+const { CompanyContact, Company, CustomerRequests } = require("../models");
 const {
   constants: {
     RESPONSE_MESSAGES,
@@ -12,9 +12,13 @@ const {
     SOCKET_CHANNELS,
     COMPANY_CONTACT_STATUS,
     FILTER_CONDITION_CASES,
+    CUSTOMER_REQUEST_TYPE,
+    TEMPLATE_CONTENT_TYPE
   },
   basicUtil,
+  sesUtil,
 } = require("../utils");
+const { PUBLIC_CIRCLES_EMAIL_ADDRESS, SUPPORT_EMAIL } = process.env;
 const { isNumericString } = require("../utils/basic.util");
 
 const readContactKeys = async ({ companyId = "" }) => {
@@ -61,12 +65,13 @@ const readContactValues = async ({
   pageSize = 100,
   searchString,
 }) => {
-  const isDuplicateExists = await readCompanyContactDuplicates({  
+  const isDuplicateExists = await readCompanyContactDuplicates({
     companyId,
   });
   if (isDuplicateExists.totalRecords) {
     throw createHttpError(400, {
-      errorMessage: RESPONSE_MESSAGES.PLEASE_RESOLVE_DUPLICATES_BEFORE_CREATING_FILTER,
+      errorMessage:
+        RESPONSE_MESSAGES.PLEASE_RESOLVE_DUPLICATES_BEFORE_CREATING_FILTER,
     });
   }
   if (searchString) {
@@ -119,7 +124,7 @@ const readContactValues = async ({
         $match: {
           public_circles_company: companyId,
           public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
-          [key]: { $nin: [null, undefined ,""] },
+          [key]: { $nin: [null, undefined, ""] },
         },
       },
       {
@@ -1108,8 +1113,9 @@ const finalizeCompanyContact = async ({ companyId }) => {
   const stripeController = require("./stripe.controller");
   const companiesController = require("./companies.controller");
 
-  const { totalRecords } =
-    await contactController.readCompanyContactDuplicates({companyId});
+  const { totalRecords } = await contactController.readCompanyContactDuplicates(
+    { companyId }
+  );
 
   if (totalRecords) {
     throw createHttpError(400, {
@@ -1118,7 +1124,7 @@ const finalizeCompanyContact = async ({ companyId }) => {
     });
   }
   const companyDoc = await companiesController.readCompanyById({ companyId });
-  if(!companyDoc.contactsPrimaryKey || !companyDoc.contactsPrimaryKey === ""){
+  if (!companyDoc.contactsPrimaryKey || !companyDoc.contactsPrimaryKey === "") {
     throw createHttpError(400, {
       errorMessage: RESPONSE_MESSAGES.ADD_PRIMARY_KEY_FOR_FINALIZATION_IMPORTS,
     });
@@ -1143,24 +1149,32 @@ const unSubscribeFromEmail = async ({ companyContactId }) => {
     { is_unsubscribed: true }
   );
   return true;
-}
+};
 
-const dedicatedIpRequest = async ({ companyId }) => {
-  const requestExists = await DedicatedIpRequest.findOne({
-    companyId
+const createDedicatedIpRequest = async ({ companyId, requested }) => {
+  await CustomerRequests.create({
+    companyId,
+    type: requested
+      ? CUSTOMER_REQUEST_TYPE.DEDICATED_IP_ENABLED
+      : CUSTOMER_REQUEST_TYPE.DEDICATED_IP_DISABLED,
   });
-  if (requestExists) {
-    throw createHttpError(400, {
-      errorMessage: RESPONSE_MESSAGES.DEDICATED_IP_REQUEST_EXISTS,
-    });
-  }
-  await DedicatedIpRequest.create({
-    companyId
-  });
-  await Company.findByIdAndUpdate(companyId, {
-    isRequestedForDedicatedIp: true,
-  });
+  const company = await Company.find({ _id: companyId });
+  await sesUtil.sendEmail({
+    fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
+    toEmailAddress: SUPPORT_EMAIL,
+    subject: `Dedicated IP ${requested ? "Enabled" : "Disabled"}`,
+    content: `A request has been made to ${
+      requested ? "enable" : "disable"
+    } the dedicated IP for the company ${company[0].companyName}.`,
+    contentType: TEMPLATE_CONTENT_TYPE.TEXT,
+  })
   return true;
+};
+const getDedicatedIpRequests = async ({ companyId }) => {
+  const requests = await CustomerRequests.find({
+    companyId,
+  }).sort({ createdAt: -1 });
+  return requests;
 }
 
 module.exports = {
@@ -1196,5 +1210,6 @@ module.exports = {
   updateMarkingDuplicatesStatus,
   finalizeCompanyContact,
   unSubscribeFromEmail,
-  dedicatedIpRequest
+  createDedicatedIpRequest,
+  getDedicatedIpRequests
 };

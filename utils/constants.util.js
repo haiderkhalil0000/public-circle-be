@@ -23,7 +23,7 @@ module.exports = {
     PLAN: "plan",
     OVERAGE_CONSUMPTION: "overage-comsumption",
     TOPUP: "topup",
-    DEDICATED_IP_REQUEST: "dedicated-ip-request"
+    CUSTOMER_REQUESTS: "customer-requests",
   },
 
   RESPONSE_MESSAGES: {
@@ -245,8 +245,12 @@ module.exports = {
     ADD_PRIMARY_KEY_FOR_FINALIZATION_IMPORTS:
       "Please set primary key first to finalize contacts!",
     UNSUBSCRIBED: "Unsubscribed successfully.",
+    DOWNGRADE_PLAN: "Downgrade plan.",
     DEDICATED_IP_REQUEST_EXISTS: "Dedicated IP request exists already!",
     DEDICATED_IP_REQUEST_CREATED: "Dedicated IP request created successfully.",
+    CUSTOMER_REQUESTS_FETCHED: "Customer requests fetched successfully.",
+    DOWNGRADE_PLAN_REQUEST_EXISTS: "Downgrade plan request exists already!",
+    DOWNGRADE_PLAN_REQUEST_CREATED: "Downgrade plan request has been scheduled.",
   },
 
   INTERACTION_CHANNELS: {
@@ -364,7 +368,19 @@ module.exports = {
     ACTIVE: "ACTIVE",
     DELETED: "DELETED",
   },
-
+  CUSTOMER_REQUEST_TYPE: {
+    DEDICATED_IP_ENABLED: "DEDICATED_IP_ENABLED",
+    DEDICATED_IP_DISABLED: "DEDICATED_IP_DISABLED",
+    DOWNGRADE_PLAN: "DOWNGRADE_PLAN",
+  },
+  CUSTOMER_REQUEST_STATUS: {
+    PENDING: "PENDING",
+    APPROVED: "APPROVED",
+    REJECTED: "REJECTED",
+    COMPLETED: "COMPLETED",
+    CANCELLED: "CANCELLED",
+    IN_PROGRESS: "IN_PROGRESS",
+  },
   USER_STATUS: {
     ACTIVE: "ACTIVE",
     SUSPENDED: "SUSPENDED",
