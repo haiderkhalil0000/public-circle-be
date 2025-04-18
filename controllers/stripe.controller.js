@@ -3,11 +3,20 @@ const _ = require("lodash");
 const moment = require("moment");
 const momentTz = require("moment-timezone");
 
-const { ReferralCode, User, Reward, Plan, Company } = require("../models");
 const {
-  constants: { RESPONSE_MESSAGES, REGIONS },
+  ReferralCode,
+  User,
+  Reward,
+  Plan,
+  Company,
+  CustomerRequests,
+} = require("../models");
+const {
+  sesUtil,
+  constants: { RESPONSE_MESSAGES, REGIONS, TEMPLATE_CONTENT_TYPE, CUSTOMER_REQUEST_TYPE },
   basicUtil,
 } = require("../utils");
+const { PUBLIC_CIRCLES_EMAIL_ADDRESS, SUPPORT_EMAIL } = process.env;
 
 const { STRIPE_KEY } = process.env;
 
@@ -391,7 +400,67 @@ const upgradeOrDowngradeSubscription = async ({ stripeCustomerId, items }) => {
     status: "active",
   });
 
+  const newPrice = await stripe.prices.retrieve(items[0].price);
+  const newProduct = await stripe.products.retrieve(newPrice.product);
+  const newPriceAmount = newPrice.unit_amount / 100;
+  const newPriceCurrency = newPrice.currency.toUpperCase();
+
   const subscription = activeSubscriptions.data[0];
+  const oldPlan = subscription.items.data[0];
+  const oldPrice = await stripe.prices.retrieve(oldPlan.price.id);
+  const oldProduct = await stripe.products.retrieve(oldPrice.product);
+  const oldPriceAmount = oldPrice.unit_amount / 100;
+  const oldPriceCurrency = oldPrice.currency.toUpperCase();
+
+  if (oldPriceAmount > newPriceAmount) {
+    const company = await Company.findOne({
+      stripeCustomerId,
+    });
+
+    const startOfMonth = moment().startOf("month").toDate();
+    const endOfMonth = moment().endOf("month").toDate();
+
+    const existingDowngradeRequest = await CustomerRequests.findOne({
+      companyId: company._id,
+      type: CUSTOMER_REQUEST_TYPE.DOWNGRADE_PLAN,
+      createdAt: {
+        $gte: startOfMonth,
+        $lte: endOfMonth,
+      },
+    });
+
+    if (existingDowngradeRequest) {
+      throw createHttpError(400, {
+        errorMessage: RESPONSE_MESSAGES.DOWNGRADE_PLAN_REQUEST_EXISTS,
+      });
+    }
+
+    await CustomerRequests.create({
+      companyId: company._id,
+      type: CUSTOMER_REQUEST_TYPE.DOWNGRADE_PLAN,
+      metadata: {
+        oldPlanName: oldProduct.name,
+        newPlanName: newProduct.name,
+        oldPlanPrice: `${oldPriceAmount} ${oldPriceCurrency}`,
+        newPlanPrice: `${newPriceAmount} ${newPriceCurrency}`,
+        oldProductId: oldProduct.id,
+        newProductId: newProduct.id,
+        oldProductPrice: oldPrice.id,
+        newProductPrice: newPrice.id,
+        stripeCustomerId,
+      },
+    });
+    await sesUtil.sendEmail({
+      fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
+      toEmailAddress: SUPPORT_EMAIL,
+      subject: RESPONSE_MESSAGES.DOWNGRADE_PLAN,
+      content: `${company.name}, has requested to downgrade their plan from ${oldProduct.name} to ${newProduct.name}. Here is the company details.
+      Company ID: ${company._id}
+      Stripe Customer ID: ${stripeCustomerId}`,
+      contentType: TEMPLATE_CONTENT_TYPE.TEXT,
+    });
+    return RESPONSE_MESSAGES.DOWNGRADE_PLAN_REQUEST_CREATED;
+  }
 
   const currentItems = subscription.items.data.map((item) => ({
     id: item.id,

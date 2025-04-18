@@ -144,18 +144,40 @@ router.post(
   authenticate.verifyToken,
   validate({
     body: Joi.object({
-      companyId: Joi.string().required(),
+      requested: Joi.boolean().required(),
     }),
   }),
   async (req, res, next) => {
     try {
-      await companyContactsController.dedicatedIpRequest({
-        companyId: req.body.companyId,
+      await companyContactsController.createDedicatedIpRequest({
+        companyId: req.user.company._id,
+        requested: req.body.requested,
       });
 
       res.status(200).json({
         message: RESPONSE_MESSAGES.DEDICATED_IP_REQUEST_CREATED,
         data: {},
+      });
+    } catch (err) {
+      companyContactsDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.get(
+  "/customer-requests",
+  authenticate.verifyToken,
+  async (req, res, next) => {
+    try {
+      const response = await companyContactsController.getDedicatedIpRequests({
+        companyId: req.user.company._id,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.CUSTOMER_REQUESTS_FETCHED,
+        data: response,
       });
     } catch (err) {
       companyContactsDebugger(err);
