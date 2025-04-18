@@ -48,10 +48,6 @@ const schema = new mongoose.Schema(
       type: Array,
       default: [],
     },
-    isRequestedForDedicatedIp: {
-      type: Boolean,
-      default: false,
-    },
   },
   { timestamps: true }
 );

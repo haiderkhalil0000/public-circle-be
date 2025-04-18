@@ -199,13 +199,13 @@ router.patch(
   }),
   async (req, res, next) => {
     try {
-      await stripeController.upgradeOrDowngradeSubscription({
+      const responseMessage = await stripeController.upgradeOrDowngradeSubscription({
         stripeCustomerId: req.user.company.stripeCustomerId,
         ...req.body,
       });
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.SUBSCRIPTION_UPDATED,
+        message: responseMessage || RESPONSE_MESSAGES.SUBSCRIPTION_UPDATED,
         data: {},
       });
     } catch (err) {
