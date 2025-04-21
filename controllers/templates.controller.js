@@ -39,7 +39,7 @@ const createThumbnail = async ({ html, width, height }) => {
   return screenshotBuffer;
 };
 
-const createTemplate = async ({ companyId, name, kind, body }) => {
+const createTemplate = async ({ companyId, name, kind, body, jsonTemplate }) => {
   const existingTemplate = await Template.findOne({
     name,
     company: companyId,
@@ -57,6 +57,7 @@ const createTemplate = async ({ companyId, name, kind, body }) => {
     kind,
     body,
     size: Buffer.byteLength(body, "utf-8"),
+    jsonTemplate,
   };
 
   if (kind === TEMPLATE_KINDS.REGULAR) {

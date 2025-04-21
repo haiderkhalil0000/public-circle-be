@@ -47,6 +47,7 @@ router.post(
     body: Joi.object({
       name: Joi.string().required(),
       body: Joi.string().required(),
+      jsonTemplate: Joi.object().optional(),
       kind: Joi.string()
         .valid(TEMPLATE_KINDS.REGULAR, TEMPLATE_KINDS.SAMPLE)
         .required(),
@@ -178,6 +179,7 @@ router.patch(
       name: Joi.string().optional(),
       body: Joi.string().optional(),
       json: Joi.string().optional(),
+      jsonTemplate: Joi.object().optional(),
     }),
   }),
   async (req, res, next) => {
