@@ -45,6 +45,11 @@ const schema = new mongoose.Schema(
       type: ObjectId,
       ref: TEMPLATE_CATEGORY,
     },
+    jsonTemplate: {
+      type: Object,
+      required: false,
+      default: {},
+    },
     status: {
       type: String,
       enum: Object.values(TEMPLATE_STATUS),
