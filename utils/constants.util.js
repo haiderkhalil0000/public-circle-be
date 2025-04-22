@@ -251,6 +251,7 @@ module.exports = {
     CUSTOMER_REQUESTS_FETCHED: "Customer requests fetched successfully.",
     DOWNGRADE_PLAN_REQUEST_EXISTS: "Downgrade plan request exists already!",
     DOWNGRADE_PLAN_REQUEST_CREATED: "Downgrade plan request has been scheduled.",
+    SIGNED_URL_GENERATED: "Signed URL generated successfully.",
   },
 
   INTERACTION_CHANNELS: {
@@ -330,6 +331,7 @@ module.exports = {
 
   ASSETS_STATUS: {
     ACTIVE: "ACTIVE",
+    IN_ACTIVE: "INACTIVE",
     ARCHIVED: "ARCHIVED",
     DELETED: "DELETED",
   },

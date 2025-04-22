@@ -16,7 +16,7 @@ router.post(
   validate({
     body: Joi.object({
       name: Joi.string().required(),
-      url: Joi.string().required(),
+      url: Joi.string().optional(),
     }),
   }),
   async (req, res, next) => {
@@ -43,7 +43,9 @@ router.post(
 
 router.get("/all", authenticate.verifyToken, async (req, res, next) => {
   try {
-    const assets = await assetsController.readAllAssets();
+    const assets = await assetsController.readAllAssets({
+      companyId: req.user.company._id,
+    });
 
     res.status(200).json({
       message: RESPONSE_MESSAGES.ALL_ASSETS_FETCHED,
@@ -115,30 +117,22 @@ router.get(
 );
 
 router.patch(
-  "/:assetId",
+  "/file-upload/:assetId",
   authenticate.verifyToken,
   validate({
     params: Joi.object({
       assetId: Joi.string().required(),
     }),
-    body: Joi.object({
-      name: Joi.string(),
-      url: Joi.string(),
-      status: Joi.string()
-        .required()
-        .valid(ASSETS_STATUS.ACTIVE, ASSETS_STATUS.ARCHIVED),
-    }),
   }),
   async (req, res, next) => {
     try {
-      await assetsController.updateAsset({
+      const updatedDate = await assetsController.updateAsset({
         ...req.params,
-        assetData: req.body,
       });
 
       res.status(200).json({
         message: RESPONSE_MESSAGES.ASSET_UPDATED,
-        data: {},
+        data: updatedDate,
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
@@ -152,11 +146,11 @@ router.patch(
 );
 
 router.delete(
-  "/:assetId",
+  "/:url",
   authenticate.verifyToken,
   validate({
     params: Joi.object({
-      assetId: Joi.string().required(),
+      url: Joi.string().required(),
     }),
   }),
   async (req, res, next) => {
@@ -169,6 +163,37 @@ router.delete(
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
+      console.log(err);
+
+      assetDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.post(
+  "/file-upload-url",
+  authenticate.verifyToken,
+  validate({
+    body: Joi.object({
+      fileName: Joi.string()
+        .required()
+        .pattern(/\.(jpg|jpeg|png|gif|bmp)$/i)
+        .message('File must be an image with one of the following extensions: .jpg, .jpeg, .png, .gif, .bmp'),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const signedUrl = await assetsController.generateUploadFileSignedUrl({
+        ...req.body,
+        companyId: req.user.company._id,
+      });
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.SIGNED_URL_GENERATED,
+        data: signedUrl,
+      });
+    } catch (err) {
       console.log(err);
 
       assetDebugger(err);
