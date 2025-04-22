@@ -55,7 +55,8 @@ const readPaginatedAssets = async ({ pageNumber, pageSize }) => {
 
 const readAllAssets = async ({ companyId }) => {
   const assets = await Asset.find({
-    company: companyId
+    company: companyId,
+    status: ASSETS_STATUS.ACTIVE,
   });
   assets?.map((asset) => {
     asset.url = s3Util.s3FileCompleteUrl(asset.url);
