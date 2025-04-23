@@ -83,9 +83,13 @@ const login = async ({ emailAddress, password }) => {
   user.save();
 
   // Sync Plans
-  user?.company?.stripeCustomerId && await stripeController.readActivePlansByCustomerId({
-    stripeCustomerId: user?.company?.stripeCustomerId,
-  });
+  try {
+    user?.company?.stripeCustomerId && await stripeController.readActivePlansByCustomerId({
+      stripeCustomerId: user?.company?.stripeCustomerId,
+    });
+  } catch (error) {
+    console.error("Error syncing plans:", error);
+  }
 
   const topupController = require("./topup.controller");
 
