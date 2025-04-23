@@ -21,6 +21,7 @@ router.post(
   validate({
     body: Joi.object({
       emailAddress: Joi.string().email().required(),
+      receiveEmailsFromPublicCircles: Joi.boolean(),
     }),
   }),
   async (req, res, next) => {
@@ -82,6 +83,7 @@ router.post(
       const user = await authController.register({
         ...req.body,
         emailAddress: req.emailAddress,
+        receiveEmailsFromPublicCircles: req.receiveEmailsFromPublicCircles,
       });
 
       res.status(200).json({

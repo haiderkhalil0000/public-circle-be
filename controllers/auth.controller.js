@@ -27,7 +27,7 @@ const {
   ACCESS_TOKEN_EXPIRY,
 } = process.env;
 
-const register = async ({ emailAddress, password }) => {
+const register = async ({ emailAddress, password,receiveEmailsFromPublicCircles }) => {
   const user = await User.findOne({ emailAddress, isEmailVerified: true });
 
   if (user) {
@@ -40,6 +40,7 @@ const register = async ({ emailAddress, password }) => {
     emailAddress,
     password,
     isEmailVerified: true,
+    receiveEmailsFromPublicCircles,
   });
 };
 
@@ -96,7 +97,7 @@ const login = async ({ emailAddress, password }) => {
   return user;
 };
 
-const sendVerificationEmail = async ({ emailAddress }) => {
+const sendVerificationEmail = async ({ emailAddress, receiveEmailsFromPublicCircles=true }) => {
   const user = await User.findOne({ emailAddress, isEmailVerified: true });
 
   if (user) {
@@ -106,7 +107,7 @@ const sendVerificationEmail = async ({ emailAddress }) => {
   }
 
   const token = generateAccessToken({
-    payload: { emailAddress },
+    payload: { emailAddress, receiveEmailsFromPublicCircles },
     options: { expiresIn: ACCESS_TOKEN_EXPIRY },
   });
 
