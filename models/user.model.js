@@ -49,6 +49,7 @@ const schema = new mongoose.Schema(
       default: USER_STATUS.ACTIVE,
       enum: Object.values(USER_STATUS),
     },
+    receiveEmailsFromPublicCircles: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

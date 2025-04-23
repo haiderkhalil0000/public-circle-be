@@ -29,7 +29,7 @@ module.exports = async function validateVerificationEmailSent(req, res, next) {
       jwtSecret: ACCESS_TOKEN_SECRET,
     });
 
-    const { emailAddress } = decodedToken;
+    const { emailAddress,receiveEmailsFromPublicCircles } = decodedToken;
 
     const isVerificationEmailSent = await EmailSent.findOne({
       kind: EMAIL_KIND.VERIFICATION,
@@ -44,6 +44,7 @@ module.exports = async function validateVerificationEmailSent(req, res, next) {
     }
 
     req.emailAddress = emailAddress;
+    req.receiveEmailsFromPublicCircles = receiveEmailsFromPublicCircles;
 
     next();
   } catch (err) {
