@@ -270,6 +270,7 @@ const deleteEmailDomain = async ({ companyId, emailDomain }) => {
     {
       company: companyId,
       "emailConfigurations.domains.emailDomain": emailDomain,
+      "emailConfigurations.domains.status": DOCUMENT_STATUS.ACTIVE,
     },
     {
       $set: {
