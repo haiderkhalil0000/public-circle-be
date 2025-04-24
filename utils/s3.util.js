@@ -54,7 +54,8 @@ const deleteFileFromS3 = async (s3Path) => {
   const command = new DeleteObjectCommand(deleteParams);
 
   return await s3Client.send(command);
-}
+};
+
 
 const s3FileCompleteUrl = (s3Path) => {
   return `https://${S3BUCKET}.s3.${AWS_REGION}.amazonaws.com/${s3Path}`;

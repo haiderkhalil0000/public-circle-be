@@ -22,12 +22,13 @@ const {
   s3Util,
 } = require("../utils");
 
-const { ADMIN_ROLE_ID } = process.env;
+const { ADMIN_ROLE_ID, S3BUCKET, AWS_REGION } = process.env;
 
 const updateUser = async ({
   emailAddress,
   password,
   profilePicture,
+  companyLogo,
   firstName,
   lastName,
   companyName,
@@ -113,6 +114,14 @@ const updateUser = async ({
 
       userUpdates.company = companyDoc._id;
     }
+  }
+  if (companyLogo) {
+    userUpdates.companyLogo =
+      companyLogo &&
+      (await s3Util.uploadImageToS3({
+        s3Path: `company-logo/${userUpdates.company}/logo.png`,
+        buffer: companyLogo.buffer,
+      }));
   }
 
   if (
@@ -380,6 +389,30 @@ const readCurrentUser = ({ currentUserId }) =>
 const readPrimaryUserByCompanyId = ({ companyId }) =>
   User.findOne({ company: companyId, kind: USER_KIND.PRIMARY }).lean();
 
+const addCompanyLogo = async ({ companyLogo, currentUser }) => {
+  if (!companyLogo) {
+    throw createHttpError(400, {
+      errorMessage: RESPONSE_MESSAGES.COMPANY_LOGO_REQUIRED,
+    });
+  }
+  const companyLogoUrl = await s3Util.uploadImageToS3({
+    s3Path: `company-logo/${currentUser.company._id}/logo.png`,
+    buffer: companyLogo.buffer,
+  });
+  await Company.updateOne(
+    { _id: currentUser.company._id },
+    { logo: companyLogoUrl }
+  );
+  return companyLogoUrl;
+};
+
+const deleteCompanyLogo = async ({ currentUser }) => {
+  await s3Util.deleteFileFromS3(
+    `company-logo/${currentUser.company._id}/logo.png`
+  );
+  await Company.updateOne({ _id: currentUser.company._id }, { logo: "" });
+};
+
 module.exports = {
   updateUser,
   createUserUnderACompany,
@@ -392,4 +425,6 @@ module.exports = {
   verifyReferralCode,
   readCurrentUser,
   readPrimaryUserByCompanyId,
+  addCompanyLogo,
+  deleteCompanyLogo,
 };

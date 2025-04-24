@@ -252,6 +252,9 @@ module.exports = {
     DOWNGRADE_PLAN_REQUEST_EXISTS: "Downgrade plan request exists already!",
     DOWNGRADE_PLAN_REQUEST_CREATED: "Downgrade plan request has been scheduled.",
     SIGNED_URL_GENERATED: "Signed URL generated successfully.",
+    LOGO_CREATED: "Company Logo Added Successfully.",
+    COMPANY_LOGO_REQUIRED: "Company Logo is required.",
+    LOGO_DELETED: "Company Logo Deleted Successfully.",
   },
 
   INTERACTION_CHANNELS: {

@@ -48,6 +48,10 @@ const schema = new mongoose.Schema(
       type: Array,
       default: [],
     },
+    logo: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );
