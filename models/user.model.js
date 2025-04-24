@@ -34,7 +34,7 @@ const schema = new mongoose.Schema(
     },
     isResetPasswordRequested: { type: Boolean, default: false },
     signUpStepsCompleted: { type: Number, min: 0, max: 8, default: 0 },
-    watchTutorialStepsCompleted: { type: Number, min: 0, max: 5, default: 0 },
+    watchTutorialStepsCompleted: { type: Number, min: 0, max: 6, default: 0 },
     referralCode: { type: ObjectId, ref: REFERRAL_CODE },
     referralCodeConsumed: { type: ObjectId, ref: REFERRAL_CODE },
     invalidReferralCodeAttempts: { type: Number, min: 0, default: 0 },
