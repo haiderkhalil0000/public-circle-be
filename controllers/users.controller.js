@@ -22,7 +22,7 @@ const {
   s3Util,
 } = require("../utils");
 
-const { ADMIN_ROLE_ID, S3BUCKET, AWS_REGION } = process.env;
+const { ADMIN_ROLE_ID } = process.env;
 
 const updateUser = async ({
   emailAddress,
