@@ -629,6 +629,7 @@ const uploadCsv = async ({
   companyId,
   stripeCustomerId,
   currentUserId,
+  emailAddress,
   file,
 }) => {
   if (!file) {
@@ -683,6 +684,7 @@ const uploadCsv = async ({
     stripeCustomerId,
     contactsPrimaryKey,
     file,
+    emailAddress,
   });
 };
 

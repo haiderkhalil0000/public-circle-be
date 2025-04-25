@@ -335,6 +335,28 @@ router.post('/company-logo',
   }
 );
 
+router.post('/skip-tour',
+  authenticate.verifyToken,
+  async (req, res, next) => {
+    try {
+      const companyLogo = await usersController.skipTour({
+        currentUser: req.user,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.LOGO_CREATED,
+        data: {
+          companyLogo,
+        },
+      });
+    } catch (err) {
+      userDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 router.delete(
   "/:userId",
   authenticate.verifyToken,

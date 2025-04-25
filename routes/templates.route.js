@@ -58,6 +58,7 @@ router.post(
       await templatesController.createTemplate({
         ...req.body,
         companyId: req.user.company._id,
+        emailAddress: req.user.emailAddress,
       });
 
       res.status(200).json({

@@ -413,6 +413,17 @@ const deleteCompanyLogo = async ({ currentUser }) => {
   await Company.updateOne({ _id: currentUser.company._id }, { logo: "" });
 };
 
+const skipTour = async ({ currentUser }) => {
+  await User.findOneAndUpdate(
+    { _id: currentUser._id },
+    {
+      $set: {
+        "tourSteps.isSkipped": true,
+      },
+    }
+  );
+};
+
 module.exports = {
   updateUser,
   createUserUnderACompany,
@@ -427,4 +438,5 @@ module.exports = {
   readPrimaryUserByCompanyId,
   addCompanyLogo,
   deleteCompanyLogo,
+  skipTour,
 };

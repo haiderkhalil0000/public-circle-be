@@ -9,8 +9,9 @@ const {
 const {
   RESPONSE_MESSAGES,
   DOCUMENT_STATUS,
+  TOUR_STEPS,
 } = require("../utils/constants.util");
-const { Configuration } = require("../models");
+const { Configuration, User } = require("../models");
 
 const addDataInCompanyConfigurations = async ({
   companyId,
@@ -114,7 +115,17 @@ const addDataInCompanyConfigurations = async ({
       isDefault: true,
     });
 
-    await configuration.save();
+    await Promise.all([
+      configuration.save(),
+      User.findOneAndUpdate(
+        { emailAddress },
+        {
+          $set: {
+            "tourSteps.steps.0.isCompleted": true,
+          },
+        }
+      ),
+    ]);
   }
 };
 
