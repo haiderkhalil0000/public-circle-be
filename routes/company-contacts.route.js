@@ -457,6 +457,7 @@ router.post(
         companyId: req.user.company._id,
         stripeCustomerId: req.user.company.stripeCustomerId,
         currentUserId: req.user._id,
+        emailAddress: req.user.emailAddress,
         file: req.file,
       });
 

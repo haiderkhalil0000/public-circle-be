@@ -20,6 +20,7 @@ const {
   sesUtil,
 } = require("../utils");
 const stripeController = require("./stripe.controller");
+const { TOUR_STEPS } = require("../utils/constants.util");
 
 const {
   PUBLIC_CIRCLES_WEB_URL,
@@ -41,6 +42,7 @@ const register = async ({ emailAddress, password,receiveEmailsFromPublicCircles 
     password,
     isEmailVerified: true,
     receiveEmailsFromPublicCircles,
+    tourSteps: TOUR_STEPS,
   });
 };
 
@@ -79,6 +81,10 @@ const login = async ({ emailAddress, password }) => {
 
   user.invalidLoginAttempts = 0;
   user.lastLoginAt = moment().format();
+  const touStepsExists = user.tourSteps && Object.keys(user.tourSteps).length > 0;
+  if (!touStepsExists) {
+    user.tourSteps = TOUR_STEPS;
+  }
 
   user.save();
 

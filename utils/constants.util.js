@@ -502,5 +502,46 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
                   </div>`,
     POWERED_BY_PARTIAL_HTML: `Powered by <a href="https://publiccircles.com" style="color: #ffffff; text-decoration: underline; font-weight: 500;">Public Circles</a> | `,
     COMMON_CLASS_NAME: "unsubscribe-section",
+  },
+  TOUR_STEPS: {
+    isSkipped: false,
+    steps: [
+      {
+        title: "Email & Domain Configuration",
+        description: "Set up your email or domain on Public Circles to use as the sender for your email marketing campaigns. This ensures your messages come from a trusted source and reflect your brand.",
+        isCompleted: false,
+        link: "/dashboard/configurations/emailConfiguration",
+      },
+      {
+        title: "Upload or Integrate Contact Data",
+        description: "Integrate your contact database with Public Circles using a webhook to keep your distribution list automatically updated. We recommend working with your developer or reaching out to our support team for help with the setup. You can also choose to upload your contacts manually by importing a CSV file with the correct data headers.",
+        isCompleted: false,
+        link: "/dashboard/configurations/contacts",
+      },
+      {
+        title: "Apply Data Filters",
+        description: "Use filters to refine your audience by specific attributes.  This helps you create more precise audience segments and improve targeting for a more effective marketing campaign.",
+        isCompleted: false,
+        link: "/dashboard/audience/filters",
+      },
+      {
+        title: "Manage Audience Segments",
+        description: "Organize your audience into segments based on shared characteristics, such as interests and attributes.  This enables personalized communication and higher engagement.",
+        isCompleted: false,
+        link: "/dashboard/audience/segments",
+      },
+      {
+        title: "Design a Template",
+        description: "Use customizable email templates to maintain consistent branding and design. Choose from pre-built layouts or create your own to fit your communication needs.",
+        isCompleted: false,
+        link: "/dashboard/templates",
+      },
+      {
+        title: "Launch Campaign",
+        description: "Create and launch an email campaign to connect with your audience effectively.  Select audience segments, craft engaging messages, and set-up your delivery schedule.",
+        isCompleted: false,
+        link: "/dashboard/campaign",
+      },
+    ]
   }
 };

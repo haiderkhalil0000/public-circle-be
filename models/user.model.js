@@ -50,6 +50,10 @@ const schema = new mongoose.Schema(
       enum: Object.values(USER_STATUS),
     },
     receiveEmailsFromPublicCircles: { type: Boolean, default: true },
+    tourSteps: {
+      type: Object,
+      default: {},
+    }
   },
   { timestamps: true }
 );

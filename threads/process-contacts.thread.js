@@ -5,7 +5,7 @@ const {
   connectDbForThread,
   disconnectDbForThread,
 } = require("./db-connection-thread");
-const { Company } = require("../models");
+const { Company, User } = require("../models");
 const {
   webhooksController,
   companiesController,
@@ -72,7 +72,7 @@ const markDuplicateContacts = (contacts, existingContacts, primaryKey) => {
 
 parentPort.on(
   "message",
-  async ({ companyId, contactsPrimaryKey, file }) => {
+  async ({ companyId, contactsPrimaryKey, file, emailAddress }) => {
     try {
       await connectDbForThread();
       const [
@@ -148,8 +148,15 @@ parentPort.on(
           processedCount += part.length;
           const progress = (processedCount / totalContacts) * 100;
           parentPort.postMessage({ progress });
-
         })
+      );
+      await User.findOneAndUpdate(
+        { emailAddress },
+        {
+          $set: {
+            "tourSteps.steps.1.isCompleted": true,
+          },
+        }
       );
 
       const companyActiveCampaigns =
