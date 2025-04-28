@@ -5,6 +5,7 @@ const {
   VerifyDomainIdentityCommand,
   GetIdentityVerificationAttributesCommand,
   DeleteIdentityCommand,
+  VerifyDomainDkimCommand
 } = require("@aws-sdk/client-ses");
 
 const { sesClient } = require("../startup/ses.config");
@@ -73,15 +74,35 @@ const listVerifiedIdentities = async () => {
 };
 
 const verifyDomain = async ({ emailDomain }) => {
-  const command = new VerifyDomainIdentityCommand({ Domain: emailDomain });
+  const domainIdentityCommand = new VerifyDomainIdentityCommand({
+    Domain: emailDomain,
+  });
+  const domainIdentityResponse = await sesClient.send(domainIdentityCommand);
 
-  const data = await sesClient.send(command);
+  const dnsRecords = [];
 
-  return {
+  dnsRecords.push({
     Name: `_amazonses.${emailDomain}`,
     Type: "TXT",
-    Value: data.VerificationToken,
-  };
+    Value: domainIdentityResponse.VerificationToken,
+  });
+
+  const dkimCommand = new VerifyDomainDkimCommand({
+    Domain: emailDomain,
+  });
+  const dkimResponse = await sesClient.send(dkimCommand);
+
+  if (dkimResponse.DkimTokens && dkimResponse.DkimTokens.length > 0) {
+    dkimResponse.DkimTokens.forEach((token) => {
+      dnsRecords.push({
+        Name: `${token}._domainkey.${emailDomain}`,
+        Type: "CNAME",
+        Value: `${token}.dkim.amazonses.com`,
+      });
+    });
+  }
+
+  return dnsRecords;
 };
 
 const deleteIdentity = async ({ identity }) => {
