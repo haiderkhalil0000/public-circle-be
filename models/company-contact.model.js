@@ -26,6 +26,10 @@ const schema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    meta_data: {
+      type: Object,
+      default: {},
+    },
   },
   {
     timestamps: {

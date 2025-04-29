@@ -543,5 +543,11 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
         link: "/dashboard/campaign",
       },
     ]
+  },
+  CONTACTS_DELETE_ACTION: {
+    PRIMARY_KEY: "PRIMARY_KEY",
+    DUPLICATION_RESOLVE: "DUPLICATION_RESOLVE",
+    FILTER: "FILTER",
+    MANUAL_DELETE: "MANUAL_DELETE",
   }
 };
