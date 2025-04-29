@@ -618,7 +618,7 @@ const runCampaign = async ({ campaign }) => {
         ...query,
         public_circles_company: campaign.company,
         public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
-        is_unsubscribed: { $in: [false, null] },
+        public_circles_is_unsubscribed: { $in: [false, null] },
       },
       {
         email: 1,
