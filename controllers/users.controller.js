@@ -1,5 +1,6 @@
 const createHttpError = require("http-errors");
 const randomString = require("randomstring");
+const _ = require("lodash");
 
 const {
   User,
@@ -51,6 +52,22 @@ const updateUser = async ({
 }) => {
   let companyDoc;
   const promises = [];
+  const companyContactsController = require("./company-contacts.controller");
+
+  const company = await Company.findOne({
+    _id: currentUser.company._id,
+  });
+
+  if (contactSelectionCriteria) {
+    if (
+      !_.isEqual(contactSelectionCriteria, company.contactSelectionCriteria)
+    ) {
+      await companyContactsController.revertFilterContactsBySelectionCriteria({
+        companyId: currentUser.company._id,
+        contactSelectionCriteria: company.contactSelectionCriteria,
+      });
+    }
+  }
 
   const userUpdates = {
     emailAddress,
@@ -155,9 +172,7 @@ const updateUser = async ({
     );
 
     if (contactSelectionCriteria) {
-      const companyContactsController = require("./company-contacts.controller");
-
-      companyContactsController.filterContactsBySelectionCriteria({
+      await companyContactsController.filterContactsBySelectionCriteria({
         companyId: userUpdates.company || currentUser.company._id,
         contactSelectionCriteria,
       });

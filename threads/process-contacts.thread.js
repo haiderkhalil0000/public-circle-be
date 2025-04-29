@@ -110,19 +110,20 @@ parentPort.on(
       }
 
       let companyModelUpdates;
-
-      if (contacts[0]["email"]) {
-        companyModelUpdates = { emailKey: "email" };
-      } else if (contacts[0]["Email"]) {
-        companyModelUpdates = { emailKey: "Email" };
-      } else if (contacts[0]["EMAIL"]) {
-        companyModelUpdates = { emailKey: "EMAIL" };
-      } else if (contacts[0]["emailAddress"]) {
-        companyModelUpdates = { emailKey: "emailAddress" };
-      } else if (contacts[0]["Email Address"]) {
-        companyModelUpdates = { emailKey: "Email Address" };
-      } else if (contacts[0]["EMAIL ADDRESS"]) {
-        companyModelUpdates = { emailKey: "EMAIL ADDRESS" };
+      if (contacts.length) {
+        if (contacts[0]["email"]) {
+          companyModelUpdates = { emailKey: "email" };
+        } else if (contacts[0]["Email"]) {
+          companyModelUpdates = { emailKey: "Email" };
+        } else if (contacts[0]["EMAIL"]) {
+          companyModelUpdates = { emailKey: "EMAIL" };
+        } else if (contacts[0]["emailAddress"]) {
+          companyModelUpdates = { emailKey: "emailAddress" };
+        } else if (contacts[0]["Email Address"]) {
+          companyModelUpdates = { emailKey: "Email Address" };
+        } else if (contacts[0]["EMAIL ADDRESS"]) {
+          companyModelUpdates = { emailKey: "EMAIL ADDRESS" };
+        }
       }
 
       companyModelUpdates.isContactFinalize = false;

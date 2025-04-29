@@ -91,6 +91,7 @@ router.patch(
         Joi.object({
           filterKey: Joi.string().required(),
           filterValues: Joi.array().required(),
+          _id: Joi.string().optional(),
         })
       ),
       emailKey: Joi.string(),
