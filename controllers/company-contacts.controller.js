@@ -595,7 +595,7 @@ const deleteCompanyContact = async ({ companyId, userId }) => {
       _id: userId,
       public_circles_company: companyId,
     },
-    { public_circles_status: COMPANY_CONTACT_STATUS.DELETED, meta_data: {
+    { public_circles_status: COMPANY_CONTACT_STATUS.DELETED, public_circles_contact_deletion_reason: {
       delete_action: CONTACTS_DELETE_ACTION.MANUAL_DELETE
     }, }
   );
@@ -620,7 +620,7 @@ const deleteAllCompanyContacts = async ({ companyId, currentUserKind }) => {
     },
     {
       public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
-      meta_data: {
+      public_circles_contact_deletion_reason: {
         delete_action: CONTACTS_DELETE_ACTION.MANUAL_DELETE,
       },
     }
@@ -749,7 +749,7 @@ const markContactsDuplicateWithPrimaryKey = async ({
               $set: {
                 public_circles_existing_contactId: null,
                 public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
-                meta_data: {
+                public_circles_contact_deletion_reason: {
                   delete_action: CONTACTS_DELETE_ACTION.PRIMARY_KEY,
                   primaryKey: primaryKey,
                 },
@@ -858,7 +858,7 @@ const updatePrimaryKey = async ({ companyId, currentUserId, primaryKey }) => {
       },
       companyContactData: {
         public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
-        meta_data:{}
+        public_circles_contact_deletion_reason:{}
       },
     }),
   ]);
@@ -879,12 +879,12 @@ const deletePrimaryKey = async ({ companyId }) => {
       {
         public_circles_company: companyId,
         public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
-        "meta_data.primaryKey": contactsPrimaryKey,
+        "public_circles_contact_deletion_reason.primaryKey": contactsPrimaryKey,
       },
       {
         public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
         public_circles_existing_contactId: null,
-        meta_data: {},
+        public_circles_contact_deletion_reason: {},
       }
     ),
     Company.findByIdAndUpdate(companyId, {
@@ -919,7 +919,7 @@ const deleteSelectedContacts = async ({ companyId, contactIds }) => {
     },
     {
       public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
-      meta_data: {
+      public_circles_contact_deletion_reason: {
         delete_action: CONTACTS_DELETE_ACTION.MANUAL_DELETE
       },
       public_circles_existing_contactId: null,
@@ -977,12 +977,12 @@ const filterContactsBySelectionCriteria = async ({
       _id: { $nin: filteredContactIds },
       public_circles_company: companyId,
       public_circles_status: { $ne: COMPANY_CONTACT_STATUS.DELETED },
-      "meta_data.delete_action": { $exists: false },
+      "public_circles_contact_deletion_reason.delete_action": { $exists: false },
     },
     {
       public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
       public_circles_existing_contactId: null,
-      meta_data: {
+      public_circles_contact_deletion_reason: {
         delete_action: CONTACTS_DELETE_ACTION.FILTER,
         filter_condition: contactSelectionCriteria,
       },
@@ -998,11 +998,11 @@ const revertFilterContactsBySelectionCriteria = async ({
   const baseQuery = {
     public_circles_company: companyId,
     public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
-    "meta_data.delete_action": CONTACTS_DELETE_ACTION.FILTER,
+    "public_circles_contact_deletion_reason.delete_action": CONTACTS_DELETE_ACTION.FILTER,
   };
 
   if (contactSelectionCriteria?.length > 0) {
-    baseQuery["meta_data.filter_condition"] = {
+    baseQuery["public_circles_contact_deletion_reason.filter_condition"] = {
       $elemMatch: {
         $or: contactSelectionCriteria.map(filter => ({
           filterKey: filter.filterKey,
@@ -1017,7 +1017,7 @@ const revertFilterContactsBySelectionCriteria = async ({
     {
       $set: {
         public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
-        meta_data: {}
+        public_circles_contact_deletion_reason: {}
       },
     }
   );
@@ -1110,7 +1110,7 @@ const resolveCompanyContactDuplicates = async ({
   const baseQuery = {
     public_circles_company: companyId,
     public_circles_status: { $ne: COMPANY_CONTACT_STATUS.DELETED },
-    "meta_data.delete_action": { $exists: false },
+    "public_circles_contact_deletion_reason.delete_action": { $exists: false },
   };
 
   // Handle bulk contact updates
@@ -1125,12 +1125,12 @@ const resolveCompanyContactDuplicates = async ({
             public_circles_company: companyId,
             _id: { $ne: contact._id },
             [contactsPrimaryKey]: contact[contactsPrimaryKey],
-            "meta_data.delete_action": { $exists: false },
+            "public_circles_contact_deletion_reason.delete_action": { $exists: false },
           },
           update: {
             $set: {
               public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
-              meta_data: {
+              public_circles_contact_deletion_reason: {
                 delete_action: CONTACTS_DELETE_ACTION.DUPLICATION_RESOLVE,
               },
               public_circles_existing_contactId: null,
@@ -1176,12 +1176,12 @@ const resolveCompanyContactDuplicates = async ({
         CompanyContact.updateMany(
           {
             _id: { $in: contactsToBeDeleted },
-            "meta_data.delete_action": { $exists: false },
+            "public_circles_contact_deletion_reason.delete_action": { $exists: false },
           },
           {
             $set: {
               public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
-              meta_data: {
+              public_circles_contact_deletion_reason: {
                 delete_action: CONTACTS_DELETE_ACTION.DUPLICATION_RESOLVE,
               },
               public_circles_existing_contactId: null,
@@ -1237,7 +1237,7 @@ const finalizeCompanyContact = async ({ companyId }) => {
 const unSubscribeFromEmail = async ({ companyContactId }) => {
   await CompanyContact.updateOne(
     { _id: companyContactId },
-    { is_unsubscribed: true }
+    { public_circles_is_unsubscribed: true }
   );
   return true;
 };
