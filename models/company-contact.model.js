@@ -22,9 +22,13 @@ const schema = new mongoose.Schema(
       enum: Object.values(COMPANY_CONTACT_STATUS),
       default: COMPANY_CONTACT_STATUS.ACTIVE,
     },
-    is_unsubscribed: {
+    public_circles_is_unsubscribed: {
       type: Boolean,
       default: false,
+    },
+    public_circles_contact_deletion_reason: {
+      type: Object,
+      default: {},
     },
   },
   {

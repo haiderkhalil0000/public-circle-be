@@ -1,5 +1,6 @@
 const createHttpError = require("http-errors");
 const randomString = require("randomstring");
+const _ = require("lodash");
 
 const {
   User,
@@ -28,6 +29,7 @@ const updateUser = async ({
   emailAddress,
   password,
   profilePicture,
+  companyLogo,
   firstName,
   lastName,
   companyName,
@@ -50,6 +52,22 @@ const updateUser = async ({
 }) => {
   let companyDoc;
   const promises = [];
+  const companyContactsController = require("./company-contacts.controller");
+
+  const company = await Company.findOne({
+    _id: currentUser.company._id,
+  });
+
+  if (contactSelectionCriteria) {
+    if (
+      !_.isEqual(contactSelectionCriteria, company.contactSelectionCriteria)
+    ) {
+      await companyContactsController.revertFilterContactsBySelectionCriteria({
+        companyId: currentUser.company._id,
+        contactSelectionCriteria: company.contactSelectionCriteria,
+      });
+    }
+  }
 
   const userUpdates = {
     emailAddress,
@@ -114,6 +132,14 @@ const updateUser = async ({
       userUpdates.company = companyDoc._id;
     }
   }
+  if (companyLogo) {
+    userUpdates.companyLogo =
+      companyLogo &&
+      (await s3Util.uploadImageToS3({
+        s3Path: `company-logo/${userUpdates.company}/logo.png`,
+        buffer: companyLogo.buffer,
+      }));
+  }
 
   if (
     companySize ||
@@ -146,9 +172,7 @@ const updateUser = async ({
     );
 
     if (contactSelectionCriteria) {
-      const companyContactsController = require("./company-contacts.controller");
-
-      companyContactsController.filterContactsBySelectionCriteria({
+      await companyContactsController.filterContactsBySelectionCriteria({
         companyId: userUpdates.company || currentUser.company._id,
         contactSelectionCriteria,
       });
@@ -380,6 +404,41 @@ const readCurrentUser = ({ currentUserId }) =>
 const readPrimaryUserByCompanyId = ({ companyId }) =>
   User.findOne({ company: companyId, kind: USER_KIND.PRIMARY }).lean();
 
+const addCompanyLogo = async ({ companyLogo, currentUser }) => {
+  if (!companyLogo) {
+    throw createHttpError(400, {
+      errorMessage: RESPONSE_MESSAGES.COMPANY_LOGO_REQUIRED,
+    });
+  }
+  const companyLogoUrl = await s3Util.uploadImageToS3({
+    s3Path: `company-logo/${currentUser.company._id}/logo.png`,
+    buffer: companyLogo.buffer,
+  });
+  await Company.updateOne(
+    { _id: currentUser.company._id },
+    { logo: companyLogoUrl }
+  );
+  return companyLogoUrl;
+};
+
+const deleteCompanyLogo = async ({ currentUser }) => {
+  await s3Util.deleteFileFromS3(
+    `company-logo/${currentUser.company._id}/logo.png`
+  );
+  await Company.updateOne({ _id: currentUser.company._id }, { logo: "" });
+};
+
+const skipTour = async ({ currentUser }) => {
+  await User.findOneAndUpdate(
+    { _id: currentUser._id },
+    {
+      $set: {
+        "tourSteps.isSkipped": true,
+      },
+    }
+  );
+};
+
 module.exports = {
   updateUser,
   createUserUnderACompany,
@@ -392,4 +451,7 @@ module.exports = {
   verifyReferralCode,
   readCurrentUser,
   readPrimaryUserByCompanyId,
+  addCompanyLogo,
+  deleteCompanyLogo,
+  skipTour,
 };

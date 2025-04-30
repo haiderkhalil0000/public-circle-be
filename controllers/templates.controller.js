@@ -1,7 +1,7 @@
 const createHttpError = require("http-errors");
 const puppeteer = require("puppeteer-core");
 
-const { Template } = require("../models");
+const { Template, User } = require("../models");
 const {
   basicUtil,
   constants: { RESPONSE_MESSAGES, TEMPLATE_KINDS, TEMPLATE_STATUS },
@@ -39,7 +39,14 @@ const createThumbnail = async ({ html, width, height }) => {
   return screenshotBuffer;
 };
 
-const createTemplate = async ({ companyId, name, kind, body }) => {
+const createTemplate = async ({
+  companyId,
+  emailAddress,
+  name,
+  kind,
+  body,
+  jsonTemplate,
+}) => {
   const existingTemplate = await Template.findOne({
     name,
     company: companyId,
@@ -57,6 +64,7 @@ const createTemplate = async ({ companyId, name, kind, body }) => {
     kind,
     body,
     size: Buffer.byteLength(body, "utf-8"),
+    jsonTemplate,
   };
 
   if (kind === TEMPLATE_KINDS.REGULAR) {
@@ -76,7 +84,17 @@ const createTemplate = async ({ companyId, name, kind, body }) => {
 
   document.thumbnailURL = url;
 
-  return Template.create(document);
+  await Promise.all[
+    (Template.create(document),
+    User.findOneAndUpdate(
+      { emailAddress },
+      {
+        $set: {
+          "tourSteps.steps.4.isCompleted": true,
+        },
+      }
+    ))
+  ];
 };
 
 const readTemplate = async ({ templateId }) => {

@@ -1,14 +1,14 @@
 const createHttpError = require("http-errors");
 const mongoose = require("mongoose");
 
-const { Segment } = require("../models");
+const { Segment, User } = require("../models");
 const {
   RESPONSE_MESSAGES,
   DOCUMENT_STATUS,
 } = require("../utils/constants.util");
 const { basicUtil } = require("../utils");
 
-const createSegment = async ({ name, filters, companyId }) => {
+const createSegment = async ({ name, filters, companyId, emailAddress }) => {
   const existingSegment = await Segment.findOne({
     name,
     company: companyId,
@@ -20,12 +20,21 @@ const createSegment = async ({ name, filters, companyId }) => {
       errorMessage: RESPONSE_MESSAGES.DUPLICATE_SEGMENT,
     });
   }
-
-  Segment.create({
-    name,
-    filters,
-    company: companyId,
-  });
+  await Promise.all([
+    Segment.create({
+      name,
+      filters,
+      company: companyId,
+    }),
+    User.findOneAndUpdate(
+      { emailAddress },
+      {
+        $set: {
+          "tourSteps.steps.3.isCompleted": true,
+        },
+      }
+    ),
+  ]);
 };
 
 const readSegment = async ({ segmentId }) => {

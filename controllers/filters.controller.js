@@ -1,23 +1,33 @@
 const createHttpError = require("http-errors");
 
-const { Filter } = require("../models");
+const { Filter, User } = require("../models");
 
 const {
   constants: { FILTER_STATUS, FILTER_TYPES },
   basicUtil,
 } = require("../utils");
 
-const createFilter = (
+const createFilter = async (
   { filterLabel, filterType, filterKey, filterValues },
-  { companyId }
+  { companyId, emailAddress }
 ) => {
-  Filter.create({
-    company: companyId,
-    filterLabel,
-    filterType,
-    filterKey,
-    filterValues,
-  });
+  await Promise.all([
+    Filter.create({
+      company: companyId,
+      filterLabel,
+      filterType,
+      filterKey,
+      filterValues,
+    }),
+    User.findOneAndUpdate(
+      { emailAddress },
+      {
+        $set: {
+          "tourSteps.steps.2.isCompleted": true,
+        },
+      }
+    ),
+  ]);
 };
 
 const updateFilter = (

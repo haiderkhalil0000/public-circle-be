@@ -20,6 +20,7 @@ const {
   sesUtil,
 } = require("../utils");
 const stripeController = require("./stripe.controller");
+const { TOUR_STEPS } = require("../utils/constants.util");
 
 const {
   PUBLIC_CIRCLES_WEB_URL,
@@ -27,7 +28,7 @@ const {
   ACCESS_TOKEN_EXPIRY,
 } = process.env;
 
-const register = async ({ emailAddress, password }) => {
+const register = async ({ emailAddress, password,receiveEmailsFromPublicCircles }) => {
   const user = await User.findOne({ emailAddress, isEmailVerified: true });
 
   if (user) {
@@ -40,6 +41,8 @@ const register = async ({ emailAddress, password }) => {
     emailAddress,
     password,
     isEmailVerified: true,
+    receiveEmailsFromPublicCircles,
+    tourSteps: TOUR_STEPS,
   });
 };
 
@@ -78,13 +81,21 @@ const login = async ({ emailAddress, password }) => {
 
   user.invalidLoginAttempts = 0;
   user.lastLoginAt = moment().format();
+  const touStepsExists = user.tourSteps && Object.keys(user.tourSteps).length > 0;
+  if (!touStepsExists) {
+    user.tourSteps = TOUR_STEPS;
+  }
 
   user.save();
 
   // Sync Plans
-  user?.company?.stripeCustomerId && await stripeController.readActivePlansByCustomerId({
-    stripeCustomerId: user?.company?.stripeCustomerId,
-  });
+  try {
+    user?.company?.stripeCustomerId && await stripeController.readActivePlansByCustomerId({
+      stripeCustomerId: user?.company?.stripeCustomerId,
+    });
+  } catch (error) {
+    console.error("Error syncing plans:", error);
+  }
 
   const topupController = require("./topup.controller");
 
@@ -96,7 +107,7 @@ const login = async ({ emailAddress, password }) => {
   return user;
 };
 
-const sendVerificationEmail = async ({ emailAddress }) => {
+const sendVerificationEmail = async ({ emailAddress, receiveEmailsFromPublicCircles=true }) => {
   const user = await User.findOne({ emailAddress, isEmailVerified: true });
 
   if (user) {
@@ -106,7 +117,7 @@ const sendVerificationEmail = async ({ emailAddress }) => {
   }
 
   const token = generateAccessToken({
-    payload: { emailAddress },
+    payload: { emailAddress, receiveEmailsFromPublicCircles },
     options: { expiresIn: ACCESS_TOKEN_EXPIRY },
   });
 

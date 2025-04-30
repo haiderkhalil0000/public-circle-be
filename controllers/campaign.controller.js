@@ -11,6 +11,7 @@ const {
   CampaignRun,
   Company,
   Plan,
+  User,
 } = require("../models");
 const {
   basicUtil,
@@ -71,6 +72,7 @@ const validateSourceEmailAddress = async ({
 
 const createCampaign = async ({
   companyId,
+  emailAddress,
   segmentIds = [],
   sourceEmailAddress,
   emailSubject,
@@ -116,6 +118,14 @@ const createCampaign = async ({
     }),
     companiesController.readCompanyById({ companyId }),
     usersController.readPrimaryUserByCompanyId({ companyId }),
+    User.findOneAndUpdate(
+      { emailAddress },
+      {
+        $set: {
+          "tourSteps.steps.5.isCompleted": true,
+        },
+      }
+    )
   ]);
 
   if (campaign.status === CAMPAIGN_STATUS.ACTIVE) {
@@ -608,7 +618,7 @@ const runCampaign = async ({ campaign }) => {
         ...query,
         public_circles_company: campaign.company,
         public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
-        is_unsubscribed: { $in: [false, null] },
+        public_circles_is_unsubscribed: { $in: [false, null] },
       },
       {
         email: 1,

@@ -20,9 +20,15 @@ const schema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    size: {
+      type: Number,
+      required: false,
+      default: 0,
+    },
     url: {
       type: String,
-      required: true,
+      required: false,
+      default: "",
     },
     status: {
       type: String,

@@ -91,6 +91,7 @@ router.patch(
         Joi.object({
           filterKey: Joi.string().required(),
           filterValues: Joi.array().required(),
+          _id: Joi.string().optional(),
         })
       ),
       emailKey: Joi.string(),
@@ -262,6 +263,101 @@ router.patch(
   }
 );
 
+router.post(
+  "/referral-codes/verify",
+  authenticate.verifyToken,
+  validate({
+    body: Joi.object({
+      referralCode: Joi.string().required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const reward = await usersController.verifyReferralCode({
+        ...req.body,
+        currentUserId: req.user._id,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.REFERRAL_CODE_ACCEPTED,
+        data: reward,
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+
+      userDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.delete('/delete-company-logo',
+  authenticate.verifyToken,
+  async (req, res, next) => {
+    try {
+      await usersController.deleteCompanyLogo({
+        currentUser: req.user,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.LOGO_DELETED,
+        data: {},
+      });
+    } catch (err) {
+      userDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.post('/company-logo',
+  upload.single('companyLogo'),
+  authenticate.verifyToken,
+  async (req, res, next) => {
+    try {
+      const companyLogo = await usersController.addCompanyLogo({
+        companyLogo: req.file,
+        currentUser: req.user,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.LOGO_CREATED,
+        data: {
+          companyLogo,
+        },
+      });
+    } catch (err) {
+      userDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.post('/skip-tour',
+  authenticate.verifyToken,
+  async (req, res, next) => {
+    try {
+      const companyLogo = await usersController.skipTour({
+        currentUser: req.user,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.LOGO_CREATED,
+        data: {
+          companyLogo,
+        },
+      });
+    } catch (err) {
+      userDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 router.delete(
   "/:userId",
   authenticate.verifyToken,
@@ -281,35 +377,6 @@ router.delete(
       res.status(200).json({
         message: RESPONSE_MESSAGES.COMPANY_USER_DELETED,
         data: {},
-      });
-    } catch (err) {
-      // sendErrorReportToSentry(error);
-
-      userDebugger(err);
-
-      next(err);
-    }
-  }
-);
-
-router.post(
-  "/referral-codes/verify",
-  authenticate.verifyToken,
-  validate({
-    body: Joi.object({
-      referralCode: Joi.string().required(),
-    }),
-  }),
-  async (req, res, next) => {
-    try {
-      const reward = await usersController.verifyReferralCode({
-        ...req.body,
-        currentUserId: req.user._id,
-      });
-
-      res.status(200).json({
-        message: RESPONSE_MESSAGES.REFERRAL_CODE_ACCEPTED,
-        data: reward,
       });
     } catch (err) {
       // sendErrorReportToSentry(error);

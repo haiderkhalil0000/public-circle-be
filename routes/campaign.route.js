@@ -80,6 +80,7 @@ router.post(
     try {
       const campaign = await campaignsController.createCampaign({
         companyId: req.user.company._id,
+        emailAddress: req.user.emailAddress,
         ...req.body,
       });
 

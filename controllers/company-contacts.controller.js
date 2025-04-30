@@ -20,6 +20,7 @@ const {
 } = require("../utils");
 const { PUBLIC_CIRCLES_EMAIL_ADDRESS, SUPPORT_EMAIL } = process.env;
 const { isNumericString } = require("../utils/basic.util");
+const { CONTACTS_DELETE_ACTION } = require("../utils/constants.util");
 
 const readContactKeys = async ({ companyId = "" }) => {
   const latestDocument = await CompanyContact.aggregate([
@@ -594,7 +595,9 @@ const deleteCompanyContact = async ({ companyId, userId }) => {
       _id: userId,
       public_circles_company: companyId,
     },
-    { public_circles_status: COMPANY_CONTACT_STATUS.DELETED }
+    { public_circles_status: COMPANY_CONTACT_STATUS.DELETED, public_circles_contact_deletion_reason: {
+      delete_action: CONTACTS_DELETE_ACTION.MANUAL_DELETE
+    }, }
   );
 
   if (!result.modifiedCount) {
@@ -615,7 +618,12 @@ const deleteAllCompanyContacts = async ({ companyId, currentUserKind }) => {
     {
       public_circles_company: companyId,
     },
-    { public_circles_status: COMPANY_CONTACT_STATUS.DELETED }
+    {
+      public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
+      public_circles_contact_deletion_reason: {
+        delete_action: CONTACTS_DELETE_ACTION.MANUAL_DELETE,
+      },
+    }
   );
 
   if (!result.modifiedCount) {
@@ -629,6 +637,7 @@ const uploadCsv = async ({
   companyId,
   stripeCustomerId,
   currentUserId,
+  emailAddress,
   file,
 }) => {
   if (!file) {
@@ -683,6 +692,7 @@ const uploadCsv = async ({
     stripeCustomerId,
     contactsPrimaryKey,
     file,
+    emailAddress,
   });
 };
 
@@ -738,7 +748,11 @@ const markContactsDuplicateWithPrimaryKey = async ({
             update: {
               $set: {
                 public_circles_existing_contactId: null,
-                public_circles_status: "DELETE",
+                public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
+                public_circles_contact_deletion_reason: {
+                  delete_action: CONTACTS_DELETE_ACTION.PRIMARY_KEY,
+                  primaryKey: primaryKey,
+                },
               },
             },
           },
@@ -844,6 +858,7 @@ const updatePrimaryKey = async ({ companyId, currentUserId, primaryKey }) => {
       },
       companyContactData: {
         public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
+        public_circles_contact_deletion_reason:{}
       },
     }),
   ]);
@@ -855,10 +870,28 @@ const updatePrimaryKey = async ({ companyId, currentUserId, primaryKey }) => {
   });
 };
 
-const deletePrimaryKey = async ({ companyId }) =>
-  Company.findByIdAndUpdate(companyId, {
-    contactsPrimaryKey: null,
-  });
+const deletePrimaryKey = async ({ companyId }) => {
+  const { contactsPrimaryKey } = await Company.findById(companyId).select(
+    "contactsPrimaryKey"
+  ).lean();
+  await Promise.all([
+    CompanyContact.updateMany(
+      {
+        public_circles_company: companyId,
+        public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
+        "public_circles_contact_deletion_reason.primaryKey": contactsPrimaryKey,
+      },
+      {
+        public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
+        public_circles_existing_contactId: null,
+        public_circles_contact_deletion_reason: {},
+      }
+    ),
+    Company.findByIdAndUpdate(companyId, {
+      contactsPrimaryKey: null,
+    })
+  ]);
+}
 
 const readCompanyContactsCount = ({ companyId }) =>
   CompanyContact.countDocuments({
@@ -886,6 +919,9 @@ const deleteSelectedContacts = async ({ companyId, contactIds }) => {
     },
     {
       public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
+      public_circles_contact_deletion_reason: {
+        delete_action: CONTACTS_DELETE_ACTION.MANUAL_DELETE
+      },
       public_circles_existing_contactId: null,
     }
   );
@@ -937,12 +973,56 @@ const filterContactsBySelectionCriteria = async ({
   const filteredContactIds = await CompanyContact.distinct("_id", query);
 
   await CompanyContact.updateMany(
-    { _id: { $nin: filteredContactIds }, public_circles_company: companyId },
+    {
+      _id: { $nin: filteredContactIds },
+      public_circles_company: companyId,
+      public_circles_status: { $ne: COMPANY_CONTACT_STATUS.DELETED },
+      "public_circles_contact_deletion_reason.delete_action": { $exists: false },
+    },
     {
       public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
       public_circles_existing_contactId: null,
+      public_circles_contact_deletion_reason: {
+        delete_action: CONTACTS_DELETE_ACTION.FILTER,
+        filter_condition: contactSelectionCriteria,
+      },
     }
   );
+};
+
+const revertFilterContactsBySelectionCriteria = async ({
+  companyId,
+  contactSelectionCriteria,
+}) => {
+
+  const baseQuery = {
+    public_circles_company: companyId,
+    public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
+    "public_circles_contact_deletion_reason.delete_action": CONTACTS_DELETE_ACTION.FILTER,
+  };
+
+  if (contactSelectionCriteria?.length > 0) {
+    baseQuery["public_circles_contact_deletion_reason.filter_condition"] = {
+      $elemMatch: {
+        $or: contactSelectionCriteria.map(filter => ({
+          filterKey: filter.filterKey,
+          filterValues: { $in: filter.filterValues }
+        }))
+      }
+    };
+  }
+
+  const result = await CompanyContact.updateMany(
+    baseQuery,
+    {
+      $set: {
+        public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
+        public_circles_contact_deletion_reason: {}
+      },
+    }
+  );
+
+  return result.modifiedCount;
 };
 
 const createMultipleCompanyContacts = ({ contacts }) => {
@@ -1030,6 +1110,7 @@ const resolveCompanyContactDuplicates = async ({
   const baseQuery = {
     public_circles_company: companyId,
     public_circles_status: { $ne: COMPANY_CONTACT_STATUS.DELETED },
+    "public_circles_contact_deletion_reason.delete_action": { $exists: false },
   };
 
   // Handle bulk contact updates
@@ -1044,10 +1125,14 @@ const resolveCompanyContactDuplicates = async ({
             public_circles_company: companyId,
             _id: { $ne: contact._id },
             [contactsPrimaryKey]: contact[contactsPrimaryKey],
+            "public_circles_contact_deletion_reason.delete_action": { $exists: false },
           },
           update: {
             $set: {
               public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
+              public_circles_contact_deletion_reason: {
+                delete_action: CONTACTS_DELETE_ACTION.DUPLICATION_RESOLVE,
+              },
               public_circles_existing_contactId: null,
             },
           },
@@ -1089,10 +1174,16 @@ const resolveCompanyContactDuplicates = async ({
     await Promise.all([
       contactsToBeDeleted.length &&
         CompanyContact.updateMany(
-          { _id: { $in: contactsToBeDeleted } },
+          {
+            _id: { $in: contactsToBeDeleted },
+            "public_circles_contact_deletion_reason.delete_action": { $exists: false },
+          },
           {
             $set: {
               public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
+              public_circles_contact_deletion_reason: {
+                delete_action: CONTACTS_DELETE_ACTION.DUPLICATION_RESOLVE,
+              },
               public_circles_existing_contactId: null,
             },
           }
@@ -1146,7 +1237,7 @@ const finalizeCompanyContact = async ({ companyId }) => {
 const unSubscribeFromEmail = async ({ companyContactId }) => {
   await CompanyContact.updateOne(
     { _id: companyContactId },
-    { is_unsubscribed: true }
+    { public_circles_is_unsubscribed: true }
   );
   return true;
 };
@@ -1211,5 +1302,6 @@ module.exports = {
   finalizeCompanyContact,
   unSubscribeFromEmail,
   createDedicatedIpRequest,
-  getDedicatedIpRequests
+  getDedicatedIpRequests,
+  revertFilterContactsBySelectionCriteria
 };

@@ -1,4 +1,5 @@
 const createHttpError = require("http-errors");
+const { s3Util } = require("../utils");
 
 const { Asset } = require("../models");
 const {
@@ -17,7 +18,7 @@ const createAsset = async ({ company, name, url }) => {
     });
   }
 
-  Asset.create({
+  await Asset.create({
     company,
     name,
     url,
@@ -27,8 +28,8 @@ const createAsset = async ({ company, name, url }) => {
 const readAsset = async ({ assetId }) => {
   basicUtil.validateObjectId({ inputString: assetId });
 
-  const assetDoc = await Asset.findById(assetId);
-
+  let assetDoc = await Asset.findById(assetId);
+  assetDoc.url = s3Util.s3FileCompleteUrl(assetDoc.url);
   if (!assetDoc) {
     throw createHttpError(404, {
       errorMessage: RESPONSE_MESSAGES.SOCIAL_LINK_NOT_FOUND,
@@ -52,27 +53,39 @@ const readPaginatedAssets = async ({ pageNumber, pageSize }) => {
   };
 };
 
-const readAllAssets = () => Asset.find();
-
-const updateAsset = async ({ assetId, assetData }) => {
-  basicUtil.validateObjectId({ inputString: assetId });
-
-  const result = await Asset.updateOne({ _id: assetId }, { ...assetData });
-
-  if (!result.matchedCount) {
-    throw createHttpError(404, {
-      errorMessage: RESPONSE_MESSAGES.ASSET_NOT_FOUND,
-    });
+const readAllAssets = async ({ companyId }) => {
+  const assets = await Asset.find({
+    company: companyId,
+    status: ASSETS_STATUS.ACTIVE,
+  });
+  assets?.map((asset) => {
+    asset.url = s3Util.s3FileCompleteUrl(asset.url);
   }
-};
-
-const deleteAsset = async ({ assetId }) => {
-  basicUtil.validateObjectId({ inputString: assetId });
-
-  const result = await Asset.updateOne(
-    { _id: assetId },
-    { status: ASSETS_STATUS.DELETED }
   );
+  return assets;
+};
+
+const updateAsset = async ({ assetId}) => {
+  basicUtil.validateObjectId({ inputString: assetId });
+
+  let result = await Asset.findOneAndUpdate(
+    { _id: assetId },
+    { $set: { status: ASSETS_STATUS.ACTIVE } },
+    { new: true }
+  ).lean();
+  
+  if (!result) {
+    throw createHttpError(404, {
+      errorMessage: RESPONSE_MESSAGES.ASSET_NOT_FOUND,
+    });
+  }
+
+  result.url = s3Util.s3FileCompleteUrl(result.url);
+  return result;
+};
+
+const deleteAsset = async ({ url }) => {
+  const result = await Asset.findOneAndDelete(url);
 
   if (!result.matchedCount) {
     throw createHttpError(404, {
@@ -80,6 +93,26 @@ const deleteAsset = async ({ assetId }) => {
     });
   }
 };
+
+const generateUploadFileSignedUrl = async ({fileName, companyId}) => {
+  const fileType = `image/${fileName.substring(fileName.lastIndexOf('.') + 1)}`;
+  const timeStamp = Date.now();
+  const fileNameWithPath = `assets/${companyId}/email-assets/${timeStamp}-${fileName}`;
+  const assetDoc = await Asset.create({
+    company: companyId,
+    name: fileName,
+    url: fileNameWithPath,
+    status: ASSETS_STATUS.IN_ACTIVE,
+  })
+  const signedUrl = await s3Util.generateUploadFileSignedUrl(
+    fileNameWithPath,
+    fileType
+  );
+  return {
+    signedUrl,
+    assetId: assetDoc._id,
+  };
+}
 
 module.exports = {
   createAsset,
@@ -88,4 +121,5 @@ module.exports = {
   readAllAssets,
   updateAsset,
   deleteAsset,
+  generateUploadFileSignedUrl,
 };

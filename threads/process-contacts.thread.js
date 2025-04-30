@@ -5,7 +5,7 @@ const {
   connectDbForThread,
   disconnectDbForThread,
 } = require("./db-connection-thread");
-const { Company } = require("../models");
+const { Company, User } = require("../models");
 const {
   webhooksController,
   companiesController,
@@ -72,7 +72,7 @@ const markDuplicateContacts = (contacts, existingContacts, primaryKey) => {
 
 parentPort.on(
   "message",
-  async ({ companyId, contactsPrimaryKey, file }) => {
+  async ({ companyId, contactsPrimaryKey, file, emailAddress }) => {
     try {
       await connectDbForThread();
       const [
@@ -110,19 +110,20 @@ parentPort.on(
       }
 
       let companyModelUpdates;
-
-      if (contacts[0]["email"]) {
-        companyModelUpdates = { emailKey: "email" };
-      } else if (contacts[0]["Email"]) {
-        companyModelUpdates = { emailKey: "Email" };
-      } else if (contacts[0]["EMAIL"]) {
-        companyModelUpdates = { emailKey: "EMAIL" };
-      } else if (contacts[0]["emailAddress"]) {
-        companyModelUpdates = { emailKey: "emailAddress" };
-      } else if (contacts[0]["Email Address"]) {
-        companyModelUpdates = { emailKey: "Email Address" };
-      } else if (contacts[0]["EMAIL ADDRESS"]) {
-        companyModelUpdates = { emailKey: "EMAIL ADDRESS" };
+      if (contacts.length) {
+        if (contacts[0]["email"]) {
+          companyModelUpdates = { emailKey: "email" };
+        } else if (contacts[0]["Email"]) {
+          companyModelUpdates = { emailKey: "Email" };
+        } else if (contacts[0]["EMAIL"]) {
+          companyModelUpdates = { emailKey: "EMAIL" };
+        } else if (contacts[0]["emailAddress"]) {
+          companyModelUpdates = { emailKey: "emailAddress" };
+        } else if (contacts[0]["Email Address"]) {
+          companyModelUpdates = { emailKey: "Email Address" };
+        } else if (contacts[0]["EMAIL ADDRESS"]) {
+          companyModelUpdates = { emailKey: "EMAIL ADDRESS" };
+        }
       }
 
       companyModelUpdates.isContactFinalize = false;
@@ -148,8 +149,15 @@ parentPort.on(
           processedCount += part.length;
           const progress = (processedCount / totalContacts) * 100;
           parentPort.postMessage({ progress });
-
         })
+      );
+      await User.findOneAndUpdate(
+        { emailAddress },
+        {
+          $set: {
+            "tourSteps.steps.1.isCompleted": true,
+          },
+        }
       );
 
       const companyActiveCampaigns =

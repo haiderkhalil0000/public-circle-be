@@ -22,6 +22,7 @@ router.post(
       await segmentsController.createSegment({
         ...req.body,
         companyId: req.user.company._id,
+        emailAddress: req.user.emailAddress,
       });
 
       res.status(200).json({
