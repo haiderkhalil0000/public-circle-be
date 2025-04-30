@@ -54,18 +54,20 @@ const updateUser = async ({
   const promises = [];
   const companyContactsController = require("./company-contacts.controller");
 
-  const company = await Company.findOne({
-    _id: currentUser.company._id,
-  });
-
-  if (contactSelectionCriteria) {
-    if (
-      !_.isEqual(contactSelectionCriteria, company.contactSelectionCriteria)
-    ) {
-      await companyContactsController.revertFilterContactsBySelectionCriteria({
-        companyId: currentUser.company._id,
-        contactSelectionCriteria: company.contactSelectionCriteria,
-      });
+  if(currentUser?.company?._id){
+    const company = await Company.findOne({
+      _id: currentUser.company._id,
+    });
+  
+    if (contactSelectionCriteria) {
+      if (
+        !_.isEqual(contactSelectionCriteria, company.contactSelectionCriteria)
+      ) {
+        await companyContactsController.revertFilterContactsBySelectionCriteria({
+          companyId: currentUser.company._id,
+          contactSelectionCriteria: company.contactSelectionCriteria,
+        });
+      }
     }
   }
 
