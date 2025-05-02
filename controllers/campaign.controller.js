@@ -200,7 +200,7 @@ const readPaginatedCampaigns = async ({
     for (const segment of campaign.segments) {
       promises.push(
         companyContactsController
-          .readFiltersCount({ filters: segment.filters, companyId })
+          .readFiltersCount({ filters: segment.filters, companyId, internalCall: true })
           .then((items) => ({
             campaignId: campaign._id.toString(),
             usersCount: items.reduce((sum, item) => sum + item.filterCount, 0),
@@ -252,7 +252,7 @@ const readAllCampaigns = async ({
     for (const segment of campaign.segments) {
       promises.push(
         companyContactsController
-          .readFiltersCount({ filters: segment.filters, companyId })
+          .readFiltersCount({ filters: segment.filters, companyId, internalCall: true })
           .then((item) => ({
             campaignId: campaign._id.toString(),
             usersCount: item[0].filterCount,
@@ -524,29 +524,32 @@ const sendSstEmail = async ({
 };
 
 const populateCompanyContactsQuery = ({ segments }) => {
-  let allFilters = {};
+  let allFilters = [];
 
   for (const segment of segments) {
+    let segmentFilters = {};
     for (const filter of segment.filters) {
       if (filter.values.length && !filter?.conditions?.length) {
-        allFilters[filter.key] = { $in: filter.values };
+        segmentFilters[filter.key] = { $in: filter.values };
       } else if (filter.conditions.length) {
         const companyContactsController = require("./company-contacts.controller");
-
         const filterConditionQueries =
           companyContactsController.getFilterConditionQuery({
             conditions: filter.conditions,
             conditionKey: filter.key,
           });
-
-        allFilters[filter.operator === "AND" ? "$and" : "$or"] =
+        segmentFilters[filter.operator === "AND" ? "$and" : "$or"] =
           filterConditionQueries.filter((c) => Object.keys(c).length > 0);
       }
     }
-  }
 
-  return allFilters;
+    if (Object.keys(segmentFilters).length > 0) {
+      allFilters.push(segmentFilters);
+    }
+  }
+  return allFilters.length > 0 ? { $and: allFilters } : {};
 };
+
 
 const runCampaign = async ({ campaign }) => {
   const promises = [];
@@ -731,6 +734,7 @@ const readPaginatedCampaignLogs = async ({
           const result = await companyContactsController.readFiltersCount({
             companyId: campaign.company,
             filters: segment.filters,
+            internalCall: true
           });
 
           if (Array.isArray(result)) {
@@ -773,6 +777,7 @@ const readCampaignRecipientsCount = async ({ campaign }) => {
       companyContactsController.readFiltersCount({
         companyId: campaign.company,
         filters: filter,
+        internalCall: true
       })
     );
   });
