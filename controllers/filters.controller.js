@@ -1,16 +1,24 @@
 const createHttpError = require("http-errors");
 
-const { Filter, User } = require("../models");
+const { Filter, User, Company } = require("../models");
 
 const {
   constants: { FILTER_STATUS, FILTER_TYPES },
   basicUtil,
 } = require("../utils");
+const { RESPONSE_MESSAGES } = require("../utils/constants.util");
 
 const createFilter = async (
   { filterLabel, filterType, filterKey, filterValues },
   { companyId, emailAddress }
 ) => {
+  const company = await Company.findById(companyId).lean();
+  if (!company.isContactFinalize) {
+    throw createHttpError(
+      400,
+      RESPONSE_MESSAGES.FILTER_ERROR_FINALIZE_CONTACTS
+    );
+  }
   await Promise.all([
     Filter.create({
       company: companyId,

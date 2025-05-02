@@ -255,6 +255,8 @@ module.exports = {
     LOGO_CREATED: "Company Logo Added Successfully.",
     COMPANY_LOGO_REQUIRED: "Company Logo is required.",
     LOGO_DELETED: "Company Logo Deleted Successfully.",
+    FILTER_ERROR_FINALIZE_CONTACTS: "You cannot create a filter until the company contact is not finalized.",
+    SEGMENT_ERROR_FINALIZE_CONTACTS: "You cannot create a segment until the company contact is not finalized.",
   },
 
   INTERACTION_CHANNELS: {
