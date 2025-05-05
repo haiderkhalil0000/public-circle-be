@@ -83,18 +83,15 @@ const createTemplate = async ({
   });
 
   document.thumbnailURL = url;
-
-  await Promise.all[
-    (Template.create(document),
-    User.findOneAndUpdate(
-      { emailAddress },
-      {
-        $set: {
-          "tourSteps.steps.4.isCompleted": true,
-        },
-      }
-    ))
-  ];
+  await Template.create(document);
+  await User.findOneAndUpdate(
+    { emailAddress },
+    {
+      $set: {
+        "tourSteps.steps.4.isCompleted": true,
+      },
+    }
+  );
 };
 
 const readTemplate = async ({ templateId }) => {
