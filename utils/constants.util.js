@@ -255,6 +255,10 @@ module.exports = {
     LOGO_CREATED: "Company Logo Added Successfully.",
     COMPANY_LOGO_REQUIRED: "Company Logo is required.",
     LOGO_DELETED: "Company Logo Deleted Successfully.",
+    FILTER_ERROR_FINALIZE_CONTACTS: "You cannot create a filter until the company contact is not finalized.",
+    SEGMENT_ERROR_FINALIZE_CONTACTS: "You cannot create a segment until the company contact is not finalized.",
+    TOUR_SKIPPED: "Tour skipped successfully.",
+    TOUR_COMPLETED: "Tour completed successfully.",
   },
 
   INTERACTION_CHANNELS: {
@@ -505,6 +509,7 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
   },
   TOUR_STEPS: {
     isSkipped: false,
+    isCompleted: false,
     steps: [
       {
         title: "Email & Domain Configuration",

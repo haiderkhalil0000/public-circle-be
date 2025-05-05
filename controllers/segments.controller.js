@@ -1,7 +1,7 @@
 const createHttpError = require("http-errors");
 const mongoose = require("mongoose");
 
-const { Segment, User } = require("../models");
+const { Segment, User, Company } = require("../models");
 const {
   RESPONSE_MESSAGES,
   DOCUMENT_STATUS,
@@ -9,6 +9,13 @@ const {
 const { basicUtil } = require("../utils");
 
 const createSegment = async ({ name, filters, companyId, emailAddress }) => {
+  const company = await Company.findById(companyId).lean();
+  if(!company.isContactFinalize) {
+    throw createHttpError(
+      400,
+      RESPONSE_MESSAGES.SEGMENT_ERROR_FINALIZE_CONTACTS
+    );
+  }
   const existingSegment = await Segment.findOne({
     name,
     company: companyId,

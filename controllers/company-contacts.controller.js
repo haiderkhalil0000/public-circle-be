@@ -395,19 +395,19 @@ const getFilterConditionQuery = ({ conditions, conditionKey }) => {
   });
 };
 
-const readFiltersCount = async ({ companyId, filters }) => {
-  const promises = [];
+const readFiltersCount = async ({ companyId, filters, internalCall=false }) => {
+  const individualPromises = [];
 
   filters?.forEach((item) => {
     if (item.values && item.values.length && !item?.conditions?.length) {
-      promises.push(
+      individualPromises.push(
         CompanyContact.countDocuments({
           public_circles_company: companyId,
           public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
           [item.key]: { $in: item.values },
         }).then((count) => ({
           key: item.key,
-          values: item.conditions,
+          values: item.values,
           count,
         }))
       );
@@ -422,24 +422,51 @@ const readFiltersCount = async ({ companyId, filters }) => {
         conditionKey: item.key,
       });
 
-      query[item.operator === "AND" ? "$and" : "$or"] =
+      query[item.operator === "OR" ? "$or" : "$and"] =
         filterConditionQueries.filter((c) => Object.keys(c).length > 0);
 
-      promises.push(
+      individualPromises.push(
         CompanyContact.countDocuments(query).then((count) => ({
           key: item.key,
           values: item.conditions,
-          count: count,
+          count,
         }))
       );
     }
   });
 
-  const results = await Promise.all(promises);
+  const combinedQuery = {
+    public_circles_company: companyId,
+    public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
+  };
+
+  filters?.forEach((item) => {
+    if (item.values && item.values.length && !item?.conditions?.length) {
+      combinedQuery[item.key] = { $in: item.values };
+    } else if (item.conditions && item.conditions.length) {
+      const filterConditionQueries = getFilterConditionQuery({
+        conditions: item.conditions,
+        conditionKey: item.key,
+      });
+      
+      combinedQuery[item.operator === "OR" ? "$or" : "$and"] = 
+        filterConditionQueries.filter((c) => Object.keys(c).length > 0);
+    }
+  });
+
+  const combinedCountPromise = CompanyContact.countDocuments(combinedQuery)
+    .then(count => ({
+      key: "combined",
+      values: filters.map(f => f.key),
+      count
+    }));
+
+  const allPromises = [...individualPromises, combinedCountPromise];
+  const results = await Promise.all(allPromises);
 
   const filterCounts = [];
 
-  results.forEach((item, index) => {
+  results.slice(0, -1).forEach((item, index) => {
     filterCounts.push({
       filterKey: filters[index].key,
       filterValues: filters[index].values || filters[index].conditions,
@@ -447,7 +474,14 @@ const readFiltersCount = async ({ companyId, filters }) => {
     });
   });
 
-  return filterCounts;
+  filterCounts.push({
+    filterKey: "segmentCount",
+    filterCount: results[results.length - 1].count,
+  });
+  if(!internalCall) {
+    return filterCounts;
+  }
+  return filterCounts.filter(item => item.filterKey === "segmentCount");
 };
 
 const search = async ({ companyId, searchString, searchFields }) => {

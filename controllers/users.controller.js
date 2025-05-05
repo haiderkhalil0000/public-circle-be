@@ -441,6 +441,17 @@ const skipTour = async ({ currentUser }) => {
   );
 };
 
+const completeTour = async ({ currentUser }) => {
+  await User.findOneAndUpdate(
+    { _id: currentUser._id },
+    {
+      $set: {
+        "tourSteps.isCompleted": true,
+      },
+    }
+  );
+};
+
 module.exports = {
   updateUser,
   createUserUnderACompany,
@@ -456,4 +467,5 @@ module.exports = {
   addCompanyLogo,
   deleteCompanyLogo,
   skipTour,
+  completeTour
 };

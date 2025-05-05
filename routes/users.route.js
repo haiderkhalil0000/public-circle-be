@@ -345,7 +345,29 @@ router.post('/skip-tour',
       });
 
       res.status(200).json({
-        message: RESPONSE_MESSAGES.LOGO_CREATED,
+        message: RESPONSE_MESSAGES.TOUR_SKIPPED,
+        data: {
+          companyLogo,
+        },
+      });
+    } catch (err) {
+      userDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.post('/complete-tour',
+  authenticate.verifyToken,
+  async (req, res, next) => {
+    try {
+      const companyLogo = await usersController.completeTour({
+        currentUser: req.user,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.TOUR_COMPLETED,
         data: {
           companyLogo,
         },
