@@ -115,18 +115,16 @@ const addDataInCompanyConfigurations = async ({
       isDefault: true,
     });
 
-    await Promise.all([
-      configuration.save(),
-      User.findOneAndUpdate(
-        { emailAddress },
-        {
-          $set: {
-            "tourSteps.steps.0.isCompleted": true,
-          },
-        }
-      ),
-    ]);
+    await configuration.save();
   }
+  await User.findOneAndUpdate(
+    { emailAddress },
+    {
+      $set: {
+        "tourSteps.steps.0.isCompleted": true,
+      },
+    }
+  );
 };
 
 const initiateEmailVerification = async ({ companyId, emailAddress }) => {
