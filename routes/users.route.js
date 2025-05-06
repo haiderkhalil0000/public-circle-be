@@ -380,6 +380,28 @@ router.post('/complete-tour',
   }
 );
 
+router.post('/reset-tour',
+  authenticate.verifyToken,
+  async (req, res, next) => {
+    try {
+      const companyLogo = await usersController.resetTour({
+        currentUser: req.user,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.TOUR_RESET,
+        data: {
+          companyLogo,
+        },
+      });
+    } catch (err) {
+      userDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 router.delete(
   "/:userId",
   authenticate.verifyToken,

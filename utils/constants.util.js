@@ -259,6 +259,7 @@ module.exports = {
     SEGMENT_ERROR_FINALIZE_CONTACTS: "You cannot create a segment until the company contact is not finalized.",
     TOUR_SKIPPED: "Tour skipped successfully.",
     TOUR_COMPLETED: "Tour completed successfully.",
+    TOUR_RESET: "Tour reset successfully.",
   },
 
   INTERACTION_CHANNELS: {
