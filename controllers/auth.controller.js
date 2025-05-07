@@ -107,7 +107,7 @@ const login = async ({ emailAddress, password }) => {
   return user;
 };
 
-const sendVerificationEmail = async ({ emailAddress, receiveEmailsFromPublicCircles=true }) => {
+const sendVerificationEmail = async ({ emailAddress, receiveEmailsFromPublicCircles = true }) => {
   const user = await User.findOne({ emailAddress, isEmailVerified: true });
 
   if (user) {
@@ -121,35 +121,33 @@ const sendVerificationEmail = async ({ emailAddress, receiveEmailsFromPublicCirc
     options: { expiresIn: ACCESS_TOKEN_EXPIRY },
   });
 
+  const verificationLink = `${PUBLIC_CIRCLES_WEB_URL}/auth/jwt/sign-up/?source=register&token=${token}`;
+
+  const htmlContent = `
+    <p>Welcome to Public Circles,</p>
+    <p>Please verify your email address by clicking the link below:</p>
+    <p><a href="${verificationLink}" target="_blank" rel="noopener noreferrer">${verificationLink}</a></p>
+    <p>Regards,<br>Public Circles Team</p>
+  `;
+
   const emailSent = await sesUtil.sendEmail({
     fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
     toEmailAddress: emailAddress,
     subject: VERIFICATION_EMAIL_SUBJECT,
-    content: `Welcome to Public Circles,
-
-Please verify your email address by using the following link:
-${PUBLIC_CIRCLES_WEB_URL}/auth/jwt/sign-up/?source=register&token=${token}
-
-Regards,
-Public Circles Team`,
-    contentType: TEMPLATE_CONTENT_TYPE.TEXT,
+    content: htmlContent,
+    contentType: TEMPLATE_CONTENT_TYPE.HTML,
   });
 
-  EmailSent.create({
+  await EmailSent.create({
     kind: EMAIL_KIND.VERIFICATION,
     fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
     toEmailAddress: emailAddress,
     emailSubject: VERIFICATION_EMAIL_SUBJECT,
-    emailContent: `Welcome to Public Circles,
-
-Please verify your email address by using the following link:
-${PUBLIC_CIRCLES_WEB_URL}/auth/jwt/sign-up/?source=register&token=${token}
-
-Regards,
-Public Circles Team`,
+    emailContent: htmlContent,
     sesMessageId: emailSent.MessageId,
   });
 };
+
 
 const verifyJwtToken = async ({ token, source }) => {
   try {
