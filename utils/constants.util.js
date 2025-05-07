@@ -525,8 +525,8 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
         link: "/dashboard/configurations/contacts",
       },
       {
-        title: "Apply Data Filters",
-        description: "Use filters to refine your audience by specific attributes.  This helps you create more precise audience segments and improve targeting for a more effective marketing campaign.",
+        title: "Apply Data Fields",
+        description: "Use fields to refine your audience by specific attributes.  This helps you create more precise audience segments and improve targeting for a more effective marketing campaign.",
         isCompleted: false,
         link: "/dashboard/audience/filters",
       },
