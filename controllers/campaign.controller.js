@@ -85,7 +85,7 @@ const createCampaign = async ({
   frequency,
   status,
 }) => {
-  if (status !== CAMPAIGN_STATUS.DISABLED) {
+  if (status !== CAMPAIGN_STATUS.PAUSED) {
     for (const segmentId of segmentIds) {
       basicUtil.validateObjectId({ inputString: segmentId });
     }
@@ -681,7 +681,7 @@ const runCampaign = async ({ campaign }) => {
     {
       [!campaign.isRecurring && !campaign.isOnGoing ? "status" : undefined]:
       !campaign.isRecurring && !campaign.isOnGoing
-      ? CAMPAIGN_STATUS.DISABLED
+      ? CAMPAIGN_STATUS.PAUSED
       : undefined,
       cronStatus: CRON_STATUS.PROCESSED,
       lastProcessed: moment().format(),
@@ -805,15 +805,15 @@ const calculateBandwidthOverageCharge = ({ unpaidBandwidth, plan }) => {
   return timesExceeded * priceInSmallestUnit;
 };
 
-const disableCampaign = ({ campaignId }) =>
-  Campaign.findByIdAndUpdate(campaignId, { status: CAMPAIGN_STATUS.DISABLED });
+const draftCampaign = ({ campaignId }) =>
+  Campaign.findByIdAndUpdate(campaignId, { status: CAMPAIGN_STATUS.DRAFT });
 
 const validateCampaign = async ({ campaign, company, primaryUser }) => {
   const stripeController = require("./stripe.controller");
   const companyContactsController = require("./company-contacts.controller");
 
   if(!company.isContactFinalize){
-    await disableCampaign({ campaignId: campaign._id });
+    await draftCampaign({ campaignId: campaign._id });
     throw createHttpError(400, {
       errorMessage: RESPONSE_MESSAGES.CONTACTS_ARE_NOT_FINALIZE,
       errorCode: `Campaign created with id ${campaign._id}`,
@@ -826,7 +826,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
       });
 
     if (totalRecords) {
-      await disableCampaign({ campaignId: campaign._id });
+      await draftCampaign({ campaignId: campaign._id });
 
       throw createHttpError(400, {
         errorMessage: RESPONSE_MESSAGES.CONTACT_DUPLICATES_NOT_RESOLVED,
@@ -836,7 +836,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
   }
 
   if (!company.emailKey) {
-    await disableCampaign({ campaignId: campaign._id });
+    await draftCampaign({ campaignId: campaign._id });
     throw createHttpError(400, {
       errorMessage: RESPONSE_MESSAGES.EMAIL_KEY_NOT_FOUND,
       errorCode: `Campaign created with id ${campaign._id}`,
@@ -894,7 +894,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
     });
 
     if (companyBalance < emailOverageCharge) {
-      await disableCampaign({ campaignId: campaign._id });
+      await draftCampaign({ campaignId: campaign._id });
 
       await sesUtil.sendEmail({
         fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
@@ -931,7 +931,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
     });
 
     if (companyBalance < bandwidthOverageCharge) {
-      await disableCampaign({ campaignId: campaign._id });
+      await draftCampaign({ campaignId: campaign._id });
 
       await sesUtil.sendEmail({
         fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,

@@ -67,7 +67,7 @@ router.post(
       }),
       status: Joi.string().valid(
         CAMPAIGN_STATUS.ACTIVE,
-        CAMPAIGN_STATUS.DISABLED
+        CAMPAIGN_STATUS.PAUSED,
       ),
     }).custom((value, helpers) => {
       if (value.isOnGoing && value.isRecurring) {
@@ -300,7 +300,7 @@ router.patch(
       isOnGoing: Joi.boolean().optional(),
       recurringPeriod: Joi.string().optional(),
       status: Joi.string()
-        .valid(CAMPAIGN_STATUS.ACTIVE, CAMPAIGN_STATUS.DISABLED)
+        .valid(CAMPAIGN_STATUS.ACTIVE, CAMPAIGN_STATUS.PAUSED)
         .optional(),
     }),
   }),
