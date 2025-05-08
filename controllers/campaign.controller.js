@@ -31,6 +31,7 @@ const {
 } = require("../utils");
 const { REGIONS, PLAN_NAMES, POWERED_BY } = require("../utils/constants.util");
 const { default: axios } = require("axios");
+const shortid = require('shortid');
 
 const { PUBLIC_CIRCLES_EMAIL_ADDRESS, PUBLIC_CIRCLES_WEB_URL } = process.env;
 
@@ -84,11 +85,15 @@ const createCampaign = async ({
   recurringPeriod,
   frequency,
   status,
+  campaignId
 }) => {
   if (status !== CAMPAIGN_STATUS.PAUSED) {
     for (const segmentId of segmentIds) {
       basicUtil.validateObjectId({ inputString: segmentId });
     }
+  }
+  if(!campaignId){
+    campaignId = shortid.generate();
   }
 
   await validateSourceEmailAddress({
@@ -112,6 +117,7 @@ const createCampaign = async ({
       runSchedule,
       isRecurring,
       isOnGoing,
+      campaignId,
       recurringPeriod,
       frequency,
       status,
@@ -289,6 +295,10 @@ const updateCampaign = async ({ companyId, campaignId, campaignData }) => {
     Company.findById(companyId),
     usersController.readPrimaryUserByCompanyId({ companyId }),
   ]);
+
+  if(!campaignData.campaignId){
+    campaignData.campaignId = shortid.generate();
+  }
 
   if (campaignData.segmentIds || campaignData.emailTemplateId) {
     basicUtil.validateObjectId({ inputString: campaignData.emailTemplateId });

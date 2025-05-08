@@ -57,6 +57,7 @@ router.post(
       runSchedule: Joi.string(),
       isRecurring: Joi.boolean(),
       isOnGoing: Joi.boolean(),
+      campaignId: Joi.string().valid('', null).optional(),
       recurringPeriod: Joi.string(),
       frequency: Joi.string()
       .valid(CAMPAIGN_FREQUENCIES.ONE_TIME, CAMPAIGN_FREQUENCIES.MANY_TIMES)
@@ -299,6 +300,7 @@ router.patch(
       isRecurring: Joi.boolean().optional(),
       isOnGoing: Joi.boolean().optional(),
       recurringPeriod: Joi.string().optional(),
+      campaignId: Joi.string().valid('', null).optional(),
       status: Joi.string()
         .valid(CAMPAIGN_STATUS.ACTIVE, CAMPAIGN_STATUS.PAUSED)
         .optional(),
