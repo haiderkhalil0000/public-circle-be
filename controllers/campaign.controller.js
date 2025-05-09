@@ -1197,11 +1197,12 @@ const validateCampaignCompanyId = async ({
           errorMessage: RESPONSE_MESSAGES.CAMPAIGN_COMPANY_ID_EXISTS,
         });
       }
-    }
-    if (campaignExists.length > 0) {
-      throw createHttpError(400, {
-        errorMessage: RESPONSE_MESSAGES.CAMPAIGN_COMPANY_ID_EXISTS,
-      });
+    } else{
+      if (campaignExists.length > 0) {
+        throw createHttpError(400, {
+          errorMessage: RESPONSE_MESSAGES.CAMPAIGN_COMPANY_ID_EXISTS,
+        });
+      }
     }
   }
 };

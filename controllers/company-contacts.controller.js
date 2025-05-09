@@ -440,19 +440,38 @@ const readFiltersCount = async ({ companyId, filters, internalCall=false }) => {
     public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
   };
 
+  const andConditions = [];
+  const orConditions = [];
+
   filters?.forEach((item) => {
     if (item.values && item.values.length && !item?.conditions?.length) {
-      combinedQuery[item.key] = { $in: item.values };
+      const condition = { [item.key]: { $in: item.values } };
+      if (item.operator === "OR") {
+        orConditions.push(condition);
+      } else {
+        andConditions.push(condition);
+      }
     } else if (item.conditions && item.conditions.length) {
       const filterConditionQueries = getFilterConditionQuery({
         conditions: item.conditions,
         conditionKey: item.key,
-      });
-      
-      combinedQuery[item.operator === "OR" ? "$or" : "$and"] = 
-        filterConditionQueries.filter((c) => Object.keys(c).length > 0);
+      }).filter((c) => Object.keys(c).length > 0);
+
+      if (item.operator === "OR") {
+        orConditions.push(...filterConditionQueries);
+      } else {
+        andConditions.push(...filterConditionQueries);
+      }
     }
   });
+
+  if (andConditions.length) {
+    combinedQuery["$and"] = andConditions;
+  }
+  if (orConditions.length) {
+    combinedQuery["$or"] = orConditions;
+  }
+  
 
   const combinedCountPromise = CompanyContact.countDocuments(combinedQuery)
     .then(count => ({
