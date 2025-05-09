@@ -77,7 +77,7 @@ const schema = new mongoose.Schema(
       default: CAMPAIGN_STATUS.ACTIVE,
       required: true,
     },
-    campaignId: {
+    campaignCompanyId: {
       type: String,
       default: null,
     },

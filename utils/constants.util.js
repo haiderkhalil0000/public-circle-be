@@ -260,6 +260,7 @@ module.exports = {
     TOUR_SKIPPED: "Tour skipped successfully.",
     TOUR_COMPLETED: "Tour completed successfully.",
     TOUR_RESET: "Tour reset successfully.",
+    CAMPAIGN_COMPANY_ID_EXISTS: "Campaign company id already exists!",
   },
 
   INTERACTION_CHANNELS: {

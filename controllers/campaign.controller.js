@@ -85,21 +85,22 @@ const createCampaign = async ({
   recurringPeriod,
   frequency,
   status,
-  campaignId
+  campaignCompanyId
 }) => {
   if (status !== CAMPAIGN_STATUS.PAUSED) {
     for (const segmentId of segmentIds) {
       basicUtil.validateObjectId({ inputString: segmentId });
     }
   }
-  if(!campaignId){
-    campaignId = shortid.generate();
+  if(!campaignCompanyId){
+    campaignCompanyId = shortid.generate();
   }
 
   await validateSourceEmailAddress({
     companyId,
     sourceEmailAddress,
   });
+  await validateCampaignCompanyId({campaignCompanyId, companyId});
 
   basicUtil.validateObjectId({ inputString: emailTemplateId });
 
@@ -117,7 +118,7 @@ const createCampaign = async ({
       runSchedule,
       isRecurring,
       isOnGoing,
-      campaignId,
+      campaignCompanyId,
       recurringPeriod,
       frequency,
       status,
@@ -295,9 +296,13 @@ const updateCampaign = async ({ companyId, campaignId, campaignData }) => {
     Company.findById(companyId),
     usersController.readPrimaryUserByCompanyId({ companyId }),
   ]);
-
-  if(!campaignData.campaignId){
-    campaignData.campaignId = shortid.generate();
+  await validateCampaignCompanyId({
+    campaignCompanyId: campaign.campaignCompanyId,
+    companyId,
+    isUpdate: true,
+  });
+  if(!campaignData.campaignCompanyId){
+    campaignData.campaignCompanyId = shortid.generate();
   }
 
   if (campaignData.segmentIds || campaignData.emailTemplateId) {
@@ -1159,6 +1164,30 @@ const getQueueUrl = () => {
   };
 
   return queueUrls[env];
+};
+
+const validateCampaignCompanyId = async ({
+  campaignCompanyId,
+  companyId,
+  isUpdate = false,
+}) => {
+  const campaignExists = await Campaign.find({
+    campaignCompanyId: campaignCompanyId,
+    company: companyId,
+  });
+
+  if (isUpdate) {
+    if (campaignExists.length > 1) {
+      throw createHttpError(400, {
+        errorMessage: RESPONSE_MESSAGES.CAMPAIGN_COMPANY_ID_EXISTS,
+      });
+    }
+  }
+  if (campaignExists.length > 0) {
+    throw createHttpError(400, {
+      errorMessage: RESPONSE_MESSAGES.CAMPAIGN_COMPANY_ID_EXISTS,
+    });
+  }
 };
 
 module.exports = {
