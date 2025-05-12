@@ -901,6 +901,7 @@ const updatePrimaryKey = async ({ companyId, currentUserId, primaryKey }) => {
   await Promise.all([
     Company.findByIdAndUpdate(companyId, {
       contactsPrimaryKey: primaryKey,
+      isContactFinalize: false,
     }),
     updateCompanyContacts({
       filter: {
@@ -942,6 +943,7 @@ const deletePrimaryKey = async ({ companyId }) => {
     ),
     Company.findByIdAndUpdate(companyId, {
       contactsPrimaryKey: null,
+      isContactFinalize: false,
     })
   ]);
 }
