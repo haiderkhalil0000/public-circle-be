@@ -88,6 +88,7 @@ router.post(
       kind: Joi.string()
         .valid(TEMPLATE_KINDS.REGULAR, TEMPLATE_KINDS.SAMPLE)
         .required(),
+    companyGroupingId: Joi.string().required(),
     }),
   }),
   async (req, res, next) => {
@@ -182,6 +183,7 @@ router.get(
       kind: Joi.string()
         .valid(TEMPLATE_KINDS.REGULAR, TEMPLATE_KINDS.SAMPLE)
         .required(),
+      companyGroupingIds: Joi.string().optional(),
     }),
   }),
   async (req, res, next) => {
@@ -218,6 +220,7 @@ router.patch(
       body: Joi.string().optional(),
       json: Joi.string().optional(),
       jsonTemplate: Joi.object().optional(),
+      companyGroupingId: Joi.string().optional(),
     }),
   }),
   async (req, res, next) => {

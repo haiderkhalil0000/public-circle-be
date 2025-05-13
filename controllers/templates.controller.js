@@ -1,12 +1,14 @@
 const createHttpError = require("http-errors");
 const puppeteer = require("puppeteer-core");
 
-const { Template, User } = require("../models");
+const { Template, User, CompanyGrouping } = require("../models");
 const {
   basicUtil,
-  constants: { RESPONSE_MESSAGES, TEMPLATE_KINDS, TEMPLATE_STATUS },
+  constants: { RESPONSE_MESSAGES, TEMPLATE_KINDS, TEMPLATE_STATUS, COMPANY_GROUPING_TYPES },
   s3Util,
 } = require("../utils");
+
+const mongoose = require("mongoose");
 
 const createThumbnail = async ({ html, width, height }) => {
   const browser = await puppeteer.launch({
@@ -106,6 +108,7 @@ const createTemplate = async ({
   kind,
   body,
   jsonTemplate,
+  companyGroupingId,
 }) => {
   const existingTemplate = await Template.findOne({
     name,
@@ -118,6 +121,19 @@ const createTemplate = async ({
       errorMessage: RESPONSE_MESSAGES.DUPLICATE_TEMPLATE,
     });
   }
+  basicUtil.validateObjectId({ inputString: companyGroupingId });
+  const companyGrouping = await CompanyGrouping.findOne({
+    _id: companyGroupingId,
+    companyId,
+    type: COMPANY_GROUPING_TYPES.TEMPLATE,
+  });
+
+  if (!companyGrouping) {
+    throw createHttpError(400, {
+      errorMessage: RESPONSE_MESSAGES.COMPANY_GROUPING_NOT_FOUND,
+    });
+  }
+    
 
   const document = {
     name,
@@ -125,6 +141,7 @@ const createTemplate = async ({
     body,
     size: Buffer.byteLength(body, "utf-8"),
     jsonTemplate,
+    companyGroupingId,
   };
 
   if (kind === TEMPLATE_KINDS.REGULAR) {
@@ -157,7 +174,7 @@ const createTemplate = async ({
 const readTemplate = async ({ templateId }) => {
   basicUtil.validateObjectId({ inputString: templateId });
 
-  const template = await Template.findById(templateId);
+  const template = await Template.findById(templateId).populate('companyGroupingId').lean();
 
   if (!template) {
     throw createHttpError(404, {
@@ -200,11 +217,22 @@ const readPaginatedTemplates = async ({
   pageNumber = 1,
   pageSize = 10,
   kind,
+  companyGroupingIds,
 }) => {
-  const query = { status: TEMPLATE_STATUS.ACTIVE };
+  const query = {
+    status: TEMPLATE_STATUS.ACTIVE,
+  };
+
+  if (companyGroupingIds) {
+    const idsArray = companyGroupingIds.split(",").map((id) => {
+      basicUtil.validateObjectId({ inputString: id });
+      return new mongoose.Types.ObjectId(id);
+    });
+    query.companyGroupingId = { $in: idsArray };
+  }
 
   if (kind === TEMPLATE_KINDS.REGULAR) {
-    query.company = companyId;
+    query.company = new mongoose.Types.ObjectId(companyId);
     query.kind = TEMPLATE_KINDS.REGULAR;
   } else {
     query.kind = TEMPLATE_KINDS.SAMPLE;
@@ -255,6 +283,20 @@ const readPaginatedTemplates = async ({
         },
       },
       {
+        $lookup: {
+          from: 'company-groupings',
+          localField: 'companyGroupingId',
+          foreignField: '_id',
+          as: 'companyGrouping',
+        },
+      },
+      {
+        $unwind: {
+          path: '$companyGrouping',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
         $project: {
           name: 1,
           kind: 1,
@@ -272,9 +314,9 @@ const readPaginatedTemplates = async ({
             lastName: 1,
           },
           campaigns: 1,
+          companyGrouping: 1,
         },
       },
-
       { $skip: skip },
       { $limit: parseInt(pageSize) },
     ]),
@@ -285,6 +327,20 @@ const readPaginatedTemplates = async ({
 
 const updateTemplate = async ({ templateId, templateData, companyId, userId }) => {
   basicUtil.validateObjectId({ inputString: templateId });
+
+  if(templateData.companyGroupingId) {
+    basicUtil.validateObjectId({ inputString: templateData.companyGroupingId });
+    const companyGrouping = await CompanyGrouping.findOne({
+      _id: templateData.companyGroupingId,
+      companyId,
+      type: COMPANY_GROUPING_TYPES.TEMPLATE,
+    });
+    if (!companyGrouping) {
+      throw createHttpError(400, {
+        errorMessage: RESPONSE_MESSAGES.COMPANY_GROUPING_NOT_FOUND,
+      });
+    }
+  }
 
   if (templateData.body) {
     const [buffer, template] = await Promise.all([
