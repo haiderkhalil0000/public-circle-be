@@ -24,6 +24,7 @@ module.exports = {
     OVERAGE_CONSUMPTION: "overage-comsumption",
     TOPUP: "topup",
     CUSTOMER_REQUESTS: "customer-requests",
+    COMPANY_GROUPING: "company-grouping",
   },
 
   RESPONSE_MESSAGES: {
@@ -261,6 +262,12 @@ module.exports = {
     TOUR_COMPLETED: "Tour completed successfully.",
     TOUR_RESET: "Tour reset successfully.",
     CAMPAIGN_COMPANY_ID_EXISTS: "Campaign company id already exists!",
+    COMPANY_GROUP_ALREADY_EXISTS: "Company group already exists!",
+    COMPANY_GROUPING_CREATED: "Company grouping created successfully.",
+    COMPANY_GROUPING_NOT_FOUND: "Company grouping not found!",
+    COMPANY_GROUPING_FETCHED: "Company grouping fetched successfully.",
+    COMPANY_GROUPING_UPDATED: "Company grouping updated successfully.",
+    COMPANY_GROUPING_DELETED: "Company grouping deleted successfully.",
   },
 
   INTERACTION_CHANNELS: {
@@ -557,5 +564,9 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
     DUPLICATION_RESOLVE: "DUPLICATION_RESOLVE",
     FILTER: "FILTER",
     MANUAL_DELETE: "MANUAL_DELETE",
+  },
+  COMPANY_GROUPING_TYPES:{
+    TEMPLATE: "TEMPLATE",
+    CAMPAIGN: "CAMPAIGN",
   }
 };

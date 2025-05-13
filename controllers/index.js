@@ -21,4 +21,5 @@ module.exports = {
   companiesController: require("./companies.controller"),
   topupController: require("./topup.controller"),
   plansController: require("./plans.controller"),
+  companyGroupingController: require("./company-grouping.controller"),
 };
