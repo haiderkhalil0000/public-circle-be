@@ -30,6 +30,7 @@ router.use("/social-links", require("./social-links.route"));
 router.use("/assets", require("./assets.route"));
 router.use("/rewards", require("./rewards.route"));
 router.use("/emails", require("./emails.route"));
+router.use("/company-grouping", require("./company-grouping.route"));
 
 router.use(error);
 
