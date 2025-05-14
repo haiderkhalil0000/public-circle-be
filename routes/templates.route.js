@@ -41,6 +41,43 @@ router.get(
 );
 
 router.post(
+  "/duplicate/:templateId",
+  authenticate.verifyToken,
+  validate({
+    body: Joi.object({
+      name: Joi.string().required(),
+      body: Joi.string().required(),
+      jsonTemplate: Joi.object().optional(),
+      kind: Joi.string()
+      .valid(TEMPLATE_KINDS.REGULAR, TEMPLATE_KINDS.SAMPLE)
+      .required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      await templatesController.duplicateTemplate({
+        ...req.body,
+        companyId: req.user.company._id,
+        emailAddress: req.user.emailAddress,
+        existingTemplateId: req.params.templateId,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.TEMPLATE_DUPLICATED,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      templateDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.post(
   "/",
   authenticate.verifyToken,
   validate({

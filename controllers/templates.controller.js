@@ -39,6 +39,66 @@ const createThumbnail = async ({ html, width, height }) => {
   return screenshotBuffer;
 };
 
+const duplicateTemplate = async ({
+  companyId,
+  emailAddress,
+  existingTemplateId,
+  name,
+  kind,
+  body,
+  jsonTemplate,
+}) => {
+  basicUtil.validateObjectId({ inputString: existingTemplateId });
+
+  const originalTemplate = await Template.findOne({
+    _id: existingTemplateId,
+    company: companyId,
+    status: TEMPLATE_STATUS.ACTIVE,
+  });
+
+  if (!originalTemplate) {
+    throw createHttpError(400, {
+      errorMessage: RESPONSE_MESSAGES.ORIGINAL_TEMPLATE_ID_NOT_FOUND,
+    });
+  }
+
+  const document = {
+    name,
+    kind,
+    body,
+    size: Buffer.byteLength(body, "utf-8"),
+    jsonTemplate,
+    existingTemplateId,
+    isDuplicate: true,
+  };
+
+  if (kind === TEMPLATE_KINDS.REGULAR) {
+    document.company = companyId;
+  }
+
+  const buffer = await createThumbnail({
+    html: body,
+    width: 150,
+    height: 150,
+  });
+
+  const url = await s3Util.uploadImageToS3({
+    s3Path: `thumbnails/${companyId}/${existingTemplateId}/${document.name}.png`,
+    buffer,
+  });
+
+  document.thumbnailURL = url;
+  await Template.create(document);
+  await User.findOneAndUpdate(
+    { emailAddress },
+    {
+      $set: {
+        "tourSteps.steps.4.isCompleted": true,
+      },
+    }
+  );
+};
+
 const createTemplate = async ({
   companyId,
   emailAddress,
@@ -196,6 +256,19 @@ const updateTemplate = async ({ templateId, templateData, companyId }) => {
 
 const deleteTemplate = async ({ templateId }) => {
   basicUtil.validateObjectId({ inputString: templateId });
+  const templateIdUsedIn = await Template.find({
+    existingTemplateId: templateId,
+    status: TEMPLATE_STATUS.ACTIVE,
+  });
+
+  if (templateIdUsedIn.length) {
+    await Template.updateMany(
+      { existingTemplateId: templateId },
+      {
+        existingTemplateId: null,
+      }
+    );
+  }
 
   const result = await Template.updateOne(
     { _id: templateId },
@@ -238,4 +311,5 @@ module.exports = {
   updateTemplate,
   deleteTemplate,
   searchTemplate,
+  duplicateTemplate,
 };

@@ -56,6 +56,15 @@ const schema = new mongoose.Schema(
       default: TEMPLATE_STATUS.ACTIVE,
       required: true,
     },
+    isDuplicate: {
+      type: Boolean,
+      default: false,
+    },
+    existingTemplateId: {
+      type: ObjectId,
+      ref: TEMPLATE,
+      default: null,
+    },
   },
   { timestamps: true }
 );
