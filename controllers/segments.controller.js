@@ -94,6 +94,14 @@ const readPaginatedSegments = async ({ companyId, pageNumber, pageSize }) => {
     );
   
     item.usersCount = segmentCountItem ? segmentCountItem.filterCount : 0;
+      item.filters.forEach((filter) => {
+    const matching = segmentInfo.find((item) => item.filterKey === filter.key);
+    if (matching) {
+      filter.count = matching.filterCount;
+    } else {
+      filter.count = 0;
+    }
+  });
   });
   
 
