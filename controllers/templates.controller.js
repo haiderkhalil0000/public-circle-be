@@ -209,18 +209,81 @@ const readPaginatedTemplates = async ({
   } else {
     query.kind = TEMPLATE_KINDS.SAMPLE;
   }
+  const skip = (parseInt(pageNumber) - 1) * pageSize;
 
   const [totalRecords, templates] = await Promise.all([
     Template.countDocuments(query),
-    Template.find(query)
-      .skip((parseInt(pageNumber) - 1) * pageSize)
-      .limit(pageSize),
+    Template.aggregate([
+      { $match: query },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'updatedBy',
+          foreignField: '_id',
+          as: 'updatedBy',
+        },
+      },
+      {
+        $unwind: {
+          path: '$updatedBy',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: 'campaigns',
+          let: { templateId: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$emailTemplate', '$$templateId'] },
+                    { $ne: ['$status', 'DELETED'] },
+                  ],
+                },
+              },
+            },
+            {
+              $project: {
+                emailSubject: 1,
+                status: 1,
+              },
+            },
+          ],
+          as: 'campaigns',
+        },
+      },
+      {
+        $project: {
+          name: 1,
+          kind: 1,
+          status: 1,
+          thumbnailURL: 1,
+          size: 1,
+          body: 1,
+          jsonTemplate: 1,
+          sizeUnit: 1,
+          company: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          updatedBy: {
+            firstName: 1,
+            lastName: 1,
+          },
+          campaigns: 1,
+        },
+      },
+
+      { $skip: skip },
+      { $limit: parseInt(pageSize) },
+    ]),
   ]);
 
   return { totalRecords, templates };
 };
 
-const updateTemplate = async ({ templateId, templateData, companyId }) => {
+const updateTemplate = async ({ templateId, templateData, companyId, userId }) => {
   basicUtil.validateObjectId({ inputString: templateId });
 
   if (templateData.body) {
@@ -240,6 +303,7 @@ const updateTemplate = async ({ templateId, templateData, companyId }) => {
 
     templateData.thumbnailURL = url;
     templateData.size = Buffer.byteLength(templateData.body, "utf-8");
+    templateData.updatedBy = userId;
   }
 
   const result = await Template.updateOne(
