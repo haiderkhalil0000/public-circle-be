@@ -246,8 +246,8 @@ const readPaginatedTemplates = async ({
             },
             {
               $project: {
-                emailSubject: 1,
-                status: 1,
+                campaignName: 1,
+                _id: 1,
               },
             },
           ],

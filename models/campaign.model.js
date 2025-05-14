@@ -81,6 +81,11 @@ const schema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    campaignName: {
+      type: String,
+      required: true,
+      default: null,
+    },
   },
   { timestamps: true }
 );

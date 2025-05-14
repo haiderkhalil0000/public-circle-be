@@ -86,6 +86,7 @@ const createCampaign = async ({
   frequency,
   status,
   campaignCompanyId,
+  campaignName,
 }) => {
   if (status !== CAMPAIGN_STATUS.PAUSED) {
     for (const segmentId of segmentIds) {
@@ -122,6 +123,7 @@ const createCampaign = async ({
       recurringPeriod,
       frequency,
       status,
+      campaignName,
     }),
     companiesController.readCompanyById({ companyId }),
     usersController.readPrimaryUserByCompanyId({ companyId }),
