@@ -268,6 +268,8 @@ module.exports = {
     COMPANY_GROUPING_FETCHED: "Company grouping fetched successfully.",
     COMPANY_GROUPING_UPDATED: "Company grouping updated successfully.",
     COMPANY_GROUPING_DELETED: "Company grouping deleted successfully.",
+    ORIGINAL_TEMPLATE_ID_NOT_FOUND: "Original template id not found!",
+    TEMPLATE_DUPLICATED: "Template duplicated successfully.",
   },
 
   INTERACTION_CHANNELS: {
