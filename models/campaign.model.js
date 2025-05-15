@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema.Types;
 const {
   constants: {
-    MODELS: { CAMPAIGN, COMPANY, SEGMENT, TEMPLATE },
+    MODELS: { CAMPAIGN, COMPANY, SEGMENT, TEMPLATE, COMPANY_GROUPING },
     CAMPAIGN_STATUS,
     RUN_MODE,
     CRON_STATUS,
@@ -85,6 +85,12 @@ const schema = new mongoose.Schema(
       type: String,
       required: true,
       default: null,
+    },
+    companyGroupingId: {
+      type: ObjectId,
+      required: true,
+      index: true,
+      ref: COMPANY_GROUPING,
     },
   },
   { timestamps: true }

@@ -12,6 +12,7 @@ const {
   Company,
   Plan,
   User,
+  CompanyGrouping,
 } = require("../models");
 const {
   basicUtil,
@@ -29,7 +30,12 @@ const {
     CAMPAIGN_FREQUENCIES,
   },
 } = require("../utils");
-const { REGIONS, PLAN_NAMES, POWERED_BY } = require("../utils/constants.util");
+const {
+  REGIONS,
+  PLAN_NAMES,
+  POWERED_BY,
+  COMPANY_GROUPING_TYPES,
+} = require("../utils/constants.util");
 const { default: axios } = require("axios");
 const shortid = require("shortid");
 
@@ -87,11 +93,25 @@ const createCampaign = async ({
   status,
   campaignCompanyId,
   campaignName,
+  companyGroupingId,
 }) => {
   if (status !== CAMPAIGN_STATUS.PAUSED) {
     for (const segmentId of segmentIds) {
       basicUtil.validateObjectId({ inputString: segmentId });
     }
+  }
+  basicUtil.validateObjectId({ inputString: companyGroupingId });
+
+  const companyGroupingDoc = await CompanyGrouping.findOne({
+    _id: companyGroupingId,
+    companyId,
+    type: COMPANY_GROUPING_TYPES.CAMPAIGN,
+  }).lean();
+
+  if (!companyGroupingDoc) {
+    throw createHttpError(404, {
+      errorMessage: RESPONSE_MESSAGES.COMPANY_GROUPING_NOT_FOUND,
+    });
   }
   if (!campaignCompanyId) {
     campaignCompanyId = shortid.generate();
@@ -124,6 +144,7 @@ const createCampaign = async ({
       frequency,
       status,
       campaignName,
+      companyGroupingId,
     }),
     companiesController.readCompanyById({ companyId }),
     usersController.readPrimaryUserByCompanyId({ companyId }),
@@ -299,6 +320,20 @@ const readAllCampaigns = async ({
 const updateCampaign = async ({ companyId, campaignId, campaignData }) => {
   basicUtil.validateObjectId({ inputString: campaignId });
 
+  if (campaignData.companyGroupingId) {
+    basicUtil.validateObjectId({ inputString: campaignData.companyGroupingId });
+    const companyGroupingDoc = await CompanyGrouping.findOne({
+      _id: campaignData.companyGroupingId,
+      companyId,
+      type: COMPANY_GROUPING_TYPES.CAMPAIGN,
+    }).lean();
+
+    if (!companyGroupingDoc) {
+      throw createHttpError(404, {
+        errorMessage: RESPONSE_MESSAGES.COMPANY_GROUPING_NOT_FOUND,
+      });
+    }
+  }
   const usersController = require("./users.controller");
 
   let [campaign, company, primaryUser] = await Promise.all([
@@ -1199,7 +1234,7 @@ const validateCampaignCompanyId = async ({
           errorMessage: RESPONSE_MESSAGES.CAMPAIGN_COMPANY_ID_EXISTS,
         });
       }
-    } else{
+    } else {
       if (campaignExists.length > 0) {
         throw createHttpError(400, {
           errorMessage: RESPONSE_MESSAGES.CAMPAIGN_COMPANY_ID_EXISTS,

@@ -270,6 +270,12 @@ module.exports = {
     COMPANY_GROUPING_DELETED: "Company grouping deleted successfully.",
     ORIGINAL_TEMPLATE_ID_NOT_FOUND: "Original template id not found!",
     TEMPLATE_DUPLICATED: "Template duplicated successfully.",
+    COMPANY_GROUPING_CAMPAIGN_EXISTS:
+      "Company grouping campaign exists already!",
+    COMPANY_GROUPING_TEMPLATE_EXISTS:
+      "Company grouping template exists already!",
+    COMPANY_GROUPING_IS_USED_IN_TEMPLATE: "Company grouping is used in template! Please delete the template first.",
+    COMPANY_GROUPING_IS_USED_IN_CAMPAIGN: "Company grouping is used in campaign! Please delete the campaign first.",
   },
 
   INTERACTION_CHANNELS: {
