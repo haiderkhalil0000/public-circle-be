@@ -259,7 +259,7 @@ router.get(
       pageSize: Joi.number().optional(),
       sortBy: Joi.string().optional(),
       sortOrder: Joi.string().valid(SORT_ORDER.ASC, SORT_ORDER.DSC).optional(),
-      companyGroupingId: Joi.string().optional(),
+      companyGroupingIds: Joi.string().optional(),
     }),
   }),
   async (req, res, next) => {

@@ -172,7 +172,10 @@ const createCampaign = async ({
 const readCampaign = async ({ campaignId }) => {
   basicUtil.validateObjectId({ inputString: campaignId });
 
-  const campaign = await Campaign.findById(campaignId);
+  const campaign = await Campaign.findById(campaignId)
+  .populate('segments')
+  .populate('companyGroupingId')
+  .lean();
 
   if (!campaign) {
     throw createHttpError(404, {
@@ -205,16 +208,19 @@ const readPaginatedCampaigns = async ({
   pageSize = 10,
   sortBy,
   sortOrder = SORT_ORDER.ASC,
-  companyGroupingId,
+  companyGroupingIds,
 }) => {
   const query = {
     company: companyId,
     status: { $ne: CAMPAIGN_STATUS.DELETED },
   };
 
-  if (companyGroupingId) {
-    basicUtil.validateObjectId({ inputString: companyGroupingId });
-    query.companyGroupingId = companyGroupingId;
+  if (companyGroupingIds) {
+    const idsArray = companyGroupingIds.split(",").map((id) => id.trim());
+    idsArray.forEach((id) => {
+      basicUtil.validateObjectId({ inputString: id });
+    });
+    query.companyGroupingId = { $in: idsArray };
   }
 
   const [totalRecords, allCampaigns] = await Promise.all([
@@ -224,6 +230,7 @@ const readPaginatedCampaigns = async ({
       .skip((parseInt(pageNumber) - 1) * pageSize)
       .limit(pageSize)
       .populate("segments")
+      .populate("companyGroupingId")
       .lean(),
   ]);
 
