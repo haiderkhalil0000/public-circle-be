@@ -10,6 +10,7 @@ const {
   EmailSent,
   ReferralCode,
   Reward,
+  CompanyGrouping
 } = require("../models");
 const {
   basicUtil,
@@ -19,6 +20,7 @@ const {
     CAMPAIGN_STATUS,
     USER_KIND,
     COMPANY_CONTACT_STATUS,
+    COMPANY_GROUPING_TYPES,
   },
   s3Util,
 } = require("../utils");
@@ -120,6 +122,19 @@ const updateUser = async ({
       companyDoc = await Company.create({
         name: companyName,
       });
+
+      await CompanyGrouping.create([
+        {
+          companyId: companyDoc._id,
+          type: COMPANY_GROUPING_TYPES.TEMPLATE,
+          groupName: "Welcome",
+        },
+        {
+          companyId: companyDoc._id,
+          type: COMPANY_GROUPING_TYPES.CAMPAIGN,
+          groupName: "Welcome",
+        },
+      ]);
 
       const stripeCustomer = await stripeController.createStripeCustomer({
         companyId: companyDoc._id.toString(),
