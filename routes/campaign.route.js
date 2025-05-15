@@ -71,6 +71,7 @@ router.post(
         CAMPAIGN_STATUS.PAUSED,
       ),
       campaignName: Joi.string().required(),
+      companyGroupingId: Joi.string().required(),
     }).custom((value, helpers) => {
       if (value.isOnGoing && value.isRecurring) {
         return helpers.message("Either isOnGoing or isRecurring can be true, not both.");
@@ -306,6 +307,7 @@ router.patch(
         .valid(CAMPAIGN_STATUS.ACTIVE, CAMPAIGN_STATUS.PAUSED)
         .optional(),
       campaignName: Joi.string().optional(),
+      companyGroupingId: Joi.string().optional(),
     }),
   }),
   async (req, res, next) => {

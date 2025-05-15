@@ -1,6 +1,6 @@
 const createHttpError = require("http-errors");
-const { CompanyGrouping } = require("../models");
-const { RESPONSE_MESSAGES } = require("../utils/constants.util");
+const { CompanyGrouping, Campaign, Template } = require("../models");
+const { RESPONSE_MESSAGES, COMPANY_GROUPING_TYPES } = require("../utils/constants.util");
 const { basicUtil } = require("../utils");
 
 const createCompanyGrouping = async ({ companyId, type, groupName }) => {
@@ -43,8 +43,29 @@ const patchCompanyGroupingById = async ({ id, type, groupName }) => {
 
 const deleteCompanyGroupingById = async ({ id }) => {
   basicUtil.validateObjectId({ inputString: id });
-  return await CompanyGrouping.findOneAndDelete({ _id: id });
+
+  const [campaignExists, templateExists] = await Promise.all([
+    Campaign.exists({ companyGroupingId: id }),
+    Template.exists({ companyGroupingId: id }),
+  ]);
+
+  if (campaignExists) {
+    throw createHttpError(
+      400,
+      RESPONSE_MESSAGES.COMPANY_GROUPING_IS_USED_IN_CAMPAIGN
+    );
+  }
+
+  if (templateExists) {
+    throw createHttpError(
+      400,
+      RESPONSE_MESSAGES.COMPANY_GROUPING_IS_USED_IN_TEMPLATE
+    );
+  }
+
+  return CompanyGrouping.findOneAndDelete({ _id: id });
 };
+
 
 const getCompanyGroupingById = async ({ id }) => {
   basicUtil.validateObjectId({ inputString: id });
