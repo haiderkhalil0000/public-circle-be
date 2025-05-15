@@ -205,11 +205,17 @@ const readPaginatedCampaigns = async ({
   pageSize = 10,
   sortBy,
   sortOrder = SORT_ORDER.ASC,
+  companyGroupingId,
 }) => {
   const query = {
     company: companyId,
     status: { $ne: CAMPAIGN_STATUS.DELETED },
   };
+
+  if (companyGroupingId) {
+    basicUtil.validateObjectId({ inputString: companyGroupingId });
+    query.companyGroupingId = companyGroupingId;
+  }
 
   const [totalRecords, allCampaigns] = await Promise.all([
     Campaign.countDocuments(query),
