@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema.Types;
 const {
   constants: {
-    MODELS: { TEMPLATE, TEMPLATE_CATEGORY, COMPANY },
+    MODELS: { TEMPLATE, TEMPLATE_CATEGORY, COMPANY, USER, COMPANY_GROUPING },
   },
 } = require("../utils");
 const { TEMPLATE_STATUS, TEMPLATE_KINDS } = require("../utils/constants.util");
@@ -55,6 +55,27 @@ const schema = new mongoose.Schema(
       enum: Object.values(TEMPLATE_STATUS),
       default: TEMPLATE_STATUS.ACTIVE,
       required: true,
+    },
+    isDuplicate: {
+      type: Boolean,
+      default: false,
+    },
+    existingTemplateId: {
+      type: ObjectId,
+      ref: TEMPLATE,
+      default: null,
+    },
+    updatedBy: {
+      type: ObjectId,
+      ref: USER,
+      index: true,
+      default: null,
+    },
+    companyGroupingId: {
+      type: ObjectId,
+      required: true,
+      index: true,
+      ref: COMPANY_GROUPING,
     },
   },
   { timestamps: true }

@@ -24,6 +24,7 @@ module.exports = {
     OVERAGE_CONSUMPTION: "overage-comsumption",
     TOPUP: "topup",
     CUSTOMER_REQUESTS: "customer-requests",
+    COMPANY_GROUPING: "company-grouping",
   },
 
   RESPONSE_MESSAGES: {
@@ -260,6 +261,21 @@ module.exports = {
     TOUR_SKIPPED: "Tour skipped successfully.",
     TOUR_COMPLETED: "Tour completed successfully.",
     TOUR_RESET: "Tour reset successfully.",
+    CAMPAIGN_COMPANY_ID_EXISTS: "Campaign company id already exists!",
+    COMPANY_GROUP_ALREADY_EXISTS: "Company group already exists!",
+    COMPANY_GROUPING_CREATED: "Company grouping created successfully.",
+    COMPANY_GROUPING_NOT_FOUND: "Company grouping not found!",
+    COMPANY_GROUPING_FETCHED: "Company grouping fetched successfully.",
+    COMPANY_GROUPING_UPDATED: "Company grouping updated successfully.",
+    COMPANY_GROUPING_DELETED: "Company grouping deleted successfully.",
+    ORIGINAL_TEMPLATE_ID_NOT_FOUND: "Original template id not found!",
+    TEMPLATE_DUPLICATED: "Template duplicated successfully.",
+    COMPANY_GROUPING_CAMPAIGN_EXISTS:
+      "Company grouping campaign exists already!",
+    COMPANY_GROUPING_TEMPLATE_EXISTS:
+      "Company grouping template exists already!",
+    COMPANY_GROUPING_IS_USED_IN_TEMPLATE: "Company grouping is used in template! Please delete the template first.",
+    COMPANY_GROUPING_IS_USED_IN_CAMPAIGN: "Company grouping is used in campaign! Please delete the campaign first.",
   },
 
   INTERACTION_CHANNELS: {
@@ -346,7 +362,8 @@ module.exports = {
 
   CAMPAIGN_STATUS: {
     ACTIVE: "ACTIVE",
-    DISABLED: "DISABLED",
+    PAUSED: "PAUSED",
+    DRAFT: "DRAFT",
     DELETED: "DELETED",
   },
 
@@ -494,10 +511,6 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
   ERROR_CODES: {
     LINK_EXPIRED: "LINK_EXPIRED",
   },
-  PLAN_NAMES: {    
-    PUBLIC_CIRCLE_ADD_ON_ID : "prod_RAsd2NfHUEV8rE",
-    DEDICATED_IP_ADD_ON_ID : "prod_RAsdFI6JBO7gch",
-  },
   POWERED_BY: {
     POWERED_BY_FULL_HTML: `<div class="unsubscribe-section" style="width: 100%; background-color: #1e1e1e; text-align: center; padding: 20px; font-size: 12px; color: #e0e0e0;">
                     <span>
@@ -525,8 +538,8 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
         link: "/dashboard/configurations/contacts",
       },
       {
-        title: "Apply Data Filters",
-        description: "Use filters to refine your audience by specific attributes.  This helps you create more precise audience segments and improve targeting for a more effective marketing campaign.",
+        title: "Apply Data Fields",
+        description: "Use fields to refine your audience by specific attributes.  This helps you create more precise audience segments and improve targeting for a more effective marketing campaign.",
         isCompleted: false,
         link: "/dashboard/audience/filters",
       },
@@ -555,5 +568,9 @@ style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td clas
     DUPLICATION_RESOLVE: "DUPLICATION_RESOLVE",
     FILTER: "FILTER",
     MANUAL_DELETE: "MANUAL_DELETE",
+  },
+  COMPANY_GROUPING_TYPES:{
+    TEMPLATE: "TEMPLATE",
+    CAMPAIGN: "CAMPAIGN",
   }
 };

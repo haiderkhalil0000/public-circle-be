@@ -46,7 +46,7 @@ const verifyToken = async (req, res, next) => {
 
     const userDoc = await User.findOne({ emailAddress })
       .populate("company")
-      .populate(ROLE);
+      .populate(ROLE).lean();
 
     if (!userDoc) {
       return res.status(401).json({

@@ -57,6 +57,7 @@ router.post(
       runSchedule: Joi.string(),
       isRecurring: Joi.boolean(),
       isOnGoing: Joi.boolean(),
+      campaignCompanyId: Joi.string().optional().allow(''),
       recurringPeriod: Joi.string(),
       frequency: Joi.string()
       .valid(CAMPAIGN_FREQUENCIES.ONE_TIME, CAMPAIGN_FREQUENCIES.MANY_TIMES)
@@ -67,8 +68,10 @@ router.post(
       }),
       status: Joi.string().valid(
         CAMPAIGN_STATUS.ACTIVE,
-        CAMPAIGN_STATUS.DISABLED
+        CAMPAIGN_STATUS.PAUSED,
       ),
+      campaignName: Joi.string().required(),
+      companyGroupingId: Joi.string().required(),
     }).custom((value, helpers) => {
       if (value.isOnGoing && value.isRecurring) {
         return helpers.message("Either isOnGoing or isRecurring can be true, not both.");
@@ -256,6 +259,7 @@ router.get(
       pageSize: Joi.number().optional(),
       sortBy: Joi.string().optional(),
       sortOrder: Joi.string().valid(SORT_ORDER.ASC, SORT_ORDER.DSC).optional(),
+      companyGroupingIds: Joi.string().optional(),
     }),
   }),
   async (req, res, next) => {
@@ -299,9 +303,12 @@ router.patch(
       isRecurring: Joi.boolean().optional(),
       isOnGoing: Joi.boolean().optional(),
       recurringPeriod: Joi.string().optional(),
+      campaignCompanyId: Joi.string().optional().allow(''),
       status: Joi.string()
-        .valid(CAMPAIGN_STATUS.ACTIVE, CAMPAIGN_STATUS.DISABLED)
+        .valid(CAMPAIGN_STATUS.ACTIVE, CAMPAIGN_STATUS.PAUSED)
         .optional(),
+      campaignName: Joi.string().optional(),
+      companyGroupingId: Joi.string().optional(),
     }),
   }),
   async (req, res, next) => {

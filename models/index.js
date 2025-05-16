@@ -21,4 +21,5 @@ module.exports = {
   TemplateCategory: require("./template-category.model"),
   OverageConsumption: require("./overage-consumption.model"),
   Topup: require("./topup.model"),
+  CompanyGrouping: require("./company-grouping.model"),
 };

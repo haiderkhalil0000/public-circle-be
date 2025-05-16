@@ -41,6 +41,43 @@ router.get(
 );
 
 router.post(
+  "/duplicate/:templateId",
+  authenticate.verifyToken,
+  validate({
+    body: Joi.object({
+      name: Joi.string().required(),
+      body: Joi.string().required(),
+      jsonTemplate: Joi.object().optional(),
+      kind: Joi.string()
+      .valid(TEMPLATE_KINDS.REGULAR, TEMPLATE_KINDS.SAMPLE)
+      .required(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      await templatesController.duplicateTemplate({
+        ...req.body,
+        companyId: req.user.company._id,
+        emailAddress: req.user.emailAddress,
+        existingTemplateId: req.params.templateId,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.TEMPLATE_DUPLICATED,
+        data: {},
+      });
+    } catch (err) {
+      // sendErrorReportToSentry(error);
+      console.log(err);
+
+      templateDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.post(
   "/",
   authenticate.verifyToken,
   validate({
@@ -51,6 +88,7 @@ router.post(
       kind: Joi.string()
         .valid(TEMPLATE_KINDS.REGULAR, TEMPLATE_KINDS.SAMPLE)
         .required(),
+    companyGroupingId: Joi.string().required(),
     }),
   }),
   async (req, res, next) => {
@@ -145,6 +183,7 @@ router.get(
       kind: Joi.string()
         .valid(TEMPLATE_KINDS.REGULAR, TEMPLATE_KINDS.SAMPLE)
         .required(),
+      companyGroupingIds: Joi.string().optional(),
     }),
   }),
   async (req, res, next) => {
@@ -181,6 +220,7 @@ router.patch(
       body: Joi.string().optional(),
       json: Joi.string().optional(),
       jsonTemplate: Joi.object().optional(),
+      companyGroupingId: Joi.string().optional(),
     }),
   }),
   async (req, res, next) => {
@@ -188,7 +228,8 @@ router.patch(
       await templatesController.updateTemplate({
         ...req.params,
         templateData: req.body,
-        companyId: req.user.company_id,
+        companyId: req.user.company._id,
+        userId: req.user._id,
       });
 
       res.status(200).json({

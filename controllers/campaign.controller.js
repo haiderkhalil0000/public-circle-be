@@ -12,6 +12,7 @@ const {
   Company,
   Plan,
   User,
+  CompanyGrouping,
 } = require("../models");
 const {
   basicUtil,
@@ -29,10 +30,15 @@ const {
     CAMPAIGN_FREQUENCIES,
   },
 } = require("../utils");
-const { REGIONS, PLAN_NAMES, POWERED_BY } = require("../utils/constants.util");
+const {
+  REGIONS,
+  POWERED_BY,
+  COMPANY_GROUPING_TYPES,
+} = require("../utils/constants.util");
 const { default: axios } = require("axios");
+const shortid = require("shortid");
 
-const { PUBLIC_CIRCLES_EMAIL_ADDRESS, PUBLIC_CIRCLES_WEB_URL } = process.env;
+const { PUBLIC_CIRCLES_EMAIL_ADDRESS, PUBLIC_CIRCLES_WEB_URL, PUBLIC_CIRCLE_ADD_ON_ID } = process.env;
 
 const validateSourceEmailAddress = async ({
   companyId,
@@ -84,17 +90,37 @@ const createCampaign = async ({
   recurringPeriod,
   frequency,
   status,
+  campaignCompanyId,
+  campaignName,
+  companyGroupingId,
 }) => {
-  if (status !== CAMPAIGN_STATUS.DISABLED) {
+  if (status !== CAMPAIGN_STATUS.PAUSED) {
     for (const segmentId of segmentIds) {
       basicUtil.validateObjectId({ inputString: segmentId });
     }
+  }
+  basicUtil.validateObjectId({ inputString: companyGroupingId });
+
+  const companyGroupingDoc = await CompanyGrouping.findOne({
+    _id: companyGroupingId,
+    companyId,
+    type: COMPANY_GROUPING_TYPES.CAMPAIGN,
+  }).lean();
+
+  if (!companyGroupingDoc) {
+    throw createHttpError(404, {
+      errorMessage: RESPONSE_MESSAGES.COMPANY_GROUPING_NOT_FOUND,
+    });
+  }
+  if (!campaignCompanyId) {
+    campaignCompanyId = shortid.generate();
   }
 
   await validateSourceEmailAddress({
     companyId,
     sourceEmailAddress,
   });
+  await validateCampaignCompanyId({ campaignCompanyId, companyId });
 
   basicUtil.validateObjectId({ inputString: emailTemplateId });
 
@@ -112,9 +138,12 @@ const createCampaign = async ({
       runSchedule,
       isRecurring,
       isOnGoing,
+      campaignCompanyId,
       recurringPeriod,
       frequency,
       status,
+      campaignName,
+      companyGroupingId,
     }),
     companiesController.readCompanyById({ companyId }),
     usersController.readPrimaryUserByCompanyId({ companyId }),
@@ -125,7 +154,7 @@ const createCampaign = async ({
           "tourSteps.steps.5.isCompleted": true,
         },
       }
-    )
+    ),
   ]);
 
   if (campaign.status === CAMPAIGN_STATUS.ACTIVE) {
@@ -142,7 +171,10 @@ const createCampaign = async ({
 const readCampaign = async ({ campaignId }) => {
   basicUtil.validateObjectId({ inputString: campaignId });
 
-  const campaign = await Campaign.findById(campaignId);
+  const campaign = await Campaign.findById(campaignId)
+  .populate('segments')
+  .populate('companyGroupingId')
+  .lean();
 
   if (!campaign) {
     throw createHttpError(404, {
@@ -175,11 +207,20 @@ const readPaginatedCampaigns = async ({
   pageSize = 10,
   sortBy,
   sortOrder = SORT_ORDER.ASC,
+  companyGroupingIds,
 }) => {
   const query = {
     company: companyId,
     status: { $ne: CAMPAIGN_STATUS.DELETED },
   };
+
+  if (companyGroupingIds) {
+    const idsArray = companyGroupingIds.split(",").map((id) => id.trim());
+    idsArray.forEach((id) => {
+      basicUtil.validateObjectId({ inputString: id });
+    });
+    query.companyGroupingId = { $in: idsArray };
+  }
 
   const [totalRecords, allCampaigns] = await Promise.all([
     Campaign.countDocuments(query),
@@ -188,6 +229,7 @@ const readPaginatedCampaigns = async ({
       .skip((parseInt(pageNumber) - 1) * pageSize)
       .limit(pageSize)
       .populate("segments")
+      .populate("companyGroupingId")
       .lean(),
   ]);
 
@@ -200,7 +242,11 @@ const readPaginatedCampaigns = async ({
     for (const segment of campaign.segments) {
       promises.push(
         companyContactsController
-          .readFiltersCount({ filters: segment.filters, companyId, internalCall: true })
+          .readFiltersCount({
+            filters: segment.filters,
+            companyId,
+            internalCall: true,
+          })
           .then((items) => ({
             campaignId: campaign._id.toString(),
             usersCount: items.reduce((sum, item) => sum + item.filterCount, 0),
@@ -252,7 +298,11 @@ const readAllCampaigns = async ({
     for (const segment of campaign.segments) {
       promises.push(
         companyContactsController
-          .readFiltersCount({ filters: segment.filters, companyId, internalCall: true })
+          .readFiltersCount({
+            filters: segment.filters,
+            companyId,
+            internalCall: true,
+          })
           .then((item) => ({
             campaignId: campaign._id.toString(),
             usersCount: item[0].filterCount,
@@ -282,6 +332,20 @@ const readAllCampaigns = async ({
 const updateCampaign = async ({ companyId, campaignId, campaignData }) => {
   basicUtil.validateObjectId({ inputString: campaignId });
 
+  if (campaignData.companyGroupingId) {
+    basicUtil.validateObjectId({ inputString: campaignData.companyGroupingId });
+    const companyGroupingDoc = await CompanyGrouping.findOne({
+      _id: campaignData.companyGroupingId,
+      companyId,
+      type: COMPANY_GROUPING_TYPES.CAMPAIGN,
+    }).lean();
+
+    if (!companyGroupingDoc) {
+      throw createHttpError(404, {
+        errorMessage: RESPONSE_MESSAGES.COMPANY_GROUPING_NOT_FOUND,
+      });
+    }
+  }
   const usersController = require("./users.controller");
 
   let [campaign, company, primaryUser] = await Promise.all([
@@ -289,6 +353,14 @@ const updateCampaign = async ({ companyId, campaignId, campaignData }) => {
     Company.findById(companyId),
     usersController.readPrimaryUserByCompanyId({ companyId }),
   ]);
+  await validateCampaignCompanyId({
+    campaignCompanyId: campaign.campaignCompanyId,
+    companyId,
+    isUpdate: true,
+  });
+  if (!campaignData.campaignCompanyId) {
+    campaignData.campaignCompanyId = shortid.generate();
+  }
 
   if (campaignData.segmentIds || campaignData.emailTemplateId) {
     basicUtil.validateObjectId({ inputString: campaignData.emailTemplateId });
@@ -322,7 +394,10 @@ const updateCampaign = async ({ companyId, campaignId, campaignData }) => {
     new: true,
   });
 
-  if (campaign.status === CAMPAIGN_STATUS.ACTIVE || campaignData.status === CAMPAIGN_STATUS.ACTIVE) {
+  if (
+    campaign.status === CAMPAIGN_STATUS.ACTIVE ||
+    campaignData.status === CAMPAIGN_STATUS.ACTIVE
+  ) {
     await validateCampaign({ campaign, company, primaryUser });
 
     if (campaign.runMode === RUN_MODE.INSTANT) {
@@ -354,15 +429,15 @@ const mapDynamicValues = async ({ companyId, emailAddress, content }) => {
     public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
     email: emailAddress,
   }).lean();
-  
+
   const companyDoc = await Company.findOne({
     _id: companyId,
   });
-  
+
   const hasPurchasedPublicCircleAddon = companyDoc.purchasedPlan.some(
-    (plan) => plan.productId === PLAN_NAMES.PUBLIC_CIRCLE_ADD_ON_ID
-  );  
-  
+    (plan) => plan.productId === PUBLIC_CIRCLE_ADD_ON_ID
+  );
+
   if (!companyContactDoc) {
     companyContactDoc = await CompanyContact.findOne({
       public_circles_company: companyId,
@@ -495,12 +570,12 @@ const sendSstEmail = async ({
   emailContentType,
 }) => {
   const template = await Template.findById({ _id: templateId });
-  
+
   const emailContent = await mapDynamicValues({
     companyId: companyId,
     emailAddress: emailTo,
     content: template.body,
-  })
+  });
   const result = await sesUtil.sendEmail({
     fromEmailAddress: emailFrom,
     toEmailAddress: emailTo,
@@ -549,7 +624,6 @@ const populateCompanyContactsQuery = ({ segments }) => {
   }
   return allFilters.length > 0 ? { $and: allFilters } : {};
 };
-
 
 const runCampaign = async ({ campaign }) => {
   const promises = [];
@@ -671,24 +745,23 @@ const runCampaign = async ({ campaign }) => {
     emailSubject: campaign.emailSubject,
     templateId: campaign.emailTemplate,
     emailContentType: TEMPLATE_CONTENT_TYPE.HTML,
-  }
-  
+  };
+
   const queueUrl = getQueueUrl();
 
-  
   await Campaign.updateOne(
     { _id: campaign._id },
     {
       [!campaign.isRecurring && !campaign.isOnGoing ? "status" : undefined]:
-      !campaign.isRecurring && !campaign.isOnGoing
-      ? CAMPAIGN_STATUS.DISABLED
-      : undefined,
+        !campaign.isRecurring && !campaign.isOnGoing
+          ? CAMPAIGN_STATUS.PAUSED
+          : undefined,
       cronStatus: CRON_STATUS.PROCESSED,
       lastProcessed: moment().format(),
       $inc: { processedCount: 1 },
     }
   );
-  axios.post(queueUrl,reqBody);
+  axios.post(queueUrl, reqBody);
 };
 
 const readPaginatedCampaignLogs = async ({
@@ -734,7 +807,7 @@ const readPaginatedCampaignLogs = async ({
           const result = await companyContactsController.readFiltersCount({
             companyId: campaign.company,
             filters: segment.filters,
-            internalCall: true
+            internalCall: true,
           });
 
           if (Array.isArray(result)) {
@@ -777,7 +850,7 @@ const readCampaignRecipientsCount = async ({ campaign }) => {
       companyContactsController.readFiltersCount({
         companyId: campaign.company,
         filters: filter,
-        internalCall: true
+        internalCall: true,
       })
     );
   });
@@ -805,15 +878,15 @@ const calculateBandwidthOverageCharge = ({ unpaidBandwidth, plan }) => {
   return timesExceeded * priceInSmallestUnit;
 };
 
-const disableCampaign = ({ campaignId }) =>
-  Campaign.findByIdAndUpdate(campaignId, { status: CAMPAIGN_STATUS.DISABLED });
+const draftCampaign = ({ campaignId }) =>
+  Campaign.findByIdAndUpdate(campaignId, { status: CAMPAIGN_STATUS.DRAFT });
 
 const validateCampaign = async ({ campaign, company, primaryUser }) => {
   const stripeController = require("./stripe.controller");
   const companyContactsController = require("./company-contacts.controller");
 
-  if(!company.isContactFinalize){
-    await disableCampaign({ campaignId: campaign._id });
+  if (!company.isContactFinalize) {
+    await draftCampaign({ campaignId: campaign._id });
     throw createHttpError(400, {
       errorMessage: RESPONSE_MESSAGES.CONTACTS_ARE_NOT_FINALIZE,
       errorCode: `Campaign created with id ${campaign._id}`,
@@ -826,7 +899,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
       });
 
     if (totalRecords) {
-      await disableCampaign({ campaignId: campaign._id });
+      await draftCampaign({ campaignId: campaign._id });
 
       throw createHttpError(400, {
         errorMessage: RESPONSE_MESSAGES.CONTACT_DUPLICATES_NOT_RESOLVED,
@@ -836,7 +909,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
   }
 
   if (!company.emailKey) {
-    await disableCampaign({ campaignId: campaign._id });
+    await draftCampaign({ campaignId: campaign._id });
     throw createHttpError(400, {
       errorMessage: RESPONSE_MESSAGES.EMAIL_KEY_NOT_FOUND,
       errorCode: `Campaign created with id ${campaign._id}`,
@@ -894,7 +967,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
     });
 
     if (companyBalance < emailOverageCharge) {
-      await disableCampaign({ campaignId: campaign._id });
+      await draftCampaign({ campaignId: campaign._id });
 
       await sesUtil.sendEmail({
         fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
@@ -913,7 +986,9 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
       throw createHttpError(400, {
         errorMessage: `${RESPONSE_MESSAGES.EMAIL_LIMIT_REACHED} Minimum ${
           company?.region === REGIONS.CANADA ? "CAD" : "USD"
-        } ${parseInt(emailOverageCharge - companyBalance) / 100} credits required.`,
+        } ${
+          parseInt(emailOverageCharge - companyBalance) / 100
+        } credits required.`,
         errorKind: "EMAIL_LIMIT_REACHED",
         errorCode: `Campaign created with id ${campaign._id}`,
       });
@@ -931,7 +1006,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
     });
 
     if (companyBalance < bandwidthOverageCharge) {
-      await disableCampaign({ campaignId: campaign._id });
+      await draftCampaign({ campaignId: campaign._id });
 
       await sesUtil.sendEmail({
         fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
@@ -950,7 +1025,9 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
       throw createHttpError(400, {
         errorMessage: `${RESPONSE_MESSAGES.BANDWIDTH_LIMIT_REACHED} Minimum ${
           company?.region === REGIONS.CANADA ? "CAD" : "USD"
-        } ${parseInt(bandwidthOverageCharge - companyBalance) / 100} credits required.`,
+        } ${
+          parseInt(bandwidthOverageCharge - companyBalance) / 100
+        } credits required.`,
         errorKind: "BANDWIDTH_LIMIT_REACHED",
         errorCode: `Campaign created with id ${campaign._id}`,
       });
@@ -1149,6 +1226,34 @@ const getQueueUrl = () => {
   };
 
   return queueUrls[env];
+};
+
+const validateCampaignCompanyId = async ({
+  campaignCompanyId,
+  companyId,
+  isUpdate = false,
+}) => {
+  if (campaignCompanyId) {
+    const campaignExists = await Campaign.find({
+      campaignCompanyId: campaignCompanyId,
+      company: companyId,
+      status: { $ne: CAMPAIGN_STATUS.DELETED },
+    });
+
+    if (isUpdate) {
+      if (campaignExists.length > 1) {
+        throw createHttpError(400, {
+          errorMessage: RESPONSE_MESSAGES.CAMPAIGN_COMPANY_ID_EXISTS,
+        });
+      }
+    } else {
+      if (campaignExists.length > 0) {
+        throw createHttpError(400, {
+          errorMessage: RESPONSE_MESSAGES.CAMPAIGN_COMPANY_ID_EXISTS,
+        });
+      }
+    }
+  }
 };
 
 module.exports = {

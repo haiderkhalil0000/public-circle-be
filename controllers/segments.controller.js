@@ -88,14 +88,22 @@ const readPaginatedSegments = async ({ companyId, pageNumber, pageSize }) => {
   const filtersCountArray = await Promise.all(promises);
 
   segments.forEach((item, index) => {
-    const filterCounts = filtersCountArray[index].map(
-      (subItem) => subItem.filterCount
+    const segmentInfo = filtersCountArray[index];
+    const segmentCountItem = segmentInfo.find(
+      (subItem) => subItem.filterKey === "segmentCount"
     );
-
-    const totalFilterCount = filterCounts.reduce((acc, curr) => acc + curr, 0);
-
-    item.usersCount = totalFilterCount;
+  
+    item.usersCount = segmentCountItem ? segmentCountItem.filterCount : 0;
+      item.filters.forEach((filter) => {
+    const matching = segmentInfo.find((item) => item.filterKey === filter.key);
+    if (matching) {
+      filter.count = matching.filterCount;
+    } else {
+      filter.count = 0;
+    }
   });
+  });
+  
 
   return { totalRecords, segments };
 };
