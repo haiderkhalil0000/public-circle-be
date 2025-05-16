@@ -123,18 +123,18 @@ const updateUser = async ({
         name: companyName,
       });
 
-      await CompanyGrouping.create([
-        {
-          companyId: companyDoc._id,
-          type: COMPANY_GROUPING_TYPES.TEMPLATE,
-          groupName: "Welcome",
-        },
-        {
-          companyId: companyDoc._id,
-          type: COMPANY_GROUPING_TYPES.CAMPAIGN,
-          groupName: "Welcome",
-        },
-      ]);
+      // await CompanyGrouping.create([
+      //   {
+      //     companyId: companyDoc._id,
+      //     type: COMPANY_GROUPING_TYPES.TEMPLATE,
+      //     groupName: "Welcome",
+      //   },
+      //   {
+      //     companyId: companyDoc._id,
+      //     type: COMPANY_GROUPING_TYPES.CAMPAIGN,
+      //     groupName: "Welcome",
+      //   },
+      // ]);
 
       const stripeCustomer = await stripeController.createStripeCustomer({
         companyId: companyDoc._id.toString(),

@@ -32,14 +32,13 @@ const {
 } = require("../utils");
 const {
   REGIONS,
-  PLAN_NAMES,
   POWERED_BY,
   COMPANY_GROUPING_TYPES,
 } = require("../utils/constants.util");
 const { default: axios } = require("axios");
 const shortid = require("shortid");
 
-const { PUBLIC_CIRCLES_EMAIL_ADDRESS, PUBLIC_CIRCLES_WEB_URL } = process.env;
+const { PUBLIC_CIRCLES_EMAIL_ADDRESS, PUBLIC_CIRCLES_WEB_URL, PUBLIC_CIRCLE_ADD_ON_ID } = process.env;
 
 const validateSourceEmailAddress = async ({
   companyId,
@@ -436,7 +435,7 @@ const mapDynamicValues = async ({ companyId, emailAddress, content }) => {
   });
 
   const hasPurchasedPublicCircleAddon = companyDoc.purchasedPlan.some(
-    (plan) => plan.productId === PLAN_NAMES.PUBLIC_CIRCLE_ADD_ON_ID
+    (plan) => plan.productId === PUBLIC_CIRCLE_ADD_ON_ID
   );
 
   if (!companyContactDoc) {
