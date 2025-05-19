@@ -16,7 +16,7 @@ const {
   constants: { RESPONSE_MESSAGES, REGIONS, TEMPLATE_CONTENT_TYPE, CUSTOMER_REQUEST_TYPE },
   basicUtil,
 } = require("../utils");
-const { PUBLIC_CIRCLES_EMAIL_ADDRESS, SUPPORT_EMAIL } = process.env;
+const { PUBLIC_CIRCLES_EMAIL_ADDRESS, SUPPORT_EMAIL, TOP_UP_ADD_ON_ID } = process.env;
 
 const { STRIPE_KEY } = process.env;
 
@@ -545,7 +545,7 @@ const createATopUpInCustomerBalance = async ({
   const currency = companyDoc.region === REGIONS.CANADA ? "cad" : "usd";
 
   const price = await stripe.prices.create({
-    product: "prod_RXLIDbemHmqlfQ",
+    product: TOP_UP_ADD_ON_ID,
     unit_amount: amount * 100, //passing amount in cents
     currency: currency,
   });
@@ -590,6 +590,9 @@ const readCustomerBalance = async ({ companyId, stripeCustomerId }) => {
     stripeCustomerId,
   });
 
+  const company = await Company.findById(companyId);
+  const currency = company.region === REGIONS.CANADA ? "CAD" : "USD";
+
   const [topupDocs, emailsSentDocs, planIds] = await Promise.all([
     topupController.readTopupsByCompanyId({ companyId }),
     emailsSentController.readEmailsSentByCompanyId({
@@ -597,39 +600,41 @@ const readCustomerBalance = async ({ companyId, stripeCustomerId }) => {
       startDate: activeBillingCycleDates.startDate,
       endDate: activeBillingCycleDates.endDate,
       project: { size: 1 },
-    }),
-    readPlanIds({
-      stripeCustomerId,
-    }),
+    }).lean(),
+    readPlanIds({ stripeCustomerId }),
   ]);
 
   const plan = await Plan.findById(planIds[0].planId);
+  const totalTopup = topupDocs.reduce(
+    (total, item) => total + item.priceInSmallestUnit,
+    0
+  );
+  const paidEmails = Math.max(emailsSentDocs.length - plan.quota.email, 0);
+  const pricePerUnitInDollars = parseFloat(
+    currency === "USD"
+      ? plan.bundles.email.priceInSmallestUnitUSD
+      : plan.bundles.email.priceInSmallestUnitCAD
+  );
 
-  const totalTopup = topupDocs
-    .map((item) => item.priceInSmallestUnit)
-    .reduce((totalValue, currentValue) => totalValue + currentValue, 0);
+  const pricePerUnitInCents = pricePerUnitInDollars * 100;
 
-  const paidEmails =
-    emailsSentDocs.length - plan.quota.email > 0
-      ? emailsSentDocs.length - plan.quota.email
-      : 0;
+  const paidEmailsPrice = paidEmails * pricePerUnitInCents;
+  const totalBandwidthSent = emailsSentDocs.reduce(
+    (total, item) => total + item.size,
+    0
+  );
 
-  const paidEmailsPrice =
-    paidEmails / (plan.bundles.email.priceInSmallestUnit / 100);
+  const paidEmailContent = Math.max(
+    totalBandwidthSent - plan.quota.bandwidth,
+    0
+  );
 
-  const totalBandwidthSent = emailsSentDocs
-    .map((item) => item.size)
-    .reduce((totalValue, currentValue) => totalValue + currentValue, 0);
+  const paidEmailContentPrice = paidEmailContent * pricePerUnitInCents;
 
-  const paidEmailContent =
-    totalBandwidthSent - plan.quota.bandwidth > 0
-      ? totalBandwidthSent - plan.quota.bandwidth
-      : 0;
+  const remainingBalanceInCents =
+    totalTopup - paidEmailsPrice - paidEmailContentPrice;
 
-  const paidEmailContentPrice =
-    paidEmailContent / plan.bundles.bandwidth.priceInSmallestUnit;
-
-  return (totalTopup - paidEmailsPrice * 100 - paidEmailContentPrice) / 100; //converted into cad
+  return remainingBalanceInCents / 100;
 };
 
 const generateImmediateChargeInvoice = async ({
@@ -958,6 +963,8 @@ const readCustomerStripeBalance = async ({ stripeCustomerId }) => {
 
 const quotaDetails = async ({ companyId, stripeCustomerId }) => {
   const emailsSentController = require("./emails-sent.controller");
+  const company = await Company.findById(companyId);
+  const currency = company.region === REGIONS.CANADA ? "CAD" : "USD";
 
   const activeBillingDates = await readActiveBillingCycleDates({
     stripeCustomerId,
@@ -994,7 +1001,7 @@ const quotaDetails = async ({ companyId, stripeCustomerId }) => {
       : 0;
 
   const emailsConsumedInOveragePrice =
-    (emailsConsumedInOverage * plan.bundles.email.priceInSmallestUnit) / 100;
+    (emailsConsumedInOverage * parseFloat(currency === "USD" ? plan.bundles.email.priceInSmallestUnitUSD : plan.bundles.email.priceInSmallestUnitCAD)) / 100;
 
   const bandwidthAllowedInPlan = Number(
     basicUtil
@@ -1026,8 +1033,15 @@ const quotaDetails = async ({ companyId, stripeCustomerId }) => {
       .split([" "])[0]
   );
 
+  const pricePerUnit = parseFloat(
+    currency === "USD"
+      ? plan.bundles.bandwidth.priceInSmallestUnitUSD
+      : plan.bundles.bandwidth.priceInSmallestUnitCAD
+  );
+
   const bandwidthConsumedInOveragePrice =
-    bandwidthConsumedInOverage * plan.bundles.bandwidth.priceInSmallestUnit;
+    bandwidthConsumedInOverage * pricePerUnit;
+
 
   const emailsAllowedInPlanUnit =
     emailsAllowedInPlan === 1 ? "email" : "emails";
@@ -1146,15 +1160,15 @@ const calculateAndChargeContactOverage = async ({
     plansController.readPlanById({ planId: planIds[0].planId }),
     readPendingInvoiceItems({ stripeCustomerId }),
   ]);
-
+  const currency =
+    company.region === REGIONS.CANADA ? "CAD" : "USD";
   if (plan.quota.contact < importedContactsCount + existingContactsCount) {
     const unpaidContacts =
       importedContactsCount + existingContactsCount - plan.quota.contact;
 
-    const { priceInSmallestUnit } = plan.bundles.contact;
+    const priceInSmallestUnit = parseFloat(currency === "USD" ? plan.bundles.contact.priceInSmallestUnitUSD : plan.bundles.contact.priceInSmallestUnitCAD);
 
-    const contactOverageCharge =
-      Math.ceil(unpaidContacts / (priceInSmallestUnit / 100)) * 100; //converting it into cents
+    const contactOverageCharge = Math.ceil(unpaidContacts * priceInSmallestUnit * 100) ;
 
     let contactsOverageInvoiceItem = pendingInvoiceItems.data.find((item) =>
       item.description.includes("contact")

@@ -38,7 +38,11 @@ const {
 const { default: axios } = require("axios");
 const shortid = require("shortid");
 
-const { PUBLIC_CIRCLES_EMAIL_ADDRESS, PUBLIC_CIRCLES_WEB_URL, PUBLIC_CIRCLE_ADD_ON_ID } = process.env;
+const {
+  PUBLIC_CIRCLES_EMAIL_ADDRESS,
+  PUBLIC_CIRCLES_WEB_URL,
+  PUBLIC_CIRCLE_ADD_ON_ID,
+} = process.env;
 
 const validateSourceEmailAddress = async ({
   companyId,
@@ -172,9 +176,9 @@ const readCampaign = async ({ campaignId }) => {
   basicUtil.validateObjectId({ inputString: campaignId });
 
   const campaign = await Campaign.findById(campaignId)
-  .populate('segments')
-  .populate('companyGroupingId')
-  .lean();
+    .populate("segments")
+    .populate("companyGroupingId")
+    .lean();
 
   if (!campaign) {
     throw createHttpError(404, {
@@ -862,20 +866,34 @@ const readCampaignRecipientsCount = async ({ campaign }) => {
     .reduce((total, current) => total + (current.filterCount || 0), 0);
 };
 
-const calculateEmailOverageCharge = ({ unpaidEmailsCount, plan }) => {
-  const { emails, priceInSmallestUnit } = plan.bundles.email;
+const calculateEmailOverageCharge = ({ unpaidEmailsCount, plan, currency }) => {
+  const { emails } = plan.bundles.email;
+  const priceInCents = parseFloat(
+    currency === "USD"
+      ? plan.bundles.email.priceInSmallestUnitUSD
+      : plan.bundles.email.priceInSmallestUnitCAD
+  );
 
   const timesExceeded = Math.ceil(unpaidEmailsCount / emails);
-
-  return timesExceeded * priceInSmallestUnit;
+  return timesExceeded * priceInCents * 100;
 };
 
-const calculateBandwidthOverageCharge = ({ unpaidBandwidth, plan }) => {
-  const { bandwidth, priceInSmallestUnit } = plan.bundles.bandwidth;
+const calculateBandwidthOverageCharge = ({
+  unpaidBandwidth,
+  plan,
+  currency,
+}) => {
+  const { bandwidth } = plan.bundles.bandwidth;
+
+  const priceInCents = parseFloat(
+    currency === "USD"
+      ? plan.bundles.bandwidth.priceInSmallestUnitUSD
+      : plan.bundles.bandwidth.priceInSmallestUnitCAD
+  );
 
   const timesExceeded = Math.ceil(unpaidBandwidth / bandwidth);
 
-  return timesExceeded * priceInSmallestUnit;
+  return timesExceeded * priceInCents * 100;
 };
 
 const draftCampaign = ({ campaignId }) =>
@@ -964,6 +982,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
     emailOverageCharge = calculateEmailOverageCharge({
       unpaidEmailsCount: campaignRecipientsCount,
       plan,
+      currency: company.region === REGIONS.CANADA ? "CAD" : "USD",
     });
 
     if (companyBalance < emailOverageCharge) {
@@ -1003,6 +1022,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
     bandwidthOverageCharge = calculateBandwidthOverageCharge({
       unpaidBandwidth: campaign.emailTemplate.size * campaignRecipientsCount,
       plan,
+      currency: company.region === REGIONS.CANADA ? "CAD" : "USD",
     });
 
     if (companyBalance < bandwidthOverageCharge) {
@@ -1049,6 +1069,8 @@ const readCampaignUsageDetails = async ({ companyId, stripeCustomerId }) => {
       stripeCustomerId,
     }),
   ]);
+  const company = await Company.findById(companyId);
+  const currency = company.region === REGIONS.CANADA ? "CAD" : "USD";
 
   const plan = await Plan.findById(planIds[0].planId);
 
@@ -1165,31 +1187,41 @@ const readCampaignUsageDetails = async ({ companyId, stripeCustomerId }) => {
           })
         : 0;
 
+    const pricePerEmail = parseFloat(
+      currency === "USD"
+        ? plan.bundles.email.priceInSmallestUnitUSD
+        : plan.bundles.email.priceInSmallestUnitCAD
+    );
+
+    const pricePerBandwidth = parseFloat(
+      currency === "USD"
+        ? plan.bundles.bandwidth.priceInSmallestUnitUSD
+        : plan.bundles.bandwidth.priceInSmallestUnitCAD
+    );
+
+    const emailUsageValue =
+      isEmailOverage && emailOverageIterator === 1
+        ? emailUsage + emailRemainder - plan.quota.email
+        : isEmailOverage
+        ? emailUsage
+        : 0;
+
+    const bandwidthUsageValue =
+      isBandwidthOverage && bandwidthOverageIterator === 1
+        ? getCampaignBandwidthUsage({
+            emailSentDocsArray: emailsSentByCompany[index],
+          }) +
+          bandwidthRemainder -
+          plan.quota.bandwidth
+        : isBandwidthOverage
+        ? getCampaignBandwidthUsage({
+            emailSentDocsArray: emailsSentByCompany[index],
+          })
+        : 0;
+
     const overagePrice = {
-      email:
-        isEmailOverage && emailOverageIterator === 1
-          ? ((emailUsage + emailRemainder - plan.quota.email) *
-              plan.bundles.email.priceInSmallestUnit) /
-            100
-          : isEmailOverage
-          ? (emailUsage * plan.bundles.email.priceInSmallestUnit) / 100
-          : 0,
-      bandwidth:
-        isBandwidthOverage && bandwidthOverageIterator === 1
-          ? ((getCampaignBandwidthUsage({
-              emailSentDocsArray: emailsSentByCompany[index],
-            }) +
-              bandwidthRemainder -
-              plan.quota.bandwidth) *
-              plan.bundles.bandwidth.priceInSmallestUnit) /
-            100
-          : isBandwidthOverage
-          ? (getCampaignBandwidthUsage({
-              emailSentDocsArray: emailsSentByCompany[index],
-            }) *
-              plan.bundles.bandwidth.priceInSmallestUnit) /
-            100
-          : 0,
+      email: emailUsageValue * pricePerEmail,
+      bandwidth: bandwidthUsageValue * pricePerBandwidth,
     };
 
     return {

@@ -33,7 +33,9 @@ const schema = new mongoose.Schema(
           required: true,
           default: 0,
         },
-        priceInSmallestUnit: { type: Number, required: true, default: 0 },
+        priceInSmallestUnit: { type: String, required: true, default: "0" },
+        priceInSmallestUnitCAD: { type: String, required: true, default: "0" },
+        priceInSmallestUnitUSD: { type: String, required: true, default: "0" },
       },
       bandwidth: {
         bandwidth: {
@@ -41,11 +43,9 @@ const schema = new mongoose.Schema(
           required: true,
           default: 0,
         },
-        priceInSmallestUnit: {
-          type: Number,
-          required: true,
-          default: 0,
-        },
+        priceInSmallestUnit: { type: String, required: true, default: "0" },
+        priceInSmallestUnitCAD: { type: String, required: true, default: "0" },
+        priceInSmallestUnitUSD: { type: String, required: true, default: "0" },
       },
       contact: {
         contacts: {
@@ -53,11 +53,9 @@ const schema = new mongoose.Schema(
           required: true,
           default: 0,
         },
-        priceInSmallestUnit: {
-          type: Number,
-          required: true,
-          default: 0,
-        },
+        priceInSmallestUnit: { type: String, required: true, default: "0" },
+        priceInSmallestUnitCAD: { type: String, required: true, default: "0" },
+        priceInSmallestUnitUSD: { type: String, required: true, default: "0" },
       },
     },
     priceInSmallestUnit: {
