@@ -119,7 +119,7 @@ const readPlans = async ({ pageSize, companyId, stripeCustomerId }) => {
 
   const promises = [];
 
-  const activeBillingDates = await readActiveBillingCycleDates({
+  const activeBillingCycleDates = await readActiveBillingCycleDates({
     stripeCustomerId,
   });
 
