@@ -13,6 +13,10 @@ const schema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    isPopular: {
+      type: Boolean,
+      default: false,
+    },
     status: {
       type: String,
       enum: Object.values(TEMPLATE_CATEGORY_STATUS),
