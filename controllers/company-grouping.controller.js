@@ -29,6 +29,31 @@ const getCompanyGroupingByType = async ({ companyId, type }) => {
     throw createHttpError(404, RESPONSE_MESSAGES.COMPANY_GROUPING_NOT_FOUND);
   }
 
+  if (type === COMPANY_GROUPING_TYPES.TEMPLATE || type === COMPANY_GROUPING_TYPES.CAMPAIGN) {
+    const groupingIds = companyGrouping.map(g => g._id);
+
+    let Model;
+    if (type === COMPANY_GROUPING_TYPES.TEMPLATE) {
+      Model = Template;
+    } else if (type === COMPANY_GROUPING_TYPES.CAMPAIGN) {
+      Model = Campaign;
+    }
+
+    const contentCounts = await Model.aggregate([
+      { $match: { companyGroupingId: { $in: groupingIds } } },
+      { $group: { _id: '$companyGroupingId', count: { $sum: 1 } } }
+    ]);
+
+    const countMap = {};
+    contentCounts.forEach(entry => {
+      countMap[entry._id.toString()] = entry.count;
+    });
+
+    return companyGrouping.map(group => ({
+      ...group.toObject(),
+      contentCount: countMap[group._id.toString()] || 0,
+    }));
+  }
   return companyGrouping;
 };
 
