@@ -196,8 +196,27 @@ const readEmailsSentByCompanyId = ({
   return EmailSent.find(query, project);
 };
 
-const readEmailsSentByCampaignId = ({ campaignId }) =>
-  EmailSent.find({ campaign: campaignId });
+const readEmailsSentByCampaignId = ({
+  campaignId,
+  startDate,
+  endDate,
+}) => {
+  const filter = {
+    campaign: campaignId,
+    createdAt: {
+      $gte: new Date(startDate),
+      $lt: new Date(endDate),
+    },
+  };
+
+  return EmailSent.find(filter).select("_id companyId size createdAt");
+};
+
+
+const readEmailSentByCampaignId = async ({ campaignId }) => {
+  return await EmailSent.find({ campaign: campaignId });
+};
+
 
 const readEmailSentByCampaignIdAndEmailAdress = ({
   campaignId,
@@ -264,6 +283,7 @@ module.exports = {
   readEmailSentCount,
   readEmailContentConsumed,
   readEmailsSentByCampaignId,
+  readEmailSentByCampaignId,
   createEmailSentDoc,
   readEmailAddressesByCampaignId,
   readEmailSentByCampaignIdAndEmailAdress,

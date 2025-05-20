@@ -1069,6 +1069,10 @@ const readCampaignUsageDetails = async ({ companyId, stripeCustomerId }) => {
       stripeCustomerId,
     }),
   ]);
+  const activeBillingDates = await stripeController.readActiveBillingCycleDates({
+    stripeCustomerId,
+  });
+
   const company = await Company.findById(companyId);
   const currency = company.region === REGIONS.CANADA ? "CAD" : "USD";
 
@@ -1086,6 +1090,8 @@ const readCampaignUsageDetails = async ({ companyId, stripeCustomerId }) => {
     emailSentPromises.push(
       emailSentController.readEmailsSentByCampaignId({
         campaignId,
+        startDate: activeBillingDates.startDate,
+      endDate: activeBillingDates.endDate,
       })
     );
   });
@@ -1222,6 +1228,7 @@ const readCampaignUsageDetails = async ({ companyId, stripeCustomerId }) => {
     const overagePrice = {
       email: emailUsageValue * pricePerEmail,
       bandwidth: bandwidthUsageValue * pricePerBandwidth,
+      currency: company.region === REGIONS.CANADA ? "CAD" : "USD",
     };
 
     return {
