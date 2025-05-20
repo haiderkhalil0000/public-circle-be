@@ -1,6 +1,9 @@
 const createHttpError = require("http-errors");
 const { CompanyGrouping, Campaign, Template } = require("../models");
-const { RESPONSE_MESSAGES, COMPANY_GROUPING_TYPES } = require("../utils/constants.util");
+const {
+  RESPONSE_MESSAGES,
+  COMPANY_GROUPING_TYPES,
+} = require("../utils/constants.util");
 const { basicUtil } = require("../utils");
 
 const createCompanyGrouping = async ({ companyId, type, groupName }) => {
@@ -29,8 +32,11 @@ const getCompanyGroupingByType = async ({ companyId, type }) => {
     throw createHttpError(404, RESPONSE_MESSAGES.COMPANY_GROUPING_NOT_FOUND);
   }
 
-  if (type === COMPANY_GROUPING_TYPES.TEMPLATE || type === COMPANY_GROUPING_TYPES.CAMPAIGN) {
-    const groupingIds = companyGrouping.map(g => g._id);
+  if (
+    type === COMPANY_GROUPING_TYPES.TEMPLATE ||
+    type === COMPANY_GROUPING_TYPES.CAMPAIGN
+  ) {
+    const groupingIds = companyGrouping.map((g) => g._id);
 
     let Model;
     if (type === COMPANY_GROUPING_TYPES.TEMPLATE) {
@@ -41,15 +47,15 @@ const getCompanyGroupingByType = async ({ companyId, type }) => {
 
     const contentCounts = await Model.aggregate([
       { $match: { companyGroupingId: { $in: groupingIds } } },
-      { $group: { _id: '$companyGroupingId', count: { $sum: 1 } } }
+      { $group: { _id: "$companyGroupingId", count: { $sum: 1 } } },
     ]);
 
     const countMap = {};
-    contentCounts.forEach(entry => {
+    contentCounts.forEach((entry) => {
       countMap[entry._id.toString()] = entry.count;
     });
 
-    return companyGrouping.map(group => ({
+    return companyGrouping.map((group) => ({
       ...group.toObject(),
       contentCount: countMap[group._id.toString()] || 0,
     }));
@@ -59,6 +65,14 @@ const getCompanyGroupingByType = async ({ companyId, type }) => {
 
 const patchCompanyGroupingById = async ({ id, type, groupName }) => {
   basicUtil.validateObjectId({ inputString: id });
+  const existingCompanyGrouping = await CompanyGrouping.findOne({
+    groupName,
+    type,
+  });
+  if (existingCompanyGrouping) {
+    throw createHttpError(400, RESPONSE_MESSAGES.COMPANY_GROUP_ALREADY_EXISTS);
+  }
+  const companyGrouping = await Company;
   return await CompanyGrouping.findOneAndUpdate(
     { _id: id },
     { type, groupName },
@@ -90,7 +104,6 @@ const deleteCompanyGroupingById = async ({ id }) => {
 
   return CompanyGrouping.findOneAndDelete({ _id: id });
 };
-
 
 const getCompanyGroupingById = async ({ id }) => {
   basicUtil.validateObjectId({ inputString: id });

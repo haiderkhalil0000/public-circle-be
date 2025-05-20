@@ -119,12 +119,21 @@ const readPlans = async ({ pageSize, companyId, stripeCustomerId }) => {
 
   const promises = [];
 
+  const activeBillingDates = await readActiveBillingCycleDates({
+    stripeCustomerId,
+  });
+
   const [stripePlans, dbPlans, emailSentDocs, companyDoc] = await Promise.all([
     stripe.products.list({
       limit: pageSize,
     }),
     plansController.readAllPlans(),
-    emailsSentController.readEmailsSentByCompanyId({ companyId }),
+    emailsSentController.readEmailsSentByCompanyId({
+      companyId,
+      startDate: activeBillingCycleDates.startDate,
+      endDate: activeBillingCycleDates.endDate,
+      project: { size: 1 },
+    }),
     companyController.readCompanyById({ companyId }),
   ]);
 
@@ -600,7 +609,7 @@ const readCustomerBalance = async ({ companyId, stripeCustomerId }) => {
       startDate: activeBillingCycleDates.startDate,
       endDate: activeBillingCycleDates.endDate,
       project: { size: 1 },
-    }).lean(),
+    }),
     readPlanIds({ stripeCustomerId }),
   ]);
 
@@ -1052,7 +1061,7 @@ const quotaDetails = async ({ companyId, stripeCustomerId }) => {
   const emailsConsumedInOverageUnit =
     emailsConsumedInOverage === 1 ? "email" : "emails";
 
-  const emailsConsumedInOveragePriceUnit = "CAD";
+  const emailsConsumedInOveragePriceUnit = currency;
 
   const bandwidthAllowedInPlanUnit = basicUtil
     .calculateByteUnit({
@@ -1078,7 +1087,7 @@ const quotaDetails = async ({ companyId, stripeCustomerId }) => {
     })
     .split([" "])[1];
 
-  const bandwidthConsumedInOveragePriceUnit = "CAD";
+  const bandwidthConsumedInOveragePriceUnit = currency;
 
   return {
     emailsAllowedInPlan,
