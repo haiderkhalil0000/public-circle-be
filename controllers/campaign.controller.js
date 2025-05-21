@@ -1224,10 +1224,10 @@ const readCampaignUsageDetails = async ({ companyId, stripeCustomerId }) => {
             emailSentDocsArray: emailsSentByCompany[index],
           })
         : 0;
-
+    const bandwidthUsageValueKB = Number((bandwidthUsageValue / 1000).toFixed(2));
     const overagePrice = {
       email: emailUsageValue * pricePerEmail,
-      bandwidth: bandwidthUsageValue * pricePerBandwidth,
+      bandwidth: bandwidthUsageValueKB * pricePerBandwidth,
       currency: company.region === REGIONS.CANADA ? "CAD" : "USD",
     };
 

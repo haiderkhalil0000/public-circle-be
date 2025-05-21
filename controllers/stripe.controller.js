@@ -626,7 +626,7 @@ const readCustomerBalance = async ({ companyId, stripeCustomerId }) => {
       : plan.bundles.email.priceInSmallestUnitCAD
   );
 
-  const pricePerUnitInCents = pricePerUnitInDollars * 100;
+  const pricePerUnitInCents = pricePerUnitInDollars;
 
   const paidEmailsPrice = paidEmails * pricePerUnitInCents;
   const totalBandwidthSent = emailsSentDocs.reduce(
@@ -644,7 +644,7 @@ const readCustomerBalance = async ({ companyId, stripeCustomerId }) => {
   const remainingBalanceInCents =
     totalTopup - paidEmailsPrice - paidEmailContentPrice;
 
-  return remainingBalanceInCents / 100;
+  return Number((remainingBalanceInCents / 100).toFixed(2));
 };
 
 const generateImmediateChargeInvoice = async ({
@@ -1047,16 +1047,16 @@ const quotaDetails = async ({ companyId, stripeCustomerId }) => {
       ? plan.bundles.bandwidth.priceInSmallestUnitUSD
       : plan.bundles.bandwidth.priceInSmallestUnitCAD
   );
+  
+const totalEmailContentSentKB = Number((totalEmailContentSent / 1000).toFixed(2));
 
-  const bandwidthAllowedInPlanBytes = plan.quota.bandwidth;
+const bandwidthAllowedInPlanKB = Number((plan.quota.bandwidth / 1000).toFixed(2));
 
-  const bandwidthConsumedInOverageBytes =
-    totalEmailContentSent > bandwidthAllowedInPlanBytes
-      ? totalEmailContentSent - bandwidthAllowedInPlanBytes
-      : 0;
+const bandwidthConsumedInOverageKB = totalEmailContentSentKB > bandwidthAllowedInPlanKB
+  ? Number((totalEmailContentSentKB - bandwidthAllowedInPlanKB).toFixed(2))
+  : 0;
 
-  const bandwidthConsumedInOveragePrice =
-    bandwidthConsumedInOverageBytes * pricePerUnit;
+const bandwidthConsumedInOveragePrice = Number((bandwidthConsumedInOverageKB * pricePerUnit).toFixed(2));
 
 
   const emailsAllowedInPlanUnit =
