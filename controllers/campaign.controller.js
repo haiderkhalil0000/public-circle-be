@@ -981,7 +981,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
 
   if (plan.quota.email < campaignRecipientsCount + emailsSentByCompany.length) {
     emailOverageCharge = calculateEmailOverageCharge({
-      unpaidEmailsCount: campaignRecipientsCount - plan.quota.email,
+      unpaidEmailsCount: (campaignRecipientsCount + emailsSentByCompany.length) - plan.quota.email,
       plan,
       currency: company.region === REGIONS.CANADA ? "CAD" : "USD",
     });
