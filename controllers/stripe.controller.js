@@ -10,6 +10,7 @@ const {
   Plan,
   Company,
   CustomerRequests,
+  Campaign,
 } = require("../models");
 const {
   sesUtil,
@@ -97,7 +98,7 @@ const readActiveBillingCycleDates = async ({ stripeCustomerId }) => {
   });
 
   activeSubscription = activeSubscription.data[0];
-
+  if(activeSubscription === undefined) return undefined;
   return {
     startDate: moment
       .unix(activeSubscription.current_period_start)
@@ -130,8 +131,8 @@ const readPlans = async ({ pageSize, companyId, stripeCustomerId }) => {
     plansController.readAllPlans(),
     emailsSentController.readEmailsSentByCompanyId({
       companyId,
-      startDate: activeBillingCycleDates.startDate,
-      endDate: activeBillingCycleDates.endDate,
+      startDate: activeBillingCycleDates?.startDate || undefined,
+      endDate: activeBillingCycleDates?.endDate || undefined,
       project: { size: 1 },
     }),
     companyController.readCompanyById({ companyId }),
@@ -203,8 +204,8 @@ const readPlans = async ({ pageSize, companyId, stripeCustomerId }) => {
     activePlan.subscriptionId
   );
 
-  const periodStart = subscription.current_period_start;
-  const periodEnd = subscription.current_period_end;
+  const periodStart = subscription?.current_period_start;
+  const periodEnd = subscription?.current_period_end;
   const today = Math.floor(Date.now() / 1000);
 
   // Convert timestamps to Date objects
@@ -978,16 +979,15 @@ const quotaDetails = async ({ companyId, stripeCustomerId }) => {
   const activeBillingDates = await readActiveBillingCycleDates({
     stripeCustomerId,
   });
-
+  const campaignIds = await Campaign.distinct("_id", { company: companyId });
   const [planIds, emailsSentDocs] = await Promise.all([
     readPlanIds({
       stripeCustomerId,
     }),
-    emailsSentController.readEmailsSentByCompanyId({
-      companyId,
+    emailsSentController.readEmailsSentByCampaignId({
+      campaignId: campaignIds,
       startDate: activeBillingDates.startDate,
-      endDate: activeBillingDates.endDate,
-      project: { size: 1 },
+      endDate: activeBillingDates.endDate
     }),
   ]);
 
@@ -1010,7 +1010,7 @@ const quotaDetails = async ({ companyId, stripeCustomerId }) => {
       : 0;
 
   const emailsConsumedInOveragePrice =
-    (emailsConsumedInOverage * parseFloat(currency === "USD" ? plan.bundles.email.priceInSmallestUnitUSD : plan.bundles.email.priceInSmallestUnitCAD)) / 100;
+    (emailsConsumedInOverage * parseFloat(currency === "USD" ? plan.bundles.email.priceInSmallestUnitUSD : plan.bundles.email.priceInSmallestUnitCAD));
 
   const bandwidthAllowedInPlan = Number(
     basicUtil
@@ -1048,8 +1048,15 @@ const quotaDetails = async ({ companyId, stripeCustomerId }) => {
       : plan.bundles.bandwidth.priceInSmallestUnitCAD
   );
 
+  const bandwidthAllowedInPlanBytes = plan.quota.bandwidth;
+
+  const bandwidthConsumedInOverageBytes =
+    totalEmailContentSent > bandwidthAllowedInPlanBytes
+      ? totalEmailContentSent - bandwidthAllowedInPlanBytes
+      : 0;
+
   const bandwidthConsumedInOveragePrice =
-    bandwidthConsumedInOverage * pricePerUnit;
+    bandwidthConsumedInOverageBytes * pricePerUnit;
 
 
   const emailsAllowedInPlanUnit =
@@ -1107,6 +1114,8 @@ const quotaDetails = async ({ companyId, stripeCustomerId }) => {
     bandwidthConsumedInOverageUnit,
     bandwidthConsumedInOveragePrice,
     bandwidthConsumedInOveragePriceUnit,
+    planCycleStartDate: activeBillingDates.startDate,
+    planCycleEndDate: activeBillingDates.endDate,
   };
 };
 

@@ -202,12 +202,17 @@ const readEmailsSentByCampaignId = ({
   endDate,
 }) => {
   const filter = {
-    campaign: campaignId,
     createdAt: {
       $gte: new Date(startDate),
       $lt: new Date(endDate),
     },
   };
+
+  if (Array.isArray(campaignId)) {
+    filter.campaign = { $in: campaignId };
+  } else {
+    filter.campaign = campaignId;
+  }
 
   return EmailSent.find(filter).select("_id companyId size createdAt");
 };
