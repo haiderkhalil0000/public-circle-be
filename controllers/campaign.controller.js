@@ -1026,7 +1026,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
       currency: company.region === REGIONS.CANADA ? "CAD" : "USD",
     });
 
-    if (companyBalance < bandwidthOverageCharge) {
+    if (companyBalance < (bandwidthOverageCharge + emailOverageCharge)) {
       await draftCampaign({ campaignId: campaign._id });
 
       await sesUtil.sendEmail({
@@ -1047,7 +1047,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
         errorMessage: `${RESPONSE_MESSAGES.BANDWIDTH_LIMIT_REACHED} Minimum ${
           company?.region === REGIONS.CANADA ? "CAD" : "USD"
         } ${
-          parseInt(bandwidthOverageCharge - companyBalance) / 100
+          parseInt((bandwidthOverageCharge + emailOverageCharge) - companyBalance) / 100
         } credits required.`,
         errorKind: "BANDWIDTH_LIMIT_REACHED",
         errorCode: `Campaign created with id ${campaign._id}`,
