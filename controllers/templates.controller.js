@@ -65,7 +65,7 @@ const duplicateExistingTemplate = async ({
   });
 
   const document = {
-    name: `${originalTemplate.name}-${currentDuplicatedCount + 1}`,
+    name: `${originalTemplate.name} - ${currentDuplicatedCount + 1}`,
     kind: originalTemplate.kind,
     body: originalTemplate.body,
     size: Buffer.byteLength(originalTemplate.body, "utf-8"),
