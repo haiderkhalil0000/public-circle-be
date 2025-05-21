@@ -1295,6 +1295,26 @@ const validateCampaignCompanyId = async ({
   }
 };
 
+const getCompanyCampaignId = async ({ companyId, companyName }) => {
+  const totalCampaigns = await Campaign.countDocuments({ company: companyId });
+  let index = totalCampaigns + 1 || 1;
+  let campaignCompanyId;
+  let exists;
+
+  do {
+    campaignCompanyId = `${companyName}-${index}`;
+    exists = await Campaign.findOne({
+      campaignCompanyId,
+      company: companyId,
+      status: { $ne: CAMPAIGN_STATUS.DELETED },
+    });
+    index++;
+  } while (exists);
+
+  return campaignCompanyId;
+};
+
+
 module.exports = {
   createCampaign,
   readCampaign,
@@ -1313,4 +1333,5 @@ module.exports = {
   readCampaign,
   readSegmentPopulatedCampaign,
   populateCompanyContactsQuery,
+  getCompanyCampaignId,
 };
