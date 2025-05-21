@@ -890,7 +890,7 @@ const calculateBandwidthOverageCharge = ({
       ? plan.bundles.bandwidth.priceInSmallestUnitUSD
       : plan.bundles.bandwidth.priceInSmallestUnitCAD
   );
-
+  unpaidBandwidth = unpaidBandwidth / 1000; // Converting to KB
   const timesExceeded = Math.ceil(unpaidBandwidth / bandwidth);
 
   return timesExceeded * priceInCents * 100;
@@ -965,6 +965,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
   let [companyBalance, planIds] = await Promise.all([
     stripeController.readCustomerBalance({
       companyId: campaign.company,
+      stripeCustomerId: company.stripeCustomerId,
     }),
     stripeController.readPlanIds({
       stripeCustomerId: company.stripeCustomerId,
@@ -980,7 +981,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
 
   if (plan.quota.email < campaignRecipientsCount + emailsSentByCompany.length) {
     emailOverageCharge = calculateEmailOverageCharge({
-      unpaidEmailsCount: campaignRecipientsCount,
+      unpaidEmailsCount: campaignRecipientsCount - plan.quota.email,
       plan,
       currency: company.region === REGIONS.CANADA ? "CAD" : "USD",
     });
@@ -1020,7 +1021,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
       campaign.emailTemplate.size * campaignRecipientsCount
   ) {
     bandwidthOverageCharge = calculateBandwidthOverageCharge({
-      unpaidBandwidth: campaign.emailTemplate.size * campaignRecipientsCount,
+      unpaidBandwidth: (bandwidthSentByCompany + campaign.emailTemplate.size * campaignRecipientsCount) - plan.quota.bandwidth,
       plan,
       currency: company.region === REGIONS.CANADA ? "CAD" : "USD",
     });

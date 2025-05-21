@@ -596,10 +596,6 @@ const readCustomerBalance = async ({ companyId, stripeCustomerId }) => {
   const topupController = require("./topup.controller");
   const emailsSentController = require("./emails-sent.controller");
 
-  const activeBillingCycleDates = await readActiveBillingCycleDates({
-    stripeCustomerId,
-  });
-
   const company = await Company.findById(companyId);
   const currency = company.region === REGIONS.CANADA ? "CAD" : "USD";
 
@@ -607,8 +603,8 @@ const readCustomerBalance = async ({ companyId, stripeCustomerId }) => {
     topupController.readTopupsByCompanyId({ companyId }),
     emailsSentController.readEmailsSentByCompanyId({
       companyId,
-      startDate: activeBillingCycleDates.startDate,
-      endDate: activeBillingCycleDates.endDate,
+      startDate: undefined,
+      endDate: undefined,
       project: { size: 1 },
     }),
     readPlanIds({ stripeCustomerId }),
@@ -634,17 +630,17 @@ const readCustomerBalance = async ({ companyId, stripeCustomerId }) => {
     0
   );
 
-  const paidEmailContent = Math.max(
+  let paidEmailContent = Math.max(
     totalBandwidthSent - plan.quota.bandwidth,
     0
   );
-
+  paidEmailContent = paidEmailContent / 1000; // Convert to KB
   const paidEmailContentPrice = paidEmailContent * pricePerUnitInCents;
 
-  const remainingBalanceInCents =
-    totalTopup - paidEmailsPrice - paidEmailContentPrice;
+  const remainingBalance =
+    totalTopup / 100 - paidEmailsPrice - paidEmailContentPrice;
 
-  return Number((remainingBalanceInCents / 100).toFixed(2));
+  return Number(remainingBalance.toFixed(2));
 };
 
 const generateImmediateChargeInvoice = async ({
