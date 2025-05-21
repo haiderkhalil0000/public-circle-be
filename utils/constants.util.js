@@ -263,19 +263,19 @@ module.exports = {
     TOUR_RESET: "Tour reset successfully.",
     CAMPAIGN_COMPANY_ID_EXISTS: "Campaign company id already exists!",
     COMPANY_GROUP_ALREADY_EXISTS: "Company group already exists!",
-    COMPANY_GROUPING_CREATED: "Company grouping created successfully.",
-    COMPANY_GROUPING_NOT_FOUND: "Company grouping not found!",
-    COMPANY_GROUPING_FETCHED: "Company grouping fetched successfully.",
-    COMPANY_GROUPING_UPDATED: "Company grouping updated successfully.",
-    COMPANY_GROUPING_DELETED: "Company grouping deleted successfully.",
+    COMPANY_GROUPING_CREATED: "Group created successfully.",
+    COMPANY_GROUPING_NOT_FOUND: "Group not found!",
+    COMPANY_GROUPING_FETCHED: "Group fetched successfully.",
+    COMPANY_GROUPING_UPDATED: "Group updated successfully.",
+    COMPANY_GROUPING_DELETED: "Group deleted successfully.",
     ORIGINAL_TEMPLATE_ID_NOT_FOUND: "Original template id not found!",
     TEMPLATE_DUPLICATED: "Template duplicated successfully.",
     COMPANY_GROUPING_CAMPAIGN_EXISTS:
-      "Company grouping campaign exists already!",
+      "Group campaign exists already!",
     COMPANY_GROUPING_TEMPLATE_EXISTS:
-      "Company grouping template exists already!",
-    COMPANY_GROUPING_IS_USED_IN_TEMPLATE: "Company grouping is used in template! Please delete the template first.",
-    COMPANY_GROUPING_IS_USED_IN_CAMPAIGN: "Company grouping is used in campaign! Please delete the campaign first.",
+      "Group template exists already!",
+    COMPANY_GROUPING_IS_USED_IN_TEMPLATE: "Group is used in template! Can't delete.",
+    COMPANY_GROUPING_IS_USED_IN_CAMPAIGN: "Group is used in campaign! Can't delete.",
   },
 
   INTERACTION_CHANNELS: {

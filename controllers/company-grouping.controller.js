@@ -72,7 +72,6 @@ const patchCompanyGroupingById = async ({ id, type, groupName }) => {
   if (existingCompanyGrouping) {
     throw createHttpError(400, RESPONSE_MESSAGES.COMPANY_GROUP_ALREADY_EXISTS);
   }
-  const companyGrouping = await Company;
   return await CompanyGrouping.findOneAndUpdate(
     { _id: id },
     { type, groupName },
