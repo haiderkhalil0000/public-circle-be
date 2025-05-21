@@ -29,7 +29,7 @@ const calculateByteUnit = ({ bytes }) => {
   let index = 0;
 
   while (bytes >= 1000 && index < units.length - 1) {
-    bytes /= 1024;
+    bytes /= 1000;
     index++;
   }
 
