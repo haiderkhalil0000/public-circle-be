@@ -592,7 +592,7 @@ const createATopUpInCustomerBalance = async ({
   });
 };
 
-const readCustomerBalance = async ({ companyId, stripeCustomerId }) => {
+const readCustomerBalance = async ({ companyId, stripeCustomerId, internalCall=false }) => {
   const topupController = require("./topup.controller");
   const emailsSentController = require("./emails-sent.controller");
 
@@ -637,6 +637,9 @@ const readCustomerBalance = async ({ companyId, stripeCustomerId }) => {
   paidEmailContent = paidEmailContent / 1000; // Convert to KB
   const paidEmailContentPrice = paidEmailContent * pricePerUnitInCents;
 
+  if(internalCall){
+    return totalTopup;
+  }
   const remainingBalance =
     totalTopup / 100 - paidEmailsPrice - paidEmailContentPrice;
 

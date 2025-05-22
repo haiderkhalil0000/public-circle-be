@@ -867,15 +867,16 @@ const readCampaignRecipientsCount = async ({ campaign }) => {
 };
 
 const calculateEmailOverageCharge = ({ unpaidEmailsCount, plan, currency }) => {
-  const { emails } = plan.bundles.email;
+  // const { emails } = plan.bundles.email;
   const priceInCents = parseFloat(
     currency === "USD"
       ? plan.bundles.email.priceInSmallestUnitUSD
       : plan.bundles.email.priceInSmallestUnitCAD
   );
 
-  const timesExceeded = Math.ceil(unpaidEmailsCount / emails);
-  return timesExceeded * priceInCents * 100;
+  // const timesExceeded = Math.ceil(unpaidEmailsCount / emails);
+  const totalCost =  Math.ceil(unpaidEmailsCount * priceInCents * 100);
+  return totalCost;
 };
 
 const calculateBandwidthOverageCharge = ({
@@ -883,7 +884,7 @@ const calculateBandwidthOverageCharge = ({
   plan,
   currency,
 }) => {
-  const { bandwidth } = plan.bundles.bandwidth;
+  // const { bandwidth } = plan.bundles.bandwidth;
 
   const priceInCents = parseFloat(
     currency === "USD"
@@ -891,9 +892,10 @@ const calculateBandwidthOverageCharge = ({
       : plan.bundles.bandwidth.priceInSmallestUnitCAD
   );
   unpaidBandwidth = unpaidBandwidth / 1000; // Converting to KB
-  const timesExceeded = Math.ceil(unpaidBandwidth / bandwidth);
+  // const timesExceeded = Math.ceil(unpaidBandwidth / bandwidth);
 
-  return timesExceeded * priceInCents * 100;
+  const totalCost =  Math.ceil(unpaidBandwidth * priceInCents * 100);
+  return totalCost;
 };
 
 const draftCampaign = ({ campaignId }) =>
@@ -966,6 +968,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
     stripeController.readCustomerBalance({
       companyId: campaign.company,
       stripeCustomerId: company.stripeCustomerId,
+      internalCall: true,
     }),
     stripeController.readPlanIds({
       stripeCustomerId: company.stripeCustomerId,
@@ -1021,7 +1024,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
       campaign.emailTemplate.size * campaignRecipientsCount
   ) {
     bandwidthOverageCharge = calculateBandwidthOverageCharge({
-      unpaidBandwidth: (bandwidthSentByCompany + campaign.emailTemplate.size * campaignRecipientsCount) - plan.quota.bandwidth,
+      unpaidBandwidth: (bandwidthSentByCompany + (campaign.emailTemplate.size * campaignRecipientsCount)) - plan.quota.bandwidth,
       plan,
       currency: company.region === REGIONS.CANADA ? "CAD" : "USD",
     });
