@@ -3,6 +3,8 @@ const { CompanyGrouping, Campaign, Template } = require("../models");
 const {
   RESPONSE_MESSAGES,
   COMPANY_GROUPING_TYPES,
+  CAMPAIGN_STATUS,
+  TEMPLATE_STATUS,
 } = require("../utils/constants.util");
 const { basicUtil } = require("../utils");
 
@@ -83,8 +85,8 @@ const deleteCompanyGroupingById = async ({ id }) => {
   basicUtil.validateObjectId({ inputString: id });
 
   const [campaignExists, templateExists] = await Promise.all([
-    Campaign.exists({ companyGroupingId: id }),
-    Template.exists({ companyGroupingId: id }),
+    Campaign.exists({ companyGroupingId: id, status: CAMPAIGN_STATUS.ACTIVE }),
+    Template.exists({ companyGroupingId: id, status: TEMPLATE_STATUS.ACTIVE }),
   ]);
 
   if (campaignExists) {
