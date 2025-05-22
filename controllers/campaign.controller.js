@@ -467,23 +467,25 @@ const mapDynamicValues = async ({ companyId, emailAddress, content }) => {
     );
   }
 
-  if (!hasPurchasedPublicCircleAddon) {
-    const CLASS_NAME = POWERED_BY.COMMON_CLASS_NAME;
-    const partialHTML = POWERED_BY.POWERED_BY_PARTIAL_HTML;
-    const fullHTML = POWERED_BY.POWERED_BY_FULL_HTML;
+  // Will have to update this code
+  
+  // if (!hasPurchasedPublicCircleAddon) {
+  //   const CLASS_NAME = POWERED_BY.COMMON_CLASS_NAME;
+  //   const partialHTML = POWERED_BY.POWERED_BY_PARTIAL_HTML;
+  //   const fullHTML = POWERED_BY.POWERED_BY_FULL_HTML;
 
-    if (modifiedContent.includes(`class="${CLASS_NAME}"`)) {
-      modifiedContent = modifiedContent.replace(
-        /(<div class="unsubscribe-section"[^>]*>\s*<span>\s*)(<a[\s\S]*?Unsubscribe)/,
-        `$1${partialHTML}$2`
-      );
-    } else {
-      modifiedContent = modifiedContent.replace(
-        /<\/body>/i,
-        `${fullHTML}</body>`
-      );
-    }
-  }
+  //   if (modifiedContent.includes(`class="${CLASS_NAME}"`)) {
+  //     modifiedContent = modifiedContent.replace(
+  //       /(<div class="unsubscribe-section"[^>]*>\s*<span>\s*)(<a[\s\S]*?Unsubscribe)/,
+  //       `$1${partialHTML}$2`
+  //     );
+  //   } else {
+  //     modifiedContent = modifiedContent.replace(
+  //       /<\/body>/i,
+  //       `${fullHTML}</body>`
+  //     );
+  //   }
+  // }
   return modifiedContent;
 };
 
