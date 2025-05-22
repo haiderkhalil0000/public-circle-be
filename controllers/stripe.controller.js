@@ -14,7 +14,7 @@ const {
 } = require("../models");
 const {
   sesUtil,
-  constants: { RESPONSE_MESSAGES, REGIONS, TEMPLATE_CONTENT_TYPE, CUSTOMER_REQUEST_TYPE },
+  constants: { RESPONSE_MESSAGES, REGIONS, TEMPLATE_CONTENT_TYPE, CUSTOMER_REQUEST_TYPE, STRIPE_WEBHOOK_SECRET },
   basicUtil,
 } = require("../utils");
 const { PUBLIC_CIRCLES_EMAIL_ADDRESS, SUPPORT_EMAIL, TOP_UP_ADD_ON_ID } = process.env;
@@ -870,12 +870,12 @@ const readInvoiceLineItems = ({ invoiceId }) =>
   stripe.invoices.listLineItems(invoiceId);
 
 const readStripeEvent = async ({ stripeSignature, body }) => {
-  const endpointSecret = "whsec_If7HK7wlpvmX6ig8eCdNf0ujOauA64GA";
+
 
   const event = await stripe.webhooks.constructEvent(
     body,
     stripeSignature,
-    endpointSecret
+    STRIPE_WEBHOOK_SECRET
   );
 
   const invoiceId = event.data.object.id;
