@@ -38,7 +38,11 @@ const {
 const { default: axios } = require("axios");
 const shortid = require("shortid");
 
-const { PUBLIC_CIRCLES_EMAIL_ADDRESS, PUBLIC_CIRCLES_WEB_URL, PUBLIC_CIRCLE_ADD_ON_ID } = process.env;
+const {
+  PUBLIC_CIRCLES_EMAIL_ADDRESS,
+  PUBLIC_CIRCLES_WEB_URL,
+  PUBLIC_CIRCLE_ADD_ON_ID,
+} = process.env;
 
 const validateSourceEmailAddress = async ({
   companyId,
@@ -172,9 +176,9 @@ const readCampaign = async ({ campaignId }) => {
   basicUtil.validateObjectId({ inputString: campaignId });
 
   const campaign = await Campaign.findById(campaignId)
-  .populate('segments')
-  .populate('companyGroupingId')
-  .lean();
+    .populate("segments")
+    .populate("companyGroupingId")
+    .lean();
 
   if (!campaign) {
     throw createHttpError(404, {
@@ -463,23 +467,25 @@ const mapDynamicValues = async ({ companyId, emailAddress, content }) => {
     );
   }
 
-  if (!hasPurchasedPublicCircleAddon) {
-    const CLASS_NAME = POWERED_BY.COMMON_CLASS_NAME;
-    const partialHTML = POWERED_BY.POWERED_BY_PARTIAL_HTML;
-    const fullHTML = POWERED_BY.POWERED_BY_FULL_HTML;
+  // Will have to update this code
+  
+  // if (!hasPurchasedPublicCircleAddon) {
+  //   const CLASS_NAME = POWERED_BY.COMMON_CLASS_NAME;
+  //   const partialHTML = POWERED_BY.POWERED_BY_PARTIAL_HTML;
+  //   const fullHTML = POWERED_BY.POWERED_BY_FULL_HTML;
 
-    if (modifiedContent.includes(`class="${CLASS_NAME}"`)) {
-      modifiedContent = modifiedContent.replace(
-        /(<div class="unsubscribe-section"[^>]*>\s*<span>\s*)(<a[\s\S]*?Unsubscribe)/,
-        `$1${partialHTML}$2`
-      );
-    } else {
-      modifiedContent = modifiedContent.replace(
-        /<\/body>/i,
-        `${fullHTML}</body>`
-      );
-    }
-  }
+  //   if (modifiedContent.includes(`class="${CLASS_NAME}"`)) {
+  //     modifiedContent = modifiedContent.replace(
+  //       /(<div class="unsubscribe-section"[^>]*>\s*<span>\s*)(<a[\s\S]*?Unsubscribe)/,
+  //       `$1${partialHTML}$2`
+  //     );
+  //   } else {
+  //     modifiedContent = modifiedContent.replace(
+  //       /<\/body>/i,
+  //       `${fullHTML}</body>`
+  //     );
+  //   }
+  // }
   return modifiedContent;
 };
 
@@ -862,20 +868,36 @@ const readCampaignRecipientsCount = async ({ campaign }) => {
     .reduce((total, current) => total + (current.filterCount || 0), 0);
 };
 
-const calculateEmailOverageCharge = ({ unpaidEmailsCount, plan }) => {
-  const { emails, priceInSmallestUnit } = plan.bundles.email;
+const calculateEmailOverageCharge = ({ unpaidEmailsCount, plan, currency }) => {
+  // const { emails } = plan.bundles.email;
+  const priceInCents = parseFloat(
+    currency === "USD"
+      ? plan.bundles.email.priceInSmallestUnitUSD
+      : plan.bundles.email.priceInSmallestUnitCAD
+  );
 
-  const timesExceeded = Math.ceil(unpaidEmailsCount / emails);
-
-  return timesExceeded * priceInSmallestUnit;
+  // const timesExceeded = Math.ceil(unpaidEmailsCount / emails);
+  const totalCost =  Math.ceil(unpaidEmailsCount * priceInCents * 100);
+  return totalCost;
 };
 
-const calculateBandwidthOverageCharge = ({ unpaidBandwidth, plan }) => {
-  const { bandwidth, priceInSmallestUnit } = plan.bundles.bandwidth;
+const calculateBandwidthOverageCharge = ({
+  unpaidBandwidth,
+  plan,
+  currency,
+}) => {
+  // const { bandwidth } = plan.bundles.bandwidth;
 
-  const timesExceeded = Math.ceil(unpaidBandwidth / bandwidth);
+  const priceInCents = parseFloat(
+    currency === "USD"
+      ? plan.bundles.bandwidth.priceInSmallestUnitUSD
+      : plan.bundles.bandwidth.priceInSmallestUnitCAD
+  );
+  unpaidBandwidth = unpaidBandwidth / 1000; // Converting to KB
+  // const timesExceeded = Math.ceil(unpaidBandwidth / bandwidth);
 
-  return timesExceeded * priceInSmallestUnit;
+  const totalCost =  Math.ceil(unpaidBandwidth * priceInCents * 100);
+  return totalCost;
 };
 
 const draftCampaign = ({ campaignId }) =>
@@ -947,6 +969,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
   let [companyBalance, planIds] = await Promise.all([
     stripeController.readCustomerBalance({
       companyId: campaign.company,
+      stripeCustomerId: company.stripeCustomerId
     }),
     stripeController.readPlanIds({
       stripeCustomerId: company.stripeCustomerId,
@@ -964,6 +987,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
     emailOverageCharge = calculateEmailOverageCharge({
       unpaidEmailsCount: campaignRecipientsCount,
       plan,
+      currency: company.region === REGIONS.CANADA ? "CAD" : "USD",
     });
 
     if (companyBalance < emailOverageCharge) {
@@ -1003,9 +1027,10 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
     bandwidthOverageCharge = calculateBandwidthOverageCharge({
       unpaidBandwidth: campaign.emailTemplate.size * campaignRecipientsCount,
       plan,
+      currency: company.region === REGIONS.CANADA ? "CAD" : "USD",
     });
 
-    if (companyBalance < bandwidthOverageCharge) {
+    if (companyBalance < (bandwidthOverageCharge + emailOverageCharge)) {
       await draftCampaign({ campaignId: campaign._id });
 
       await sesUtil.sendEmail({
@@ -1026,7 +1051,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
         errorMessage: `${RESPONSE_MESSAGES.BANDWIDTH_LIMIT_REACHED} Minimum ${
           company?.region === REGIONS.CANADA ? "CAD" : "USD"
         } ${
-          parseInt(bandwidthOverageCharge - companyBalance) / 100
+          parseInt((bandwidthOverageCharge + emailOverageCharge) - companyBalance) / 100
         } credits required.`,
         errorKind: "BANDWIDTH_LIMIT_REACHED",
         errorCode: `Campaign created with id ${campaign._id}`,
@@ -1049,6 +1074,12 @@ const readCampaignUsageDetails = async ({ companyId, stripeCustomerId }) => {
       stripeCustomerId,
     }),
   ]);
+  const activeBillingDates = await stripeController.readActiveBillingCycleDates({
+    stripeCustomerId,
+  });
+
+  const company = await Company.findById(companyId);
+  const currency = company.region === REGIONS.CANADA ? "CAD" : "USD";
 
   const plan = await Plan.findById(planIds[0].planId);
 
@@ -1064,6 +1095,8 @@ const readCampaignUsageDetails = async ({ companyId, stripeCustomerId }) => {
     emailSentPromises.push(
       emailSentController.readEmailsSentByCampaignId({
         campaignId,
+        startDate: activeBillingDates.startDate,
+      endDate: activeBillingDates.endDate,
       })
     );
   });
@@ -1165,31 +1198,42 @@ const readCampaignUsageDetails = async ({ companyId, stripeCustomerId }) => {
           })
         : 0;
 
+    const pricePerEmail = parseFloat(
+      currency === "USD"
+        ? plan.bundles.email.priceInSmallestUnitUSD
+        : plan.bundles.email.priceInSmallestUnitCAD
+    );
+
+    const pricePerBandwidth = parseFloat(
+      currency === "USD"
+        ? plan.bundles.bandwidth.priceInSmallestUnitUSD
+        : plan.bundles.bandwidth.priceInSmallestUnitCAD
+    );
+
+    const emailUsageValue =
+      isEmailOverage && emailOverageIterator === 1
+        ? emailUsage + emailRemainder - plan.quota.email
+        : isEmailOverage
+        ? emailUsage
+        : 0;
+
+    const bandwidthUsageValue =
+      isBandwidthOverage && bandwidthOverageIterator === 1
+        ? getCampaignBandwidthUsage({
+            emailSentDocsArray: emailsSentByCompany[index],
+          }) +
+          bandwidthRemainder -
+          plan.quota.bandwidth
+        : isBandwidthOverage
+        ? getCampaignBandwidthUsage({
+            emailSentDocsArray: emailsSentByCompany[index],
+          })
+        : 0;
+    const bandwidthUsageValueKB = Number((bandwidthUsageValue / 1000).toFixed(2));
     const overagePrice = {
-      email:
-        isEmailOverage && emailOverageIterator === 1
-          ? ((emailUsage + emailRemainder - plan.quota.email) *
-              plan.bundles.email.priceInSmallestUnit) /
-            100
-          : isEmailOverage
-          ? (emailUsage * plan.bundles.email.priceInSmallestUnit) / 100
-          : 0,
-      bandwidth:
-        isBandwidthOverage && bandwidthOverageIterator === 1
-          ? ((getCampaignBandwidthUsage({
-              emailSentDocsArray: emailsSentByCompany[index],
-            }) +
-              bandwidthRemainder -
-              plan.quota.bandwidth) *
-              plan.bundles.bandwidth.priceInSmallestUnit) /
-            100
-          : isBandwidthOverage
-          ? (getCampaignBandwidthUsage({
-              emailSentDocsArray: emailsSentByCompany[index],
-            }) *
-              plan.bundles.bandwidth.priceInSmallestUnit) /
-            100
-          : 0,
+      email: emailUsageValue * pricePerEmail,
+      bandwidth: bandwidthUsageValueKB * pricePerBandwidth,
+      currency: company.region === REGIONS.CANADA ? "CAD" : "USD",
     };
 
     return {
@@ -1256,6 +1300,26 @@ const validateCampaignCompanyId = async ({
   }
 };
 
+const getCompanyCampaignId = async ({ companyId, companyName }) => {
+  const totalCampaigns = await Campaign.countDocuments({ company: companyId });
+  let index = totalCampaigns + 1 || 1;
+  let campaignCompanyId;
+  let exists;
+
+  do {
+    campaignCompanyId = `${companyName}-${index}`;
+    exists = await Campaign.findOne({
+      campaignCompanyId,
+      company: companyId,
+      status: { $ne: CAMPAIGN_STATUS.DELETED },
+    });
+    index++;
+  } while (exists);
+
+  return campaignCompanyId;
+};
+
+
 module.exports = {
   createCampaign,
   readCampaign,
@@ -1274,4 +1338,5 @@ module.exports = {
   readCampaign,
   readSegmentPopulatedCampaign,
   populateCompanyContactsQuery,
+  getCompanyCampaignId,
 };

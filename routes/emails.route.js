@@ -20,7 +20,7 @@ router.get(
   }),
   async (req, res, next) => {
     try {
-      const emails = await emailsSentController.readEmailsSentByCampaignId(
+      const emails = await emailsSentController.readEmailSentByCampaignId(
         req.params
       );
 

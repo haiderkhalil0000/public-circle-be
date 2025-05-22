@@ -24,7 +24,7 @@ router.get(
       const campaignUsageDetails =
         await campaignsController.readCampaignUsageDetails({
           companyId: req.user.company._id,
-          stripeCustomerId: req.user.company.stripeCustomerid,
+          stripeCustomerId: req.user.company.stripeCustomerId,
         });
 
       res.status(200).json({
@@ -33,6 +33,31 @@ router.get(
       });
     } catch (err) {
       // sendErrorReportToSentry(error);
+      console.log(err);
+
+      campaignDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.get(
+  "/company-campaign-id",
+  authenticate.verifyToken,
+  async (req, res, next) => {
+    try {
+      const campaignUsageDetails =
+        await campaignsController.getCompanyCampaignId({
+          companyId: req.user.company._id,
+          companyName: req.user.company.name,
+        });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.CAMPAIGN_USAGE_DETAILS_FETCHED,
+        data: campaignUsageDetails,
+      });
+    } catch (err) {
       console.log(err);
 
       campaignDebugger(err);

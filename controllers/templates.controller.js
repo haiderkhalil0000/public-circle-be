@@ -41,6 +41,59 @@ const createThumbnail = async ({ html, width, height }) => {
   return screenshotBuffer;
 };
 
+const duplicateExistingTemplate = async ({
+  templateId,
+  companyId,
+}) => {
+  basicUtil.validateObjectId({ inputString: templateId });
+
+  const originalTemplate = await Template.findOne({
+    _id: templateId,
+    company: companyId,
+    status: TEMPLATE_STATUS.ACTIVE,
+  });
+
+  if (!originalTemplate) {
+    throw createHttpError(400, {
+      errorMessage: RESPONSE_MESSAGES.ORIGINAL_TEMPLATE_ID_NOT_FOUND,
+    });
+  }
+
+  const currentDuplicatedCount = await Template.countDocuments({
+    existingTemplateId: originalTemplate._id,
+    status: TEMPLATE_STATUS.ACTIVE,
+  });
+
+  const document = {
+    name: `${originalTemplate.name} - ${currentDuplicatedCount + 1}`,
+    kind: originalTemplate.kind,
+    body: originalTemplate.body,
+    size: Buffer.byteLength(originalTemplate.body, "utf-8"),
+    jsonTemplate: originalTemplate.jsonTemplate,
+    existingTemplateId: originalTemplate._id,
+    companyGroupingId: originalTemplate?.companyGroupingId,
+    isDuplicate: true,
+  };
+
+  if (originalTemplate.kind === TEMPLATE_KINDS.REGULAR) {
+    document.company = companyId;
+  }
+
+  const buffer = await createThumbnail({
+    html: originalTemplate.body,
+    width: 150,
+    height: 150,
+  });
+
+  const url = await s3Util.uploadImageToS3({
+    s3Path: `thumbnails/${companyId}/${templateId}/${document.name}.png`,
+    buffer,
+  });
+
+  document.thumbnailURL = url;
+  await Template.create(document);
+};
+
 const duplicateTemplate = async ({
   companyId,
   emailAddress,
@@ -49,6 +102,7 @@ const duplicateTemplate = async ({
   kind,
   body,
   jsonTemplate,
+  companyGroupingId,
 }) => {
   basicUtil.validateObjectId({ inputString: existingTemplateId });
 
@@ -71,6 +125,7 @@ const duplicateTemplate = async ({
     size: Buffer.byteLength(body, "utf-8"),
     jsonTemplate,
     existingTemplateId,
+    companyGroupingId,
     isDuplicate: true,
   };
 
@@ -431,5 +486,6 @@ module.exports = {
   updateTemplate,
   deleteTemplate,
   searchTemplate,
+  duplicateExistingTemplate,
   duplicateTemplate,
 };

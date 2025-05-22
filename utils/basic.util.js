@@ -5,7 +5,7 @@ const jsonwebtoken = require("jsonwebtoken");
 const { RESPONSE_MESSAGES } = require("./constants.util");
 
 const validateObjectId = ({ inputString }) => {
-  if (inputString.length !== 24 || !/^[a-fA-F0-9]{24}$/.test(inputString)) {
+  if (inputString?.length !== 24 || !/^[a-fA-F0-9]{24}$/.test(inputString)) {
     throw createHttpError(400, {
       errorMessage: `${RESPONSE_MESSAGES.INVALID_OBJECT_ID}: ${inputString}`,
     });
