@@ -14,12 +14,12 @@ const {
 } = require("../models");
 const {
   sesUtil,
-  constants: { RESPONSE_MESSAGES, REGIONS, TEMPLATE_CONTENT_TYPE, CUSTOMER_REQUEST_TYPE, STRIPE_WEBHOOK_SECRET },
+  constants: { RESPONSE_MESSAGES, REGIONS, TEMPLATE_CONTENT_TYPE, CUSTOMER_REQUEST_TYPE },
   basicUtil,
 } = require("../utils");
 const { PUBLIC_CIRCLES_EMAIL_ADDRESS, SUPPORT_EMAIL, TOP_UP_ADD_ON_ID } = process.env;
 
-const { STRIPE_KEY } = process.env;
+const { STRIPE_KEY, STRIPE_WEBHOOK_SECRET } = process.env;
 
 const stripe = require("stripe")(STRIPE_KEY);
 
