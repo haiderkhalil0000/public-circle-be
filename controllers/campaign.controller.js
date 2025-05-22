@@ -237,43 +237,13 @@ const readPaginatedCampaigns = async ({
       .lean(),
   ]);
 
-  const companyContactsController = require("./company-contacts.controller");
-  const promises = [];
-  const usersCountMap = new Map();
-
   for (const campaign of allCampaigns) {
-    usersCountMap.set(campaign._id.toString(), 0); // Initialize `usersCount` for each campaign
-    for (const segment of campaign.segments) {
-      promises.push(
-        companyContactsController
-          .readFiltersCount({
-            filters: segment.filters,
-            companyId,
-            internalCall: true,
-          })
-          .then((items) => ({
-            campaignId: campaign._id.toString(),
-            usersCount: items.reduce((sum, item) => sum + item.filterCount, 0),
-          }))
-      );
-    }
+    const query = buildCombinedQueryFromSegments({
+      segments: campaign.segments,
+      companyId: campaign.company,
+    });
+    campaign.usersCount = await CompanyContact.countDocuments(query);
   }
-
-  const segmentUsersCount = await Promise.all(promises);
-
-  // Use the Map to aggregate `usersCount` for each campaign
-  segmentUsersCount.forEach((item) => {
-    usersCountMap.set(
-      item.campaignId,
-      usersCountMap.get(item.campaignId) + item.usersCount
-    );
-  });
-
-  // Attach aggregated `usersCount` from the Map to the campaigns
-  allCampaigns.forEach((campaign) => {
-    campaign.usersCount = usersCountMap.get(campaign._id.toString());
-  });
-
   return {
     totalRecords,
     allCampaigns,
@@ -293,43 +263,13 @@ const readAllCampaigns = async ({
     .populate("segments")
     .lean();
 
-  const companyContactsController = require("./company-contacts.controller");
-  const promises = [];
-  const usersCountMap = new Map();
-
   for (const campaign of allCampaigns) {
-    usersCountMap.set(campaign._id.toString(), 0);
-    for (const segment of campaign.segments) {
-      promises.push(
-        companyContactsController
-          .readFiltersCount({
-            filters: segment.filters,
-            companyId,
-            internalCall: true,
-          })
-          .then((item) => ({
-            campaignId: campaign._id.toString(),
-            usersCount: item[0].filterCount,
-          }))
-      );
-    }
+    const query = buildCombinedQueryFromSegments({
+      segments: campaign.segments,
+      companyId: campaign.company,
+    });
+    campaign.usersCount = await CompanyContact.countDocuments(query);
   }
-
-  const segmentUsersCount = await Promise.all(promises);
-
-  // Use the Map to aggregate `usersCount` for each campaign
-  segmentUsersCount.forEach((item) => {
-    usersCountMap.set(
-      item.campaignId,
-      usersCountMap.get(item.campaignId) + item.usersCount
-    );
-  });
-
-  // Attach aggregated `usersCount` from the Map to the campaigns
-  allCampaigns.forEach((campaign) => {
-    campaign.usersCount = usersCountMap.get(campaign._id.toString());
-  });
-
   return allCampaigns;
 };
 
@@ -604,32 +544,75 @@ const sendSstEmail = async ({
   });
 };
 
-const populateCompanyContactsQuery = ({ segments }) => {
-  let allFilters = [];
+const buildCombinedQueryFromSegments = ({segments, companyId}) => {
+  const segmentQueries = [];
 
-  for (const segment of segments) {
-    let segmentFilters = {};
-    for (const filter of segment.filters) {
-      if (filter.values.length && !filter?.conditions?.length) {
-        segmentFilters[filter.key] = { $in: filter.values };
-      } else if (filter.conditions.length) {
+  segments.forEach(segment => {
+    const segmentAndConditions = [];
+    const segmentOrConditions = [];
+
+    segment.filters.forEach(filter => {
+      if (filter.values && filter.values.length && !filter.conditions?.length) {
+        const condition = { [filter.key]: { $in: filter.values } };
+        if (filter.operator === "OR") {
+          segmentOrConditions.push(condition);
+        } else {
+          segmentAndConditions.push(condition);
+        }
+      } else if (filter.conditions && filter.conditions.length) {
         const companyContactsController = require("./company-contacts.controller");
-        const filterConditionQueries =
-          companyContactsController.getFilterConditionQuery({
-            conditions: filter.conditions,
-            conditionKey: filter.key,
-          });
-        segmentFilters[filter.operator === "AND" ? "$and" : "$or"] =
-          filterConditionQueries.filter((c) => Object.keys(c).length > 0);
+        const filterConditionQueries = companyContactsController.getFilterConditionQuery({
+          conditions: filter.conditions,
+          conditionKey: filter.key,
+        }).filter(c => Object.keys(c).length > 0);
+
+        if (filter.operator === "OR") {
+          segmentOrConditions.push(...filterConditionQueries);
+        } else {
+          segmentAndConditions.push(...filterConditionQueries);
+        }
+      }
+    });
+    const segmentQuery = {};
+
+    if (segmentAndConditions.length && segmentOrConditions.length) {
+      segmentQuery["$and"] = [
+        { $and: segmentAndConditions },
+        { $or: segmentOrConditions }
+      ];
+    } else if (segmentAndConditions.length) {
+      if (segmentAndConditions.length === 1) {
+        Object.assign(segmentQuery, segmentAndConditions[0]);
+      } else {
+        segmentQuery["$and"] = segmentAndConditions;
+      }
+    } else if (segmentOrConditions.length) {
+      if (segmentOrConditions.length === 1) {
+        Object.assign(segmentQuery, segmentOrConditions[0]);
+      } else {
+        segmentQuery["$or"] = segmentOrConditions;
       }
     }
 
-    if (Object.keys(segmentFilters).length > 0) {
-      allFilters.push(segmentFilters);
+    if (Object.keys(segmentQuery).length > 0) {
+      segmentQueries.push(segmentQuery);
     }
+  });
+
+  const combinedQuery = {
+    public_circles_company: companyId,
+    public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
+  };
+
+  if (segmentQueries.length === 1) {
+    Object.assign(combinedQuery, segmentQueries[0]);
+  } else if (segmentQueries.length > 1) {
+    combinedQuery["$or"] = segmentQueries;
   }
-  return allFilters.length > 0 ? { $and: allFilters } : {};
+
+  return combinedQuery;
 };
+
 
 const runCampaign = async ({ campaign }) => {
   const promises = [];
@@ -688,25 +671,23 @@ const runCampaign = async ({ campaign }) => {
   }
 
   for (const segment of campaign.segments) {
-    segmentPromises.push(Segment.findById(segment));
+    segmentPromises.push(Segment.findById(segment).lean());
   }
 
   const segments = await Promise.all(segmentPromises);
 
-  const query = populateCompanyContactsQuery({ segments });
-
+  const query = buildCombinedQueryFromSegments({
+    segments,
+    companyId: campaign.company,
+  });
+  
   let [emailAddresses, company] = await Promise.all([
     CompanyContact.find(
-      {
-        ...query,
-        public_circles_company: campaign.company,
-        public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
-        public_circles_is_unsubscribed: { $in: [false, null] },
-      },
+      query,
       {
         email: 1,
       }
-    ).lean(),
+    ),
     Company.findById(campaign.company),
   ]);
 
@@ -807,25 +788,11 @@ const readPaginatedCampaignLogs = async ({
 
   await Promise.all(
     campaignDocs.map(async (campaign) => {
-      let totalUsersCount = 0;
-      await Promise.all(
-        campaign.segments.map(async (segment) => {
-          const result = await companyContactsController.readFiltersCount({
-            companyId: campaign.company,
-            filters: segment.filters,
-            internalCall: true,
-          });
-
-          if (Array.isArray(result)) {
-            totalUsersCount += result.reduce(
-              (sum, item) => sum + item.filterCount,
-              0
-            );
-          }
-
-          campaign.usersCount = totalUsersCount;
-        })
-      );
+      const query = buildCombinedQueryFromSegments({
+        segments: campaign.segments,
+        companyId: campaign.company,
+      });
+      campaign.usersCount = await CompanyContact.countDocuments(query);
     })
   );
 
@@ -840,32 +807,16 @@ const readAllCampaignLogs = ({ pageNumber, pageSize, companyId }) =>
     .populate(CAMPAIGN);
 
 const readCampaignRecipientsCount = async ({ campaign }) => {
-  const companyContactsController = require("./company-contacts.controller");
-
   const { segments } = await Campaign.findById(campaign._id).populate(
     "segments",
     "filters"
   );
-
-  const filters = segments.map((item) => item.filters);
-
-  const promises = [];
-
-  filters.forEach((filter) => {
-    promises.push(
-      companyContactsController.readFiltersCount({
-        companyId: campaign.company,
-        filters: filter,
-        internalCall: true,
-      })
-    );
+  const query = buildCombinedQueryFromSegments({
+    segments: segments,
+    companyId: campaign.company,
   });
-
-  let filterCounts = await Promise.all(promises);
-
-  return filterCounts
-    .flat()
-    .reduce((total, current) => total + (current.filterCount || 0), 0);
+  const filterCounts = await CompanyContact.countDocuments(query);
+  return filterCounts;
 };
 
 const calculateEmailOverageCharge = ({ unpaidEmailsCount, plan, currency }) => {
@@ -1337,6 +1288,6 @@ module.exports = {
   readCampaignUsageDetails,
   readCampaign,
   readSegmentPopulatedCampaign,
-  populateCompanyContactsQuery,
+  buildCombinedQueryFromSegments,
   getCompanyCampaignId,
 };

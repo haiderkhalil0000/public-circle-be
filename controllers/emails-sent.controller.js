@@ -237,16 +237,13 @@ const readEmailAddressesByCampaignId = async ({ campaignId }) => {
 
   let query = {};
 
-  query = campaignsController.populateCompanyContactsQuery({
+  query = campaignsController.buildCombinedQueryFromSegments({
     segments: campaign.segments,
+    companyId: campaign.company,
   });
 
   let emailAddresses = await CompanyContact.find(
-    {
-      ...query,
-      public_circles_company: campaign.company,
-      public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
-    },
+    query,
     {
       email: 1,
     }
