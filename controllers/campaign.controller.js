@@ -967,8 +967,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
   let [companyBalance, planIds] = await Promise.all([
     stripeController.readCustomerBalance({
       companyId: campaign.company,
-      stripeCustomerId: company.stripeCustomerId,
-      internalCall: true,
+      stripeCustomerId: company.stripeCustomerId
     }),
     stripeController.readPlanIds({
       stripeCustomerId: company.stripeCustomerId,
@@ -984,7 +983,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
 
   if (plan.quota.email < campaignRecipientsCount + emailsSentByCompany.length) {
     emailOverageCharge = calculateEmailOverageCharge({
-      unpaidEmailsCount: (campaignRecipientsCount + emailsSentByCompany.length) - plan.quota.email,
+      unpaidEmailsCount: campaignRecipientsCount,
       plan,
       currency: company.region === REGIONS.CANADA ? "CAD" : "USD",
     });
@@ -1024,7 +1023,7 @@ const validateCampaign = async ({ campaign, company, primaryUser }) => {
       campaign.emailTemplate.size * campaignRecipientsCount
   ) {
     bandwidthOverageCharge = calculateBandwidthOverageCharge({
-      unpaidBandwidth: (bandwidthSentByCompany + (campaign.emailTemplate.size * campaignRecipientsCount)) - plan.quota.bandwidth,
+      unpaidBandwidth: campaign.emailTemplate.size * campaignRecipientsCount,
       plan,
       currency: company.region === REGIONS.CANADA ? "CAD" : "USD",
     });
