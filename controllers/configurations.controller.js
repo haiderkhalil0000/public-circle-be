@@ -17,6 +17,7 @@ const addDataInCompanyConfigurations = async ({
   companyId,
   emailAddress,
   emailDomain,
+  userEmailAddress,
 }) => {
   const query = { company: { $ne: companyId } };
   let errorMessage = "";
@@ -67,6 +68,14 @@ const addDataInCompanyConfigurations = async ({
         ],
       },
     });
+    await User.findOneAndUpdate(
+      { userEmailAddress },
+      {
+        $set: {
+          "tourSteps.steps.0.isCompleted": true,
+        },
+      }
+    );
   } else {
     const existingEmailsOrDomains = JSON.parse(
       JSON.stringify(
@@ -118,7 +127,7 @@ const addDataInCompanyConfigurations = async ({
     await configuration.save();
   }
   await User.findOneAndUpdate(
-    { emailAddress },
+    { userEmailAddress },
     {
       $set: {
         "tourSteps.steps.0.isCompleted": true,
@@ -127,8 +136,8 @@ const addDataInCompanyConfigurations = async ({
   );
 };
 
-const initiateEmailVerification = async ({ companyId, emailAddress }) => {
-  await addDataInCompanyConfigurations({ companyId, emailAddress });
+const initiateEmailVerification = async ({ companyId, emailAddress, userEmailAddress }) => {
+  await addDataInCompanyConfigurations({ companyId, emailAddress, userEmailAddress });
 
   sendVerificationEmail({ emailAddress });
 };
@@ -217,6 +226,7 @@ const createConfiguration = async ({
   companyId,
   emailAddresses,
   emailDomains,
+  userEmailAddress,
 }) => {
   const configuration = await Configuration.findOne({ company: companyId });
 
@@ -233,6 +243,14 @@ const createConfiguration = async ({
       domains: emailDomains,
     },
   });
+  await User.findOneAndUpdate(
+    { userEmailAddress },
+    {
+      $set: {
+        "tourSteps.steps.0.isCompleted": true,
+      },
+    }
+  );
 };
 
 const deleteIdentityFromSES = ({ emailAddress, emailDomain }) => {

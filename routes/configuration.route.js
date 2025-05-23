@@ -25,6 +25,7 @@ router.post(
       await configurationsController.initiateEmailVerification({
         emailAddress: req.body.emailAddress,
         companyId: req.user.company._id,
+        userEmailAddress: req.user.emailAddress,
       });
 
       res.status(200).json({
@@ -81,6 +82,7 @@ router.post(
         {
           companyId: req.user.company._id,
           emailDomain: req.body.emailDomain,
+          userEmailAddress: req.user.emailAddress,
         }
       );
 
@@ -139,6 +141,7 @@ router.post(
         companyId: req.user.company._id,
         emailAddresses: req.body.emailAddresses,
         emailDomains: req.body.emailDomains,
+        userEmailAddress: req.user.emailAddress,
       });
 
       res.status(200).json({
