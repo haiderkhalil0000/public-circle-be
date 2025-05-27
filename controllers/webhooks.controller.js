@@ -7,7 +7,12 @@ const recieveCompanyContacts = async ({ companyId, contacts }) => {
   });
 
   if (primaryKey) {
-    for (const contact of contacts) {
+    for (const originalContact of contacts) {
+      const contact = Object.fromEntries(
+        Object.entries(originalContact).filter(([_, v]) => v !== undefined)
+      );
+      if (contact._id) { contact.id = contact._id.toString(); }
+      delete contact._id;
       const primaryKeyValue = contact[primaryKey];
 
       if (primaryKeyValue) {
