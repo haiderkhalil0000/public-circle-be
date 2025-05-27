@@ -897,6 +897,19 @@ const readPrimaryKey = async ({ companyId }) => {
   return companyDoc.contactsPrimaryKey;
 };
 
+const findContactsByPrimaryKey = async ({
+  companyId,
+  primaryKey,
+  primaryKeyValue,
+}) => {
+  const companyContacts = await CompanyContact.find({
+    public_circles_company: companyId,
+    [primaryKey]: primaryKeyValue,
+    public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
+  });
+  return companyContacts;
+};
+
 const updatePrimaryKey = async ({ companyId, currentUserId, primaryKey }) => {
   await Promise.all([
     Company.findByIdAndUpdate(companyId, {
@@ -1342,6 +1355,7 @@ module.exports = {
   readPrimaryKey,
   updatePrimaryKey,
   deletePrimaryKey,
+  findContactsByPrimaryKey,
   readCompanyContactsCount,
   readPrimaryKeyEffect,
   deleteSelectedContacts,
