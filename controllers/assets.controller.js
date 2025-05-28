@@ -6,6 +6,7 @@ const {
   basicUtil,
   constants: { RESPONSE_MESSAGES, ASSETS_STATUS },
 } = require("../utils");
+const { deleteFileFromS3 } = require("../utils/s3.util");
 
 const createAsset = async ({ company, name, url }) => {
   const existingAssetDoc = await Asset.findOne({
@@ -84,13 +85,14 @@ const updateAsset = async ({ assetId}) => {
   return result;
 };
 
-const deleteAsset = async ({ url }) => {
-  const result = await Asset.findOneAndDelete(url);
-
-  if (!result.matchedCount) {
-    throw createHttpError(404, {
-      errorMessage: RESPONSE_MESSAGES.ASSET_NOT_FOUND,
-    });
+const deleteAsset = async ({ assetId, companyId }) => {
+  basicUtil.validateObjectId({ inputString: assetId });
+  const assetData = await Asset.findOne({ _id: assetId, company: companyId });
+  if(assetData){
+    await Promise.all([      
+      deleteFileFromS3(assetData.url),
+      Asset.findOneAndDelete({ _id: assetId, company: companyId })
+    ]);
   }
 };
 
