@@ -140,17 +140,15 @@ parentPort.on(
       let processedCount = 0;
 
       // Process parts in parallel with controlled concurrency
-      await Promise.all(
-        parts.map(async (part) => {
-          await webhooksController.recieveCompanyContacts({
-            companyId,
-            contacts: part,
-          });
-          processedCount += part.length;
-          const progress = (processedCount / totalContacts) * 100;
-          parentPort.postMessage({ progress });
-        })
-      );
+      for (const part of parts) {
+        await webhooksController.recieveCompanyContacts({
+          companyId,
+          contacts: part,
+        });
+        processedCount += part.length;
+        const progress = (processedCount / totalContacts) * 100;
+        parentPort.postMessage({ progress });
+      }
       await User.findOneAndUpdate(
         { emailAddress },
         {
