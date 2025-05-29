@@ -1026,6 +1026,26 @@ const quotaDetails = async ({ companyId, stripeCustomerId }) => {
       })
       .split([" "])[0]
   );
+  const overageConsumptionInPercentageEmails =
+    emailsAllowedInPlan > 0
+      ? Number(
+          ((emailsConsumedInOverage / emailsAllowedInPlan) * 100).toFixed(0)
+        )
+      : 0;
+  const bandwidthRawOverageConsumption =
+    totalEmailContentSent - plan.quota.bandwidth > 0
+      ? totalEmailContentSent - plan.quota.bandwidth
+      : 0;
+
+  const overageConsumptionInPercentageBandwidth =
+    bandwidthAllowedInPlan > 0
+      ? Number(
+          (
+            (bandwidthRawOverageConsumption / plan.quota.bandwidth) *
+            100
+          ).toFixed(0)
+        )
+      : 0;
 
   const bandwidthConsumedInOverage = Number(
     basicUtil
@@ -1092,6 +1112,7 @@ const bandwidthConsumedInOveragePrice = Number((bandwidthConsumedInOverageKB * p
 
   const bandwidthConsumedInOveragePriceUnit = currency;
 
+
   return {
     emailsAllowedInPlan,
     emailsAllowedInPlanUnit,
@@ -1110,10 +1131,15 @@ const bandwidthConsumedInOveragePrice = Number((bandwidthConsumedInOverageKB * p
     bandwidthConsumedInOverageUnit,
     bandwidthConsumedInOveragePrice,
     bandwidthConsumedInOveragePriceUnit,
+
+    overageConsumptionInPercentageEmails,
+    overageConsumptionInPercentageBandwidth,
+
     planCycleStartDate: activeBillingDates.startDate,
     planCycleEndDate: activeBillingDates.endDate,
   };
 };
+
 
 const readTopupInvoices = async ({ stripeCustomerId }) => {
   let invoices = [];
