@@ -157,7 +157,13 @@ const updateUser = async ({
         buffer: companyLogo.buffer,
       }));
   }
-
+  const companyExistingRecord = await Company.findOne({
+      _id: currentUser.company,
+    });
+  let currency = "USD";
+  if(companyExistingRecord && companyExistingRecord.region) {
+    currency = companyExistingRecord.region === "CA" ? "CAD" : "USD";
+  }
   if (
     companySize ||
     address ||
@@ -184,7 +190,7 @@ const updateUser = async ({
           contactSelectionCriteria,
           emailKey,
           region,
-          currency: region === "CA" ? "CAD" : "USD",
+          currency,
         }
       )
     );
