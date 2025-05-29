@@ -276,6 +276,10 @@ module.exports = {
       "Group template exists already!",
     COMPANY_GROUPING_IS_USED_IN_TEMPLATE: "Group is used in template! Can't delete.",
     COMPANY_GROUPING_IS_USED_IN_CAMPAIGN: "Group is used in campaign! Can't delete.",
+    REVERT_FINALIZE_CONTACTS_REQUEST_EXISTS: "Revert finalize contacts request exists already!",
+    REVERT_FINALIZE_CONTACTS_REQUEST_CREATED: "Revert finalize contacts request created successfully.",
+    CANCEL_REVERT_FINALIZE_CONTACTS_REQUEST: "Revert finalize contacts request cancelled successfully.",
+    REVERT_FINALIZE_REQUEST_EXISTS: "Can't do this action, revert finalize request exists!",
   },
 
   INTERACTION_CHANNELS: {
@@ -399,6 +403,7 @@ module.exports = {
     DEDICATED_IP_ENABLED: "DEDICATED_IP_ENABLED",
     DEDICATED_IP_DISABLED: "DEDICATED_IP_DISABLED",
     DOWNGRADE_PLAN: "DOWNGRADE_PLAN",
+    REVERT_FINALIZE_CONTACT_REQUEST: "REVERT_FINALIZE_CONTACT_REQUEST",
   },
   CUSTOMER_REQUEST_STATUS: {
     PENDING: "PENDING",

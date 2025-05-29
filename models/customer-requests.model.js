@@ -28,6 +28,10 @@ const schema = new mongoose.Schema(
       enum: Object.values(CUSTOMER_REQUEST_STATUS),
       default: CUSTOMER_REQUEST_STATUS.PENDING,
     },
+    reason: {
+      type: String,
+      default: "",
+    },
     metadata: {
       type: Object,
       default: {},

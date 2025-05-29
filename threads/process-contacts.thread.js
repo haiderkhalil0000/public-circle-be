@@ -159,7 +159,10 @@ parentPort.on(
           },
         }
       );
-
+      await companyContactsController.cancelFinalizeContactRequest({
+        companyId,
+        reason: "New Contacts Imported",
+      });
       const companyActiveCampaigns =
         await companiesController.readCompanyActiveOngoingCampaigns({
           companyId,

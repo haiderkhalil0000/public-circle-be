@@ -166,12 +166,54 @@ router.post(
   }
 );
 
+router.post(
+  "/revert-finalize-contact-request",
+  authenticate.verifyToken,
+  async (req, res, next) => {
+    try {
+      await companyContactsController.createRevertFinalizeContactRequest({
+        companyId: req.user.company._id,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.REVERT_FINALIZE_CONTACTS_REQUEST_CREATED,
+        data: {},
+      });
+    } catch (err) {
+      companyContactsDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.post(
+  "/cancel/revert-finalize-contact-request",
+  authenticate.verifyToken,
+  async (req, res, next) => {
+    try {
+      await companyContactsController.cancelRevertFinalizeContactRequest({
+        companyId: req.user.company._id,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.CANCEL_REVERT_FINALIZE_CONTACTS_REQUEST,
+        data: {},
+      });
+    } catch (err) {
+      companyContactsDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
 router.get(
   "/customer-requests",
   authenticate.verifyToken,
   async (req, res, next) => {
     try {
-      const response = await companyContactsController.getDedicatedIpRequests({
+      const response = await companyContactsController.getCustomerRequests({
         companyId: req.user.company._id,
       });
 
