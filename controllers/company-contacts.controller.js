@@ -921,7 +921,7 @@ const findContactsByPrimaryKey = async ({
 };
 
 const updatePrimaryKey = async ({ companyId, currentUserId, primaryKey }) => {
-  const revertFinalizeRequestExists = getRevertFinalizeContactRequest({
+  const revertFinalizeRequestExists = await getRevertFinalizeContactRequest({
     companyId,
   });
   if( revertFinalizeRequestExists) {
@@ -956,7 +956,7 @@ const updatePrimaryKey = async ({ companyId, currentUserId, primaryKey }) => {
 };
 
 const deletePrimaryKey = async ({ companyId }) => {
-  const revertFinalizeRequestExists = getRevertFinalizeContactRequest({
+  const revertFinalizeRequestExists = await getRevertFinalizeContactRequest({
     companyId,
   });
   if (revertFinalizeRequestExists) {
@@ -1054,7 +1054,7 @@ const filterContactsBySelectionCriteria = async ({
   companyId,
   contactSelectionCriteria,
 }) => {
-  const revertFinalizeRequestExists = getRevertFinalizeContactRequest({
+  const revertFinalizeRequestExists = await getRevertFinalizeContactRequest({
     companyId,
   });
   if (revertFinalizeRequestExists) {
