@@ -146,16 +146,19 @@ router.patch(
 );
 
 router.delete(
-  "/:url",
+  "/file-upload/:assetId",
   authenticate.verifyToken,
   validate({
     params: Joi.object({
-      url: Joi.string().required(),
+      assetId: Joi.string().required(),
     }),
   }),
   async (req, res, next) => {
     try {
-      await assetsController.deleteAsset(req.params);
+      await assetsController.deleteAsset({
+        assetId: req.params.assetId,
+        companyId: req.user.company._id,
+      });
 
       res.status(200).json({
         message: RESPONSE_MESSAGES.ASSET_DELETED,

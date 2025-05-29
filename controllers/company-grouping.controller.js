@@ -48,7 +48,7 @@ const getCompanyGroupingByType = async ({ companyId, type }) => {
     }
 
     const contentCounts = await Model.aggregate([
-      { $match: { companyGroupingId: { $in: groupingIds } } },
+      { $match: { companyGroupingId: { $in: groupingIds }, status: { $ne: CAMPAIGN_STATUS.DELETED} } },
       { $group: { _id: "$companyGroupingId", count: { $sum: 1 } } },
     ]);
 

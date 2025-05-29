@@ -52,6 +52,10 @@ const schema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    currency: {
+      type: String,
+      default: "USD",
+    }
   },
   { timestamps: true }
 );

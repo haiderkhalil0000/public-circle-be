@@ -7,7 +7,16 @@ const recieveCompanyContacts = async ({ companyId, contacts }) => {
   });
 
   if (primaryKey) {
-    for (const contact of contacts) {
+    for (let contact of contacts) {
+      contact = Object.fromEntries(
+        Object.entries(contact).filter(
+          ([_, value]) => value !== undefined && value !== null && value !== ""
+        )
+      );
+      if (contact._id) {
+        contact.ID = contact._id.toString();
+      }
+      delete contact._id;
       const primaryKeyValue = contact[primaryKey];
 
       if (primaryKeyValue) {
@@ -49,11 +58,23 @@ const recieveCompanyContacts = async ({ companyId, contacts }) => {
       }
     }
   } else {
-    contacts = contacts.map((item) => ({
-      ...item,
-      public_circles_company: companyId,
-    }));
+    contacts = contacts.map((item) => {
+      let contact = {
+        ...item,
+        public_circles_company: companyId,
+      };
+      contact = Object.fromEntries(
+        Object.entries(contact).filter(
+          ([_, value]) => value !== undefined && value !== null && value !== ""
+        )
+      );
+      if (contact._id) {
+        contact.id = contact._id.toString();
+        delete contact._id;
+      }
 
+      return contact;
+    });
     await companyContactsController.createMultipleCompanyContacts({ contacts });
   }
 };

@@ -69,7 +69,7 @@ const addDataInCompanyConfigurations = async ({
       },
     });
     await User.findOneAndUpdate(
-      { userEmailAddress },
+      { emailAddress: userEmailAddress },
       {
         $set: {
           "tourSteps.steps.0.isCompleted": true,
@@ -127,7 +127,7 @@ const addDataInCompanyConfigurations = async ({
     await configuration.save();
   }
   await User.findOneAndUpdate(
-    { userEmailAddress },
+    { emailAddress: userEmailAddress },
     {
       $set: {
         "tourSteps.steps.0.isCompleted": true,
@@ -244,7 +244,7 @@ const createConfiguration = async ({
     },
   });
   await User.findOneAndUpdate(
-    { userEmailAddress },
+    { emailAddress: userEmailAddress },
     {
       $set: {
         "tourSteps.steps.0.isCompleted": true,

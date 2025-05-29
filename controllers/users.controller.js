@@ -184,6 +184,7 @@ const updateUser = async ({
           contactSelectionCriteria,
           emailKey,
           region,
+          currency: region === "CA" ? "CAD" : "USD",
         }
       )
     );

@@ -8,6 +8,7 @@ const {
 } = require("../utils");
 const { authenticate, validate } = require("../middlewares");
 const { companyContactsController } = require("../controllers");
+const { CUSTOMER_REQUEST_TYPE } = require("../utils/constants.util");
 
 const router = express.Router();
 
@@ -166,13 +167,63 @@ router.post(
   }
 );
 
-router.get(
-  "/customer-requests",
+router.post(
+  "/revert-finalize-contact-request",
   authenticate.verifyToken,
   async (req, res, next) => {
     try {
-      const response = await companyContactsController.getDedicatedIpRequests({
+      await companyContactsController.createRevertFinalizeContactRequest({
         companyId: req.user.company._id,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.REVERT_FINALIZE_CONTACTS_REQUEST_CREATED,
+        data: {},
+      });
+    } catch (err) {
+      companyContactsDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.post(
+  "/cancel/revert-finalize-contact-request",
+  authenticate.verifyToken,
+  async (req, res, next) => {
+    try {
+      await companyContactsController.cancelRevertFinalizeContactRequest({
+        companyId: req.user.company._id,
+      });
+
+      res.status(200).json({
+        message: RESPONSE_MESSAGES.CANCEL_REVERT_FINALIZE_CONTACTS_REQUEST,
+        data: {},
+      });
+    } catch (err) {
+      companyContactsDebugger(err);
+
+      next(err);
+    }
+  }
+);
+
+router.get(
+  "/customer-requests",
+  authenticate.verifyToken,
+  validate({
+    query: Joi.object({
+      type: Joi.string()
+        .valid(...Object.values(CUSTOMER_REQUEST_TYPE))
+        .optional(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const response = await companyContactsController.getCustomerRequests({
+        companyId: req.user.company._id,
+        type: req.query.type,
       });
 
       res.status(200).json({
