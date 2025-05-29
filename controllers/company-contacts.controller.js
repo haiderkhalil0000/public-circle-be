@@ -13,14 +13,17 @@ const {
     COMPANY_CONTACT_STATUS,
     FILTER_CONDITION_CASES,
     CUSTOMER_REQUEST_TYPE,
-    TEMPLATE_CONTENT_TYPE
+    TEMPLATE_CONTENT_TYPE,
   },
   basicUtil,
   sesUtil,
 } = require("../utils");
 const { PUBLIC_CIRCLES_EMAIL_ADDRESS, SUPPORT_EMAIL } = process.env;
 const { isNumericString } = require("../utils/basic.util");
-const { CONTACTS_DELETE_ACTION } = require("../utils/constants.util");
+const {
+  CONTACTS_DELETE_ACTION,
+  CUSTOMER_REQUEST_STATUS,
+} = require("../utils/constants.util");
 
 const readContactKeys = async ({ companyId = "" }) => {
   const latestDocument = await CompanyContact.aggregate([
@@ -395,7 +398,11 @@ const getFilterConditionQuery = ({ conditions, conditionKey }) => {
   });
 };
 
-const readFiltersCount = async ({ companyId, filters, internalCall=false }) => {
+const readFiltersCount = async ({
+  companyId,
+  filters,
+  internalCall = false,
+}) => {
   const individualPromises = [];
 
   filters?.forEach((item) => {
@@ -471,14 +478,14 @@ const readFiltersCount = async ({ companyId, filters, internalCall=false }) => {
   if (orConditions.length) {
     combinedQuery["$or"] = orConditions;
   }
-  
 
-  const combinedCountPromise = CompanyContact.countDocuments(combinedQuery)
-    .then(count => ({
-      key: "combined",
-      values: filters.map(f => f.key),
-      count
-    }));
+  const combinedCountPromise = CompanyContact.countDocuments(
+    combinedQuery
+  ).then((count) => ({
+    key: "combined",
+    values: filters.map((f) => f.key),
+    count,
+  }));
 
   const allPromises = [...individualPromises, combinedCountPromise];
   const results = await Promise.all(allPromises);
@@ -497,10 +504,10 @@ const readFiltersCount = async ({ companyId, filters, internalCall=false }) => {
     filterKey: "segmentCount",
     filterCount: results[results.length - 1].count,
   });
-  if(!internalCall) {
+  if (!internalCall) {
     return filterCounts;
   }
-  return filterCounts.filter(item => item.filterKey === "segmentCount");
+  return filterCounts.filter((item) => item.filterKey === "segmentCount");
 };
 
 const search = async ({ companyId, searchString, searchFields }) => {
@@ -648,9 +655,12 @@ const deleteCompanyContact = async ({ companyId, userId }) => {
       _id: userId,
       public_circles_company: companyId,
     },
-    { public_circles_status: COMPANY_CONTACT_STATUS.DELETED, public_circles_contact_deletion_reason: {
-      delete_action: CONTACTS_DELETE_ACTION.MANUAL_DELETE
-    }, }
+    {
+      public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
+      public_circles_contact_deletion_reason: {
+        delete_action: CONTACTS_DELETE_ACTION.MANUAL_DELETE,
+      },
+    }
   );
 
   if (!result.modifiedCount) {
@@ -911,6 +921,14 @@ const findContactsByPrimaryKey = async ({
 };
 
 const updatePrimaryKey = async ({ companyId, currentUserId, primaryKey }) => {
+  const revertFinalizeRequestExists = getRevertFinalizeContactRequest({
+    companyId,
+  });
+  if( revertFinalizeRequestExists) {
+    throw createHttpError(400, {
+      errorMessage: RESPONSE_MESSAGES.REVERT_FINALIZE_REQUEST_EXISTS,
+    });
+  }
   await Promise.all([
     Company.findByIdAndUpdate(companyId, {
       contactsPrimaryKey: primaryKey,
@@ -925,7 +943,7 @@ const updatePrimaryKey = async ({ companyId, currentUserId, primaryKey }) => {
       },
       companyContactData: {
         public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
-        public_circles_contact_deletion_reason:{}
+        public_circles_contact_deletion_reason: {},
       },
     }),
   ]);
@@ -938,9 +956,17 @@ const updatePrimaryKey = async ({ companyId, currentUserId, primaryKey }) => {
 };
 
 const deletePrimaryKey = async ({ companyId }) => {
-  const { contactsPrimaryKey } = await Company.findById(companyId).select(
-    "contactsPrimaryKey"
-  ).lean();
+  const revertFinalizeRequestExists = getRevertFinalizeContactRequest({
+    companyId,
+  });
+  if (revertFinalizeRequestExists) {
+    throw createHttpError(400, {
+      errorMessage: RESPONSE_MESSAGES.REVERT_FINALIZE_REQUEST_EXISTS,
+    });
+  }
+  const { contactsPrimaryKey } = await Company.findById(companyId)
+    .select("contactsPrimaryKey")
+    .lean();
   await Promise.all([
     CompanyContact.updateMany(
       {
@@ -957,9 +983,9 @@ const deletePrimaryKey = async ({ companyId }) => {
     Company.findByIdAndUpdate(companyId, {
       contactsPrimaryKey: null,
       isContactFinalize: false,
-    })
+    }),
   ]);
-}
+};
 
 const readCompanyContactsCount = ({ companyId }) =>
   CompanyContact.countDocuments({
@@ -988,7 +1014,7 @@ const deleteSelectedContacts = async ({ companyId, contactIds }) => {
     {
       public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
       public_circles_contact_deletion_reason: {
-        delete_action: CONTACTS_DELETE_ACTION.MANUAL_DELETE
+        delete_action: CONTACTS_DELETE_ACTION.MANUAL_DELETE,
       },
       public_circles_existing_contactId: null,
     }
@@ -1028,6 +1054,14 @@ const filterContactsBySelectionCriteria = async ({
   companyId,
   contactSelectionCriteria,
 }) => {
+  const revertFinalizeRequestExists = getRevertFinalizeContactRequest({
+    companyId,
+  });
+  if (revertFinalizeRequestExists) {
+    throw createHttpError(400, {
+      errorMessage: RESPONSE_MESSAGES.REVERT_FINALIZE_REQUEST_EXISTS,
+    });
+  }
   const query = {
     public_circles_company: companyId,
   };
@@ -1045,7 +1079,9 @@ const filterContactsBySelectionCriteria = async ({
       _id: { $nin: filteredContactIds },
       public_circles_company: companyId,
       public_circles_status: { $ne: COMPANY_CONTACT_STATUS.DELETED },
-      "public_circles_contact_deletion_reason.delete_action": { $exists: false },
+      "public_circles_contact_deletion_reason.delete_action": {
+        $exists: false,
+      },
     },
     {
       public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
@@ -1062,33 +1098,30 @@ const revertFilterContactsBySelectionCriteria = async ({
   companyId,
   contactSelectionCriteria,
 }) => {
-
   const baseQuery = {
     public_circles_company: companyId,
     public_circles_status: COMPANY_CONTACT_STATUS.DELETED,
-    "public_circles_contact_deletion_reason.delete_action": CONTACTS_DELETE_ACTION.FILTER,
+    "public_circles_contact_deletion_reason.delete_action":
+      CONTACTS_DELETE_ACTION.FILTER,
   };
 
   if (contactSelectionCriteria?.length > 0) {
     baseQuery["public_circles_contact_deletion_reason.filter_condition"] = {
       $elemMatch: {
-        $or: contactSelectionCriteria.map(filter => ({
+        $or: contactSelectionCriteria.map((filter) => ({
           filterKey: filter.filterKey,
-          filterValues: { $in: filter.filterValues }
-        }))
-      }
+          filterValues: { $in: filter.filterValues },
+        })),
+      },
     };
   }
 
-  const result = await CompanyContact.updateMany(
-    baseQuery,
-    {
-      $set: {
-        public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
-        public_circles_contact_deletion_reason: {}
-      },
-    }
-  );
+  const result = await CompanyContact.updateMany(baseQuery, {
+    $set: {
+      public_circles_status: COMPANY_CONTACT_STATUS.ACTIVE,
+      public_circles_contact_deletion_reason: {},
+    },
+  });
 
   return result.modifiedCount;
 };
@@ -1193,7 +1226,9 @@ const resolveCompanyContactDuplicates = async ({
             public_circles_company: companyId,
             _id: { $ne: contact._id },
             [contactsPrimaryKey]: contact[contactsPrimaryKey],
-            "public_circles_contact_deletion_reason.delete_action": { $exists: false },
+            "public_circles_contact_deletion_reason.delete_action": {
+              $exists: false,
+            },
           },
           update: {
             $set: {
@@ -1244,7 +1279,9 @@ const resolveCompanyContactDuplicates = async ({
         CompanyContact.updateMany(
           {
             _id: { $in: contactsToBeDeleted },
-            "public_circles_contact_deletion_reason.delete_action": { $exists: false },
+            "public_circles_contact_deletion_reason.delete_action": {
+              $exists: false,
+            },
           },
           {
             $set: {
@@ -1326,15 +1363,76 @@ const createDedicatedIpRequest = async ({ companyId, requested }) => {
       requested ? "enable" : "disable"
     } the dedicated IP for the company ${company[0].companyName}.`,
     contentType: TEMPLATE_CONTENT_TYPE.TEXT,
-  })
+  });
   return true;
 };
-const getDedicatedIpRequests = async ({ companyId }) => {
+
+const createRevertFinalizeContactRequest = async ({ companyId }) => {
+  const existingRequest = await getRevertFinalizeContactRequest({
+    companyId,
+  });
+  if (existingRequest) {
+    throw createHttpError(400, {
+      errorMessage: RESPONSE_MESSAGES.REVERT_FINALIZE_CONTACTS_REQUEST_EXISTS,
+    });
+  }
+  await CustomerRequests.create({
+    companyId,
+    type: CUSTOMER_REQUEST_TYPE.REVERT_FINALIZE_CONTACT_REQUEST,
+  });
+  const company = await Company.find({ _id: companyId });
+  await sesUtil.sendEmail({
+    fromEmailAddress: PUBLIC_CIRCLES_EMAIL_ADDRESS,
+    toEmailAddress: SUPPORT_EMAIL,
+    subject: `Revert Finalize Contacts Requested`,
+    content: `A request has been made to revert the finalize contacts for the company ${company[0].companyName}.`,
+    contentType: TEMPLATE_CONTENT_TYPE.TEXT,
+  });
+  return true;
+};
+
+const cancelRevertFinalizeContactRequest = async ({ companyId }) => {
+  await cancelFinalizeContactRequest({companyId})
+  return true;
+};
+
+const getCustomerRequests = async ({ companyId }) => {
   const requests = await CustomerRequests.find({
     companyId,
   }).sort({ createdAt: -1 });
   return requests;
-}
+};
+
+const getRevertFinalizeContactRequest = async ({ companyId }) => {
+  const request = await CustomerRequests.findOne({
+    companyId,
+    type: CUSTOMER_REQUEST_TYPE.REVERT_FINALIZE_CONTACT_REQUEST,
+    requestStatus: {
+      $in: [
+        CUSTOMER_REQUEST_STATUS.PENDING,
+        CUSTOMER_REQUEST_STATUS.IN_PROGRESS,
+      ],
+    },
+  });
+  return request;
+};
+
+const cancelFinalizeContactRequest = async ({
+  companyId,
+  reason = "Request canceled by user",
+}) => {
+  await CustomerRequests.findOneAndUpdate(
+    {
+      companyId,
+      type: CUSTOMER_REQUEST_TYPE.REVERT_FINALIZE_CONTACT_REQUEST,
+      requestStatus: { $ne: CUSTOMER_REQUEST_STATUS.CANCELLED },
+    },
+    {
+      requestStatus: CUSTOMER_REQUEST_STATUS.CANCELLED,
+      reason,
+    }
+  );
+};
 
 module.exports = {
   readContactKeys,
@@ -1371,6 +1469,10 @@ module.exports = {
   finalizeCompanyContact,
   unSubscribeFromEmail,
   createDedicatedIpRequest,
-  getDedicatedIpRequests,
-  revertFilterContactsBySelectionCriteria
+  getCustomerRequests,
+  createRevertFinalizeContactRequest,
+  revertFilterContactsBySelectionCriteria,
+  cancelRevertFinalizeContactRequest,
+  getRevertFinalizeContactRequest,
+  cancelFinalizeContactRequest,
 };
