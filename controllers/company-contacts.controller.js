@@ -1396,12 +1396,17 @@ const cancelRevertFinalizeContactRequest = async ({ companyId }) => {
   return true;
 };
 
-const getCustomerRequests = async ({ companyId }) => {
-  const requests = await CustomerRequests.find({
-    companyId,
-  }).sort({ createdAt: -1 });
+const getCustomerRequests = async ({ companyId, type }) => {
+  const query = { companyId };
+
+  if (type !== undefined && type !== null) {
+    query.type = type;
+  }
+
+  const requests = await CustomerRequests.find(query).sort({ createdAt: -1 });
   return requests;
 };
+
 
 const getRevertFinalizeContactRequest = async ({ companyId }) => {
   const request = await CustomerRequests.findOne({

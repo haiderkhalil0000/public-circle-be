@@ -8,6 +8,7 @@ const {
 } = require("../utils");
 const { authenticate, validate } = require("../middlewares");
 const { companyContactsController } = require("../controllers");
+const { CUSTOMER_REQUEST_TYPE } = require("../utils/constants.util");
 
 const router = express.Router();
 
@@ -211,10 +212,18 @@ router.post(
 router.get(
   "/customer-requests",
   authenticate.verifyToken,
+  validate({
+    query: Joi.object({
+      type: Joi.string()
+        .valid(...Object.values(CUSTOMER_REQUEST_TYPE))
+        .optional(),
+    }),
+  }),
   async (req, res, next) => {
     try {
       const response = await companyContactsController.getCustomerRequests({
         companyId: req.user.company._id,
+        type: req.query.type,
       });
 
       res.status(200).json({
