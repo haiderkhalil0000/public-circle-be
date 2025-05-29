@@ -14,7 +14,7 @@ const recieveCompanyContacts = async ({ companyId, contacts }) => {
         )
       );
       if (contact._id) {
-        contact.id = contact._id.toString();
+        contact.ID = contact._id.toString();
       }
       delete contact._id;
       const primaryKeyValue = contact[primaryKey];
