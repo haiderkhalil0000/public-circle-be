@@ -13,6 +13,7 @@ const {
   companyContactsController,
   stripeController,
 } = require("../controllers");
+const { CUSTOMER_REQUEST_STATUS } = require("../utils/constants.util");
 
 const splitArrayIntoParts = (array, numberOfParts) => {
   const partSize = Math.ceil(array.length / numberOfParts);
@@ -160,6 +161,7 @@ parentPort.on(
       await companyContactsController.cancelFinalizeContactRequest({
         companyId,
         reason: "New Contacts Imported",
+        requestStatus: CUSTOMER_REQUEST_STATUS.COMPLETED
       });
       const companyActiveCampaigns =
         await companiesController.readCompanyActiveOngoingCampaigns({

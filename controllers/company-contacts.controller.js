@@ -1425,6 +1425,7 @@ const getRevertFinalizeContactRequest = async ({ companyId }) => {
 const cancelFinalizeContactRequest = async ({
   companyId,
   reason = "Request canceled by user",
+  requestStatus = CUSTOMER_REQUEST_STATUS.CANCELLED,
 }) => {
   await CustomerRequests.findOneAndUpdate(
     {
@@ -1433,7 +1434,7 @@ const cancelFinalizeContactRequest = async ({
       requestStatus: { $ne: CUSTOMER_REQUEST_STATUS.CANCELLED },
     },
     {
-      requestStatus: CUSTOMER_REQUEST_STATUS.CANCELLED,
+      requestStatus,
       reason,
     }
   );
