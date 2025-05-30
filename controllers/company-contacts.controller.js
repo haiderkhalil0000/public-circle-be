@@ -1335,7 +1335,11 @@ const finalizeCompanyContact = async ({ companyId }) => {
     importedContactsCount: 0,
     existingContactsCount: companyExistingContacts,
   });
-
+  await cancelFinalizeContactRequest({
+    companyId,
+    reason: "Finalize contacts",
+    requestStatus: CUSTOMER_REQUEST_STATUS.IN_PROGRESS,
+  })
   await Company.updateOne({ _id: companyId }, { isContactFinalize: true });
 };
 
