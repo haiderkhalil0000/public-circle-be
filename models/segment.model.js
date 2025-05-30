@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const { ObjectId } = mongoose.Schema.Types;
 const {
   constants: {
@@ -24,6 +23,7 @@ const schema = new mongoose.Schema(
       {
         key: { type: String },
         values: { type: Array },
+        name: { type: String },
         type: { type: String, enum: ["CHECK_BOX", "INPUT", "RADIO", "DROP_DOWN"] },
         count: { type: Number },
         operator: { type: String, enum: ["AND", "OR"] },
