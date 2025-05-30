@@ -85,8 +85,8 @@ const deleteCompanyGroupingById = async ({ id }) => {
   basicUtil.validateObjectId({ inputString: id });
 
   const [campaignExists, templateExists] = await Promise.all([
-    Campaign.exists({ companyGroupingId: id, status: CAMPAIGN_STATUS.DELETED }),
-    Template.exists({ companyGroupingId: id, status: TEMPLATE_STATUS.DELETED }),
+    Campaign.exists({ companyGroupingId: id, status: { $ne: CAMPAIGN_STATUS.DELETED} }),
+    Template.exists({ companyGroupingId: id, status: {$ne: TEMPLATE_STATUS.DELETED} }),
   ]);
 
   if (campaignExists) {
